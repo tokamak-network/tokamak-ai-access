@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
+import { useTonBalance, useStake, LAYER2_OPTIONS, DEFAULT_LAYER2 } from "@/lib/hooks/useStake";
 
 interface BalanceData {
   address: string;
@@ -20,23 +21,280 @@ function shortAddr(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+/* ── In-App Stake Panel ───────────────────────────────────────────── */
+function StakePanel({
+  minTon,
+  onSuccess,
+}: {
+  minTon: number;
+  onSuccess: () => void;
+}) {
+  const { address } = useAccount();
+  const tonBalance = useTonBalance(address as `0x${string}` | undefined);
+  const { stake, status, txHash, error, reset } = useStake();
+
+  const [amount, setAmount] = useState("");
+  const [layer2, setLayer2] = useState<`0x${string}`>(DEFAULT_LAYER2);
+
+  const isLoading = status === "pending" || status === "confirming";
+  const walletTON = parseFloat(tonBalance.formatted);
+  const inputAmount = parseFloat(amount) || 0;
+  const hasEnough = inputAmount > 0 && walletTON >= inputAmount;
+
+  // Auto-notify parent on success
+  useEffect(() => {
+    if (status === "success") {
+      const t = setTimeout(() => { onSuccess(); reset(); }, 3000);
+      return () => clearTimeout(t);
+    }
+  }, [status, onSuccess, reset]);
+
+  async function handleStake() {
+    if (!amount || !hasEnough) return;
+    try {
+      await stake(amount, layer2);
+    } catch {
+      // error surfaced via hook
+    }
+  }
+
+  const presets = [
+    { label: `${minTon}`, value: String(minTon) },
+    { label: `${minTon * 2}`, value: String(minTon * 2) },
+    { label: `${minTon * 5}`, value: String(minTon * 5) },
+  ];
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    fontFamily: "var(--font-mono)",
+    fontSize: "1rem",
+    color: "var(--ink)",
+    background: "var(--surface)",
+    border: "1px solid var(--hairline)",
+    borderRadius: "calc(var(--radius) - 2px)",
+    padding: "10px 14px",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle,
+    fontSize: "0.8125rem",
+    cursor: "pointer",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Wallet TON balance */}
+      <div>
+        <span style={{
+          fontFamily: "var(--font-mono)", fontSize: "0.625rem",
+          letterSpacing: "0.12em", textTransform: "uppercase" as const,
+          color: "var(--muted)", display: "block", marginBottom: "6px",
+        }}>
+          Wallet TON balance
+        </span>
+        <span style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", fontWeight: 700, color: "var(--ink)" }}>
+          {tonBalance.isLoading ? "…" : `${tonBalance.formatted} TON`}
+        </span>
+      </div>
+
+      {/* Amount input */}
+      <div>
+        <label style={{
+          fontFamily: "var(--font-mono)", fontSize: "0.625rem",
+          letterSpacing: "0.12em", textTransform: "uppercase" as const,
+          color: "var(--muted)", display: "block", marginBottom: "8px",
+        }}>
+          Amount to stake (TON)
+        </label>
+        <input
+          type="number"
+          min="0"
+          step="1"
+          placeholder={`min ${minTon}`}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          disabled={isLoading}
+          style={inputStyle}
+        />
+        {/* Quick presets */}
+        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+          {presets.map((p) => (
+            <button
+              key={p.label}
+              onClick={() => setAmount(p.value)}
+              disabled={isLoading}
+              style={{
+                fontFamily: "var(--font-mono)", fontSize: "0.6875rem",
+                color: amount === p.value ? "var(--surface)" : "var(--accent)",
+                background: amount === p.value ? "var(--accent)" : "transparent",
+                border: "1px solid var(--accent)",
+                borderRadius: "calc(var(--radius) - 4px)",
+                padding: "4px 10px", cursor: "pointer", transition: "all 120ms",
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+          <button
+            onClick={() => setAmount(tonBalance.formatted.replace(/\.0+$/, ""))}
+            disabled={isLoading || walletTON === 0}
+            style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.6875rem",
+              color: "var(--muted)", background: "transparent",
+              border: "1px solid var(--hairline)",
+              borderRadius: "calc(var(--radius) - 4px)",
+              padding: "4px 10px", cursor: "pointer",
+            }}
+          >
+            MAX
+          </button>
+        </div>
+      </div>
+
+      {/* Layer2 selector */}
+      <div>
+        <label style={{
+          fontFamily: "var(--font-mono)", fontSize: "0.625rem",
+          letterSpacing: "0.12em", textTransform: "uppercase" as const,
+          color: "var(--muted)", display: "block", marginBottom: "8px",
+        }}>
+          Operator (Layer2)
+        </label>
+        <select
+          value={layer2}
+          onChange={(e) => setLayer2(e.target.value as `0x${string}`)}
+          disabled={isLoading}
+          style={selectStyle}
+        >
+          {LAYER2_OPTIONS.map((op) => (
+            <option key={op.address} value={op.address}>{op.label}</option>
+          ))}
+        </select>
+        <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)", marginTop: "6px" }}>
+          Any operator counts toward eligibility. tokamak1 is the default.
+        </p>
+      </div>
+
+      {/* Validation hint */}
+      {amount && !hasEnough && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>
+          {inputAmount <= 0
+            ? "Enter an amount greater than 0."
+            : `Insufficient balance — you have ${tonBalance.formatted} TON.`}
+        </p>
+      )}
+
+      {/* Action button */}
+      {status !== "success" ? (
+        <button
+          className="btn-primary"
+          onClick={handleStake}
+          disabled={isLoading || !hasEnough}
+          style={{ alignSelf: "flex-start" }}
+        >
+          {status === "pending"    ? "Confirm in wallet…" :
+           status === "confirming" ? "Confirming tx…" :
+                                     `Stake ${amount || "—"} TON →`}
+        </button>
+      ) : (
+        <div style={{
+          display: "flex", alignItems: "center", gap: "10px",
+          background: "#f0fdf4", border: "1px solid #86efac",
+          borderRadius: "var(--radius)", padding: "14px 18px",
+        }}>
+          <span style={{ color: "#16a34a", fontSize: "0.9rem" }}>✓ Staked successfully — refreshing balance…</span>
+        </div>
+      )}
+
+      {/* TX hash */}
+      {txHash && (
+        <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)" }}>
+          Tx:{" "}
+          <a
+            href={`https://etherscan.io/tx/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: "var(--accent)", textDecoration: "underline" }}
+          >
+            {txHash.slice(0, 10)}…{txHash.slice(-8)}
+          </a>
+        </p>
+      )}
+
+      {/* Error */}
+      {error && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>{error}</p>
+      )}
+    </div>
+  );
+}
+
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
 function CliSetupPanel({ apiKey }: { apiKey: string }) {
   const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
+  const [models, setModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState("qwen-3.6");
+  const [modelsLoading, setModelsLoading] = useState(true);
 
-  const agentInstruction = `Help me set up TON AI Access. Run the command below to configure my environment variables so I can use this API key with Claude Code and Codex.
+  // 모델 목록 자동탐색 — /api/proxy/models 를 통해 서버사이드 프록시
+  useEffect(() => {
+    if (!apiKey) return;
+    setModelsLoading(true);
+    fetch("/api/proxy/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    })
+      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
+      .then((data: { models: string[] }) => {
+        if (data.models?.length) {
+          setModels(data.models);
+          // 기본값이 목록에 있으면 유지, 없으면 첫 번째로
+          if (!data.models.includes(selectedModel)) {
+            setSelectedModel(data.models[0]);
+          }
+        }
+      })
+      .catch(() => {
+        /* 탐색 실패 시 기본값(qwen-3.6) 유지 */
+      })
+      .finally(() => setModelsLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiKey]);
 
+  const scriptUrl = "https://tokamak-ai-access.vercel.app/configure-cli.sh";
+
+  const agentInstruction =
+`TON AI Access 설정을 시작해 주세요.
+
+아래 명령을 그대로 실행하면 Claude Code와 Codex 환경이 자동으로 설정됩니다.
+
+\`\`\`bash
 TON_API_KEY="${apiKey}" \\
-TON_MODEL="qwen-3.6" \\
-bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \\
+TON_MODEL="${selectedModel}" \\
+bash <(curl -fsSL ${scriptUrl}) \\
   --non-interactive
+\`\`\`
 
-Once it's done, run source ~/.zshrc (or ~/.bashrc) to apply the changes to the current session.`;
+실행 후, 현재 터미널에 적용하려면:
 
-  const directCommand = `TON_API_KEY="${apiKey}" \\
-TON_MODEL="qwen-3.6" \\
-bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \\
+\`\`\`bash
+source ~/.zshrc   # zsh
+# 또는
+source ~/.bashrc  # bash
+\`\`\`
+
+검증:
+\`\`\`bash
+echo $OPENAI_BASE_URL   # → https://api2.ai.tokamak.network
+echo $TON_AI_MODEL      # → ${selectedModel}
+\`\`\``;
+
+  const directCommand =
+`TON_API_KEY="${apiKey}" \\
+TON_MODEL="${selectedModel}" \\
+bash <(curl -fsSL ${scriptUrl}) \\
   --non-interactive`;
 
   const content = tab === "agent" ? agentInstruction : directCommand;
@@ -67,19 +325,68 @@ bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \\
       {/* Tab bar */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--hairline)" }}>
         <button style={tabStyle(tab === "agent")} onClick={() => setTab("agent")}>Agent Setup</button>
-        <button style={tabStyle(tab === "direct")} onClick={() => setTab("direct")}>Direct</button>
+        <button style={tabStyle(tab === "direct")} onClick={() => setTab("direct")}>Direct (Terminal)</button>
       </div>
+
       {/* Body */}
       <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
+        {/* 모델 선택 */}
+        <div style={{ marginBottom: "18px" }}>
+          <label style={{
+            display: "block",
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.625rem",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--muted)",
+            marginBottom: "8px",
+          }}>
+            Model
+          </label>
+          {modelsLoading ? (
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem", color: "var(--muted)" }}>
+              Fetching models…
+            </span>
+          ) : models.length > 0 ? (
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.8125rem",
+                color: "var(--ink)",
+                background: "var(--surface)",
+                border: "1px solid var(--hairline)",
+                borderRadius: "calc(var(--radius) - 2px)",
+                padding: "8px 12px",
+                cursor: "pointer",
+                minWidth: "220px",
+              }}
+            >
+              {models.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+          ) : (
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--ink)" }}>
+              {selectedModel}
+              <span style={{ color: "var(--muted)", marginLeft: "8px" }}>(default)</span>
+            </span>
+          )}
+        </div>
+
+        {/* 설명 */}
         {tab === "agent" ? (
           <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
-            Copy and paste this into Claude Code, Codex, or any AI agent. The agent will find and run the script automatically.
+            Paste into Claude Code, Codex, or any AI agent chat. The agent will run the script and configure your environment automatically.
           </p>
         ) : (
           <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
-            Paste this directly into your terminal to configure your environment without an agent.
+            Paste directly into your terminal to configure without an agent.
           </p>
         )}
+
+        {/* 코드 블록 */}
         <pre style={{
           fontFamily: "var(--font-mono)",
           fontSize: "0.8125rem",
@@ -92,9 +399,12 @@ bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \\
           wordBreak: "break-word",
           lineHeight: 1.75,
           marginBottom: "16px",
+          maxHeight: "320px",
+          overflowY: "auto",
         }}>
           {content}
         </pre>
+
         <button
           onClick={handleCopy}
           style={{
@@ -240,6 +550,7 @@ export default function DashboardPage() {
 
             {!loading && balance && !balance.eligible && (
               <>
+                {/* Current staked amount + gap */}
                 <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
                   <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.25rem, 3.5vw, 3rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1 }}>
                     {balance.totalStakedTON}
@@ -249,20 +560,35 @@ export default function DashboardPage() {
                   </span>
                   <span className="badge badge--no">Not eligible</span>
                 </div>
-                <p className="body-lead">
+                <p className="body-lead" style={{ marginBottom: "32px" }}>
                   You need at least <strong style={{ color: "var(--ink)" }}>{balance.minTon} TON</strong> staked
-                  across any Layer2 on Tokamak Network to receive an API key.
-                  You&apos;re <strong style={{ color: "var(--ink)" }}>{(balance.minTon - parseFloat(balance.totalStakedTON)).toFixed(1)} TON</strong> short.
+                  across any Tokamak Layer2 to receive an API key.
+                  You&apos;re <strong style={{ color: "var(--ink)" }}>
+                    {Math.max(0, balance.minTon - parseFloat(balance.totalStakedTON)).toFixed(1)} TON
+                  </strong> short.
                 </p>
-                <a
-                  href="https://tokamak.network/staking"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Stake on Tokamak (opens in new tab)"
-                  className="btn-primary"
-                >
-                  Stake on Tokamak →
-                </a>
+
+                {/* In-app staking panel */}
+                <div className="card">
+                  <span className="card__label">Stake TON directly</span>
+                  <StakePanel
+                    minTon={balance.minTon}
+                    onSuccess={fetchAll}
+                  />
+                </div>
+
+                {/* Fallback external link */}
+                <p style={{ marginTop: "16px", fontSize: "0.8125rem", color: "var(--muted)" }}>
+                  Prefer to stake elsewhere?{" "}
+                  <a
+                    href="https://tokamak.network/staking"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: "var(--accent)", textDecoration: "underline" }}
+                  >
+                    Open tokamak.network →
+                  </a>
+                </p>
               </>
             )}
 

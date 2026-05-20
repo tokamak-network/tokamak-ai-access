@@ -1,0 +1,38 @@
+{
+  "_meta": {
+    "contract": "TON",
+    "source": "https://etherscan.io/token/0x2be5e8c109e2197d077d13a82daead6a9b3433c5",
+    "note": "Minimal ABI for staking integration — balanceOf + approveAndCall. Full ABI at tokamak-network/ton-staking-v2.",
+    "addresses": {
+      "mainnet": { "proxy": "0x2be5e8c109e2197d077d13a82daead6a9b3433c5" },
+      "sepolia": { "proxy": "0x68c1f9620aecd7156c3509b2b74b21e4cf7fb53b" }
+    }
+  },
+  "abi": [
+    {
+      "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
+      "name": "balanceOf",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "_spender", "type": "address" },
+        { "internalType": "uint256", "name": "_amount",  "type": "uint256" },
+        { "internalType": "bytes",   "name": "_data",    "type": "bytes" }
+      ],
+      "name": "approveAndCall",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}

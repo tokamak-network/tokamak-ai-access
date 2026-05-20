@@ -15,6 +15,7 @@ build/
 
 # Snapshot output — may contain wallet addresses; keep locally
 data/eligible_holders.csv
+data/ton_holder_analysis.json
 
 # OS
 .DS_Store

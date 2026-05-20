@@ -77,7 +77,7 @@ export default function LandingPage() {
             <span className="n-lbl">Access</span>
             <span className="n-val">Free for TON stakers</span>
             <span className="n-lbl">Minimum stake</span>
-            <span className="n-val">10 TON</span>
+            <span className="n-val">200 TON</span>
             <span className="n-lbl">Network</span>
             <span className="n-val">Ethereum Mainnet</span>
           </aside>
@@ -88,7 +88,7 @@ export default function LandingPage() {
               Your stake<br />earns you AI.
             </h1>
             <p className="body-lead">
-              TON stakers with 10 TON or more get a free LiteLLM API key —
+              TON stakers with 200 TON or more get a free LiteLLM API key —
               no sign-up, no credit card. Just your wallet.
             </p>
 
@@ -151,7 +151,7 @@ export default function LandingPage() {
               {[
                 ["01", "Connect wallet", "MetaMask, WalletConnect, or any EVM-compatible wallet."],
                 ["02", "Sign a message", "One SIWE signature proves ownership. No gas, no transactions."],
-                ["03", "Get your API key", "10 TON staked across any Layer2 qualifies. Key issued instantly."],
+                ["03", "Get your API key", "200 TON staked across any Layer2 qualifies. Key issued instantly."],
               ].map(([num, title, desc]) => (
                 <li key={num} style={{ display: "flex", gap: "20px" }}>
                   <span style={{

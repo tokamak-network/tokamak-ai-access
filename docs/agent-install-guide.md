@@ -3,6 +3,69 @@
 > **이 문서의 용도**: Claude Code 또는 Codex 에이전트가 읽고, 사용자에게 묻거나 직접 실행하여
 > LiteLLM API 키와 모델 설정을 완료할 수 있도록 작성된 구조화 가이드.
 >
+> **빠른 사용**: [§ 대화문 형식 설치 프롬프트](#대화문-형식-설치-프롬프트) 섹션의 내용을  
+> Claude Code 또는 Codex 채팅창에 그대로 붙여넣으면 됩니다.
+
+---
+
+## 대화문 형식 설치 프롬프트
+
+> **사용자 안내**: 아래 회색 블록 전체를 Claude Code 또는 Codex 채팅창에 붙여넣으세요.  
+> AI 에이전트가 API 키 입력 → 모델 탐색 → 환경 설정 → 검증까지 자동으로 수행합니다.  
+> *(대시보드에서 [Agent Setup 복사] 버튼을 클릭하면 API 키가 자동으로 채워진 버전이 복사됩니다.)*
+
+---
+
+```
+당신은 TON AI Access 설치 에이전트입니다. 아래 지시를 순서대로 실행하세요.
+
+목표: TON AI Access API를 Claude Code와 Codex에서 바로 사용할 수 있도록
+      환경 변수와 설정 파일을 자동으로 구성합니다.
+
+──────────────────────────────────────────────────
+[1] 사용자에게 다음을 출력하세요:
+    "TON AI Access 설치를 시작합니다.
+     발급받은 API 키를 입력해 주세요. (sk-litellm-... 형식)"
+
+[2] 사용자가 API 키를 입력하면:
+    - API_KEY 변수에 저장
+    - "사용 가능한 모델을 불러옵니다..." 출력
+    - 다음 명령으로 모델 목록 탐색:
+      curl -s https://api2.ai.tokamak.network/v1/models \
+        -H "Authorization: Bearer $API_KEY" | \
+        python3 -c "
+      import sys,json
+      d=json.load(sys.stdin)
+      models=[m['id'] for m in d.get('data',[])]
+      print('사용 가능한 모델:')
+      for i,m in enumerate(models,1): print(f'  {i}. {m}')
+      "
+    - 탐색 실패 시 기본값 qwen-3.6 사용
+
+[3] 모델 선택:
+    "사용할 모델 번호를 입력하거나 Enter → qwen-3.6 (기본)"
+    선택을 MODEL 변수에 저장
+
+[4] 다음 bash 명령을 실행하세요 ($API_KEY, $MODEL 대입):
+    TON_API_KEY="$API_KEY" \
+    TON_MODEL="$MODEL" \
+    bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
+      --non-interactive
+
+[5] 실행 후 현재 세션에 적용:
+    source ~/.zshrc   # zsh 사용 시
+    source ~/.bashrc  # bash 사용 시
+
+[6] 검증:
+    echo $OPENAI_BASE_URL    # → https://api2.ai.tokamak.network
+    echo $TON_AI_MODEL       # → 선택한 모델명
+
+완료 후: "설정이 완료되었습니다! $MODEL 모델로 TON AI Access를 사용할 수 있습니다." 출력
+──────────────────────────────────────────────────
+```
+
+---
+>
 > **에이전트 실행 원칙**
 > - 각 Step은 독립적으로 실행 가능하다.
 > - `VERIFY` 블록의 명령을 실행해 성공 여부를 확인한 후 다음 Step으로 진행한다.
