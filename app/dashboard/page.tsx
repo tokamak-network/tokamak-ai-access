@@ -4,6 +4,16 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
 import { useTonBalance, useStake, LAYER2_OPTIONS, DEFAULT_LAYER2 } from "@/lib/hooks/useStake";
+import {
+  useStakedBalance,
+  usePendingUnstaked,
+  useRequestWithdrawal,
+  useProcessRequest,
+  type StakedBalanceResult,
+  type PendingUnstakedResult,
+  type UseRequestWithdrawalResult,
+  type UseProcessRequestResult,
+} from "@/lib/hooks/useUnstake";
 
 interface BalanceData {
   address: string;
@@ -21,6 +31,245 @@ function shortAddr(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
+/* ── Unstake Tab Content ──────────────────────────────────────────── */
+interface UnstakeTabContentProps {
+  address: `0x${string}` | undefined;
+  unstakeLayer2: `0x${string}`;
+  setUnstakeLayer2: (v: `0x${string}`) => void;
+  unstakeAmount: string;
+  setUnstakeAmount: (v: string) => void;
+  stakedBalance: StakedBalanceResult;
+  pendingUnstaked: PendingUnstakedResult;
+  withdrawal: UseRequestWithdrawalResult;
+  claim: UseProcessRequestResult;
+}
+
+function UnstakeTabContent({
+  unstakeLayer2,
+  setUnstakeLayer2,
+  unstakeAmount,
+  setUnstakeAmount,
+  stakedBalance,
+  pendingUnstaked,
+  withdrawal,
+  claim,
+}: UnstakeTabContentProps) {
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    fontFamily: "var(--font-mono)",
+    fontSize: "1rem",
+    color: "var(--ink)",
+    background: "var(--surface)",
+    border: "1px solid var(--hairline)",
+    borderRadius: "calc(var(--radius) - 2px)",
+    padding: "10px 14px",
+    outline: "none",
+    boxSizing: "border-box",
+  };
+
+  const selectStyle: React.CSSProperties = {
+    ...inputStyle,
+    fontSize: "0.8125rem",
+    cursor: "pointer",
+  };
+
+  const labelStyle: React.CSSProperties = {
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.625rem",
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    color: "var(--muted)",
+    display: "block",
+    marginBottom: "8px",
+  };
+
+  const isWithdrawing = withdrawal.status === "pending" || withdrawal.status === "confirming";
+  const isClaiming = claim.status === "pending" || claim.status === "confirming";
+  const stakedTON = parseFloat(stakedBalance.formatted);
+  const inputAmount = parseFloat(unstakeAmount) || 0;
+  const canWithdraw = !isWithdrawing && inputAmount > 0 && stakedTON >= inputAmount && stakedTON > 0;
+
+  async function handleRequestWithdrawal() {
+    if (!unstakeAmount || !canWithdraw) return;
+    try {
+      await withdrawal.requestWithdrawal(unstakeAmount, unstakeLayer2);
+      setUnstakeAmount("");
+      stakedBalance.refetch();
+      pendingUnstaked.refetch();
+    } catch {
+      // error surfaced via hook
+    }
+  }
+
+  async function handleClaim() {
+    try {
+      await claim.processRequest(unstakeLayer2);
+      pendingUnstaked.refetch();
+      stakedBalance.refetch();
+    } catch {
+      // error surfaced via hook
+    }
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+      {/* Staked balance */}
+      <div>
+        <span style={labelStyle}>Staked TON (this operator)</span>
+        <span style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", fontWeight: 700, color: "var(--ink)" }}>
+          {stakedBalance.isLoading ? "…" : `${stakedBalance.formatted} TON`}
+        </span>
+      </div>
+
+      {/* Operator selector */}
+      <div>
+        <label style={labelStyle}>Operator (Layer2)</label>
+        <select
+          value={unstakeLayer2}
+          onChange={(e) => {
+            setUnstakeLayer2(e.target.value as `0x${string}`);
+            setUnstakeAmount("");
+            withdrawal.reset();
+            claim.reset();
+          }}
+          disabled={isWithdrawing || isClaiming}
+          style={selectStyle}
+        >
+          {LAYER2_OPTIONS.map((op) => (
+            <option key={op.address} value={op.address}>{op.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Amount input */}
+      <div>
+        <label style={labelStyle}>Amount to unstake (TON)</label>
+        <input
+          type="number"
+          min="0"
+          step="1"
+          placeholder="0"
+          value={unstakeAmount}
+          onChange={(e) => setUnstakeAmount(e.target.value)}
+          disabled={isWithdrawing || stakedTON === 0}
+          style={inputStyle}
+        />
+        <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+          <button
+            onClick={() => setUnstakeAmount(stakedBalance.formatted.replace(/\.0+$/, ""))}
+            disabled={isWithdrawing || stakedTON === 0}
+            style={{
+              fontFamily: "var(--font-mono)", fontSize: "0.6875rem",
+              color: "var(--muted)", background: "transparent",
+              border: "1px solid var(--hairline)",
+              borderRadius: "calc(var(--radius) - 4px)",
+              padding: "4px 10px", cursor: "pointer",
+            }}
+          >
+            MAX
+          </button>
+        </div>
+      </div>
+
+      {/* Validation messages */}
+      {unstakeAmount && stakedTON === 0 && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>
+          No staked TON on this operator.
+        </p>
+      )}
+      {unstakeAmount && stakedTON > 0 && inputAmount > stakedTON && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>
+          Amount exceeds staked balance ({stakedBalance.formatted} TON).
+        </p>
+      )}
+
+      {/* Request Withdrawal button */}
+      {withdrawal.status !== "success" ? (
+        <button
+          className="btn-primary"
+          onClick={handleRequestWithdrawal}
+          disabled={!canWithdraw}
+          style={{ alignSelf: "flex-start" }}
+        >
+          {isWithdrawing
+            ? (withdrawal.status === "pending" ? "Confirm in wallet…" : "Confirming tx…")
+            : `Request Withdrawal${unstakeAmount ? ` ${unstakeAmount} TON` : ""} →`}
+        </button>
+      ) : (
+        <div style={{
+          display: "flex", alignItems: "center", gap: "10px",
+          background: "#fffbeb", border: "1px solid #fcd34d",
+          borderRadius: "var(--radius)", padding: "14px 18px",
+        }}>
+          <span style={{ color: "#92400e", fontSize: "0.9rem" }}>
+            ✓ Withdrawal requested — cooldown in progress.
+          </span>
+        </div>
+      )}
+
+      {withdrawal.txHash && withdrawal.status !== "success" && (
+        <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)" }}>
+          Tx:{" "}
+          <a href={`https://etherscan.io/tx/${withdrawal.txHash}`} target="_blank" rel="noopener noreferrer"
+            style={{ color: "var(--accent)", textDecoration: "underline" }}>
+            {withdrawal.txHash.slice(0, 10)}…{withdrawal.txHash.slice(-8)}
+          </a>
+        </p>
+      )}
+
+      {withdrawal.error && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>{withdrawal.error}</p>
+      )}
+
+      {/* Pending Withdrawal section */}
+      {pendingUnstaked.hasPending && (
+        <div style={{
+          borderTop: "1px solid var(--hairline)",
+          paddingTop: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}>
+          <span style={labelStyle}>Pending Withdrawal</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+            <span style={{ fontFamily: "var(--font-display)", fontSize: "1.25rem", fontWeight: 700, color: "var(--ink)" }}>
+              {pendingUnstaked.formatted} TON
+            </span>
+            {claim.status !== "success" ? (
+              <button
+                className="btn-primary"
+                onClick={handleClaim}
+                disabled={isClaiming}
+                style={{ background: "#16a34a", borderColor: "#16a34a" }}
+              >
+                {isClaiming
+                  ? (claim.status === "pending" ? "Confirm in wallet…" : "Confirming tx…")
+                  : "Claim →"}
+              </button>
+            ) : (
+              <span style={{ color: "#16a34a", fontSize: "0.875rem" }}>✓ Claimed</span>
+            )}
+          </div>
+
+          {claim.error && (
+            <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>{claim.error}</p>
+          )}
+
+          {claim.txHash && claim.status !== "success" && (
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)" }}>
+              Tx:{" "}
+              <a href={`https://etherscan.io/tx/${claim.txHash}`} target="_blank" rel="noopener noreferrer"
+                style={{ color: "var(--accent)", textDecoration: "underline" }}>
+                {claim.txHash.slice(0, 10)}…{claim.txHash.slice(-8)}
+              </a>
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── In-App Stake Panel ───────────────────────────────────────────── */
 function StakePanel({
   minTon,
@@ -35,6 +284,15 @@ function StakePanel({
 
   const [amount, setAmount] = useState("");
   const [layer2, setLayer2] = useState<`0x${string}`>(DEFAULT_LAYER2);
+
+  // Unstake tab state
+  const [activeTab, setActiveTab] = useState<"stake" | "unstake">("stake");
+  const [unstakeLayer2, setUnstakeLayer2] = useState<`0x${string}`>(DEFAULT_LAYER2);
+  const [unstakeAmount, setUnstakeAmount] = useState("");
+  const stakedBalance = useStakedBalance(address as `0x${string}` | undefined, unstakeLayer2);
+  const pendingUnstaked = usePendingUnstaked(address as `0x${string}` | undefined, unstakeLayer2);
+  const withdrawal = useRequestWithdrawal();
+  const claim = useProcessRequest();
 
   const isLoading = status === "pending" || status === "confirming";
   const balanceReady = !tonBalance.isLoading && !tonBalance.isError;
@@ -84,8 +342,31 @@ function StakePanel({
     cursor: "pointer",
   };
 
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: "10px 0",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.625rem",
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    background: active ? "var(--ink)" : "transparent",
+    color: active ? "var(--surface-raised)" : "var(--muted)",
+    border: "none",
+    borderBottom: `1px solid ${active ? "var(--ink)" : "var(--hairline)"}`,
+    cursor: "pointer",
+    transition: "all 120ms",
+  });
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+      {/* Tab header */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--hairline)", marginBottom: "20px" }}>
+        <button style={tabStyle(activeTab === "stake")} onClick={() => setActiveTab("stake")}>Stake</button>
+        <button style={tabStyle(activeTab === "unstake")} onClick={() => setActiveTab("unstake")}>Unstake</button>
+      </div>
+
+      {activeTab === "stake" && (
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       {/* Wallet TON balance */}
       <div>
         <span style={{
@@ -232,6 +513,22 @@ function StakePanel({
       {/* Error */}
       {error && (
         <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>{error}</p>
+      )}
+      </div>
+      )}
+
+      {activeTab === "unstake" && (
+        <UnstakeTabContent
+          address={address as `0x${string}` | undefined}
+          unstakeLayer2={unstakeLayer2}
+          setUnstakeLayer2={setUnstakeLayer2}
+          unstakeAmount={unstakeAmount}
+          setUnstakeAmount={setUnstakeAmount}
+          stakedBalance={stakedBalance}
+          pendingUnstaked={pendingUnstaked}
+          withdrawal={withdrawal}
+          claim={claim}
+        />
       )}
     </div>
   );
