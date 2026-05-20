@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
         util: false,
         os: false,
         "node:*": false,
+        // MetaMask SDK optionally imports React Native storage — not needed in browser builds
+        "@react-native-async-storage/async-storage": false,
       };
     }
     return config;
