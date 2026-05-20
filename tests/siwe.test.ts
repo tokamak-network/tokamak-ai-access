@@ -5,7 +5,9 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ---- Mock @vercel/kv before any lib imports ----
-const mockKvGet = vi.fn();
+// vi.mock is hoisted to top of file, so top-level `const` variables are not yet
+// initialized when the factory runs. vi.hoisted() runs before hoisting and is safe.
+const { mockKvGet } = vi.hoisted(() => ({ mockKvGet: vi.fn() }));
 vi.mock("@vercel/kv", () => ({
   kv: {
     get: mockKvGet,

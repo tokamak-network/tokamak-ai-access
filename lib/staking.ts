@@ -133,6 +133,7 @@ export async function getLayer2Addresses(): Promise<`0x${string}`[]> {
   if (cached && Date.now() < cached.expiresAt) return cached.value;
 
   let addresses: `0x${string}`[] = [];
+  let registrySucceeded = false;
 
   try {
     const client = getClient();
@@ -143,6 +144,9 @@ export async function getLayer2Addresses(): Promise<`0x${string}`[]> {
       abi: REGISTRY_ABI,
       functionName: "layer2sLength",
     }) as bigint;
+
+    // Mark success before multicall so a partial multicall failure still uses fallback
+    registrySucceeded = true;
 
     if (length > 0n) {
       // 2. Multicall layer2sByIndex(0..length-1)
@@ -168,11 +172,11 @@ export async function getLayer2Addresses(): Promise<`0x${string}`[]> {
       "[staking] Layer2Registry call failed — using hardcoded fallback list.",
       "If this is unexpected, check Layer2Registry proxy implementation slot.",
     );
-    addresses = LAYER2S_FALLBACK[CHAIN as "mainnet" | "sepolia"];
   }
 
-  // If registry returned empty but didn't revert, also use fallback
-  if (addresses.length === 0) {
+  // Only fall back to hardcoded list when the registry itself failed (reverted/unreachable).
+  // If the registry succeeded but returned 0 operators, there is genuinely nothing to query.
+  if (!registrySucceeded) {
     addresses = LAYER2S_FALLBACK[CHAIN as "mainnet" | "sepolia"];
   }
 

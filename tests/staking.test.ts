@@ -39,7 +39,7 @@ import {
 
 // ---- Helpers ----
 const TON_18  = 10n ** 18n;
-const WTON_RAY = 10n ** 9n;
+const WTON_RAY = 10n ** 27n; // WTON is 27-decimal ray: 1 TON = 1e27 ray units
 function wton(ton: bigint): bigint { return ton * WTON_RAY; }
 
 // 10 dummy Layer2 addresses for registry mock
@@ -74,7 +74,7 @@ function stakeOfResult(successes: bigint[], total: number) {
 beforeEach(() => {
   invalidateStakingCache();   // clear per-address balance cache
   invalidateLayer2Cache();    // clear Layer2 list cache
-  vi.clearAllMocks();
+  vi.resetAllMocks();         // reset implementations, not just call counts
 });
 
 describe("getTotalStakedTON — dynamic Layer2Registry", () => {
