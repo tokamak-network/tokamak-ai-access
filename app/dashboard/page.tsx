@@ -535,7 +535,7 @@ function StakePanel({
 }
 
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
-function CliSetupPanel({ apiKey }: { apiKey?: string }) {
+function CliSetupPanel({ apiKey, showKey }: { apiKey?: string; showKey?: boolean }) {
   const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
   const [keyInput, setKeyInput] = useState("");
@@ -569,13 +569,16 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
 
   const scriptUrl = "https://tokamak-ai-access.vercel.app/configure-cli.sh";
 
+  // Display the actual key only when revealed; otherwise use a placeholder
+  const displayKey = (apiKey != null && !showKey) ? "[YOUR_API_KEY]" : effectiveKey;
+
   // Agent instruction — no backtick fences, plain text for pasting into agent chat
-  const agentInstruction = effectiveKey
-    ? `Please set up TON AI Access.\n\nRunning the command below will automatically configure your Claude Code and Codex environment.\n\nTON_API_KEY="${effectiveKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n\nAfter running, apply to the current terminal:\n\nsource ~/.zshrc   # zsh\n# or\nsource ~/.bashrc  # bash\n\nVerify:\necho $OPENAI_BASE_URL   # → https://api2.ai.tokamak.network\necho $TON_AI_MODEL      # → ${selectedModel}`
+  const agentInstruction = displayKey
+    ? `Please set up TON AI Access.\n\nRunning the command below will automatically configure your Claude Code and Codex environment.\n\nTON_API_KEY="${displayKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n\nAfter running, apply to the current terminal:\n\nsource ~/.zshrc   # zsh\n# or\nsource ~/.bashrc  # bash\n\nVerify:\necho $OPENAI_BASE_URL   # → https://api2.ai.tokamak.network\necho $TON_AI_MODEL      # → ${selectedModel}`
     : "(Enter your API key to generate the setup command.)";
 
-  const directCommand = effectiveKey
-    ? `TON_API_KEY="${effectiveKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive`
+  const directCommand = displayKey
+    ? `TON_API_KEY="${displayKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive`
     : "(Enter your API key to generate the command.)";
 
   const content = tab === "agent" ? agentInstruction : directCommand;
@@ -758,6 +761,13 @@ export default function DashboardPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
+  const [showKey, setShowKey] = useState(false);
+
+  function maskKey(key: string): string {
+    const prefix = key.slice(0, 13);
+    const suffix = key.slice(-4);
+    return `${prefix}****${suffix}`;
+  }
   const setupRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
@@ -983,20 +993,29 @@ export default function DashboardPage() {
                     marginBottom: "8px",
                   }}>
                     <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--ink)", flex: 1, wordBreak: "break-all" }}>
-                      {oneTimeKey}
+                      {showKey ? oneTimeKey : maskKey(oneTimeKey)}
                     </code>
-                    <button
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(oneTimeKey);
-                        setKeyCopied(true);
-                        setTimeout(() => setKeyCopied(false), 2000);
-                        // Scroll to setup panel after a brief delay
-                        setTimeout(() => setupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
-                      }}
-                      style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
-                    >
-                      {keyCopied ? "Copied ✓ — scroll to setup ↓" : "Copy"}
-                    </button>
+                    {!showKey && (
+                      <button
+                        onClick={() => setShowKey(true)}
+                        style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
+                      >
+                        Show Key
+                      </button>
+                    )}
+                    {showKey && (
+                      <button
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(oneTimeKey);
+                          setKeyCopied(true);
+                          setTimeout(() => setKeyCopied(false), 2000);
+                          setTimeout(() => setupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+                        }}
+                        style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
+                      >
+                        {keyCopied ? "Copied ✓ — scroll to setup ↓" : "Copy"}
+                      </button>
+                    )}
                   </div>
                   <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)", lineHeight: 1.8 }}>
                     Endpoint: api2.ai.tokamak.network · Model: qwen-3.6
@@ -1015,7 +1034,7 @@ export default function DashboardPage() {
                     ? "Your key is pre-filled. Paste the instruction into Claude Code, Codex, or any AI agent to configure your environment automatically."
                     : "Paste your API key below to generate the setup instruction for Claude Code, Codex, or any AI agent."}
                 </p>
-                <CliSetupPanel apiKey={oneTimeKey ?? undefined} />
+                <CliSetupPanel apiKey={oneTimeKey ?? undefined} showKey={showKey} />
               </div>
             )}
 
