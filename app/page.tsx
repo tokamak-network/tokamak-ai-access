@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useSiwe } from "@/lib/hooks/useSiwe";
 
+// Inlined at build time: 10 in dev (.env.local), 200 in production (.env.production)
+const MIN_TON = process.env.NEXT_PUBLIC_MIN_TON ?? "10";
+
 const STATUS_LABELS: Record<string, string> = {
   "fetching-nonce": "Preparing…",
   signing:          "Check your wallet…",
@@ -77,7 +80,7 @@ export default function LandingPage() {
             <span className="n-lbl">Access</span>
             <span className="n-val">Free for TON stakers</span>
             <span className="n-lbl">Minimum stake</span>
-            <span className="n-val">200 TON</span>
+            <span className="n-val">{MIN_TON} TON</span>
             <span className="n-lbl">Network</span>
             <span className="n-val">Ethereum Mainnet</span>
           </aside>
@@ -88,7 +91,7 @@ export default function LandingPage() {
               Your stake<br />earns you AI.
             </h1>
             <p className="body-lead">
-              TON stakers with 200 TON or more get a free LiteLLM API key —
+              TON stakers with {MIN_TON} TON or more get a free LiteLLM API key —
               no sign-up, no credit card. Just your wallet.
             </p>
 
@@ -151,7 +154,7 @@ export default function LandingPage() {
               {[
                 ["01", "Connect wallet", "MetaMask, WalletConnect, or any EVM-compatible wallet."],
                 ["02", "Sign a message", "One SIWE signature proves ownership. No gas, no transactions."],
-                ["03", "Get your API key", "200 TON staked across any Layer2 qualifies. Key issued instantly."],
+                ["03", "Get your API key", `${MIN_TON} TON staked across any Layer2 qualifies. Key issued instantly.`],
               ].map(([num, title, desc]) => (
                 <li key={num} style={{ display: "flex", gap: "20px" }}>
                   <span style={{
@@ -193,6 +196,23 @@ export default function LandingPage() {
                   </code>
                 </div>
               ))}
+            </div>
+            <div className="card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+                Quick test
+              </span>
+              <pre style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.75rem",
+                color: "var(--ink)",
+                lineHeight: 1.6,
+                margin: 0,
+                overflowX: "auto",
+                whiteSpace: "pre",
+              }}>{`curl https://api2.ai.tokamak.network/v1/chat/completions \\
+  -H "Authorization: Bearer $YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model":"qwen-3.6","messages":[{"role":"user","content":"hello"}],"max_tokens":10}'`}</pre>
             </div>
           </div>
         </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
 import { useTonBalance, useStake, LAYER2_OPTIONS, DEFAULT_LAYER2 } from "@/lib/hooks/useStake";
@@ -232,74 +232,53 @@ function StakePanel({
 }
 
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
-function CliSetupPanel({ apiKey }: { apiKey: string }) {
+function CliSetupPanel({ apiKey }: { apiKey?: string }) {
   const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
+  const [keyInput, setKeyInput] = useState("");
   const [models, setModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState("qwen-3.6");
-  const [modelsLoading, setModelsLoading] = useState(true);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  // Effective key: prop takes precedence, else user-entered
+  const effectiveKey = apiKey || keyInput;
 
   // 모델 목록 자동탐색 — /api/proxy/models 를 통해 서버사이드 프록시
   useEffect(() => {
-    if (!apiKey) return;
+    if (!effectiveKey) return;
     setModelsLoading(true);
     fetch("/api/proxy/models", {
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${effectiveKey}` },
     })
       .then((r) => r.ok ? r.json() : Promise.reject(r.status))
       .then((data: { models: string[] }) => {
         if (data.models?.length) {
           setModels(data.models);
-          // 기본값이 목록에 있으면 유지, 없으면 첫 번째로
           if (!data.models.includes(selectedModel)) {
             setSelectedModel(data.models[0]);
           }
         }
       })
-      .catch(() => {
-        /* 탐색 실패 시 기본값(qwen-3.6) 유지 */
-      })
+      .catch(() => { /* 탐색 실패 시 기본값(qwen-3.6) 유지 */ })
       .finally(() => setModelsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiKey]);
+  }, [effectiveKey]);
 
   const scriptUrl = "https://tokamak-ai-access.vercel.app/configure-cli.sh";
 
-  const agentInstruction =
-`TON AI Access 설정을 시작해 주세요.
+  // Agent instruction — no backtick fences, plain text for pasting into agent chat
+  const agentInstruction = effectiveKey
+    ? `TON AI Access 설정을 시작해 주세요.\n\n아래 명령을 그대로 실행하면 Claude Code와 Codex 환경이 자동으로 설정됩니다.\n\nTON_API_KEY="${effectiveKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n\n실행 후, 현재 터미널에 적용하려면:\n\nsource ~/.zshrc   # zsh\n# 또는\nsource ~/.bashrc  # bash\n\n검증:\necho $OPENAI_BASE_URL   # → https://api2.ai.tokamak.network\necho $TON_AI_MODEL      # → ${selectedModel}`
+    : "(API 키를 입력하면 설치 명령이 생성됩니다.)";
 
-아래 명령을 그대로 실행하면 Claude Code와 Codex 환경이 자동으로 설정됩니다.
-
-\`\`\`bash
-TON_API_KEY="${apiKey}" \\
-TON_MODEL="${selectedModel}" \\
-bash <(curl -fsSL ${scriptUrl}) \\
-  --non-interactive
-\`\`\`
-
-실행 후, 현재 터미널에 적용하려면:
-
-\`\`\`bash
-source ~/.zshrc   # zsh
-# 또는
-source ~/.bashrc  # bash
-\`\`\`
-
-검증:
-\`\`\`bash
-echo $OPENAI_BASE_URL   # → https://api2.ai.tokamak.network
-echo $TON_AI_MODEL      # → ${selectedModel}
-\`\`\``;
-
-  const directCommand =
-`TON_API_KEY="${apiKey}" \\
-TON_MODEL="${selectedModel}" \\
-bash <(curl -fsSL ${scriptUrl}) \\
-  --non-interactive`;
+  const directCommand = effectiveKey
+    ? `TON_API_KEY="${effectiveKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive`
+    : "(API 키를 입력하면 명령이 생성됩니다.)";
 
   const content = tab === "agent" ? agentInstruction : directCommand;
 
   async function handleCopy() {
+    if (!effectiveKey) return;
     await navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -330,6 +309,41 @@ bash <(curl -fsSL ${scriptUrl}) \\
 
       {/* Body */}
       <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
+        {/* Key input — only shown when no apiKey prop */}
+        {!apiKey && (
+          <div style={{ marginBottom: "18px" }}>
+            <label style={{
+              display: "block",
+              fontFamily: "var(--font-mono)",
+              fontSize: "0.625rem",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--muted)",
+              marginBottom: "8px",
+            }}>
+              Your API key
+            </label>
+            <input
+              type="text"
+              placeholder="sk-litellm-…"
+              value={keyInput}
+              onChange={(e) => setKeyInput(e.target.value.trim())}
+              style={{
+                width: "100%",
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.8125rem",
+                color: "var(--ink)",
+                background: "var(--surface)",
+                border: "1px solid var(--hairline)",
+                borderRadius: "calc(var(--radius) - 2px)",
+                padding: "10px 14px",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        )}
+
         {/* 모델 선택 */}
         <div style={{ marginBottom: "18px" }}>
           <label style={{
@@ -397,6 +411,7 @@ bash <(curl -fsSL ${scriptUrl}) \\
           padding: "16px 18px",
           whiteSpace: "pre-wrap",
           wordBreak: "break-word",
+          overflowX: "auto",
           lineHeight: 1.75,
           marginBottom: "16px",
           maxHeight: "320px",
@@ -407,15 +422,16 @@ bash <(curl -fsSL ${scriptUrl}) \\
 
         <button
           onClick={handleCopy}
+          disabled={!effectiveKey}
           style={{
             fontFamily: "var(--font-mono)",
             fontSize: "0.625rem",
             letterSpacing: "0.12em",
             textTransform: "uppercase",
-            color: "var(--accent)",
+            color: effectiveKey ? "var(--accent)" : "var(--muted)",
             background: "none",
             border: "none",
-            cursor: "pointer",
+            cursor: effectiveKey ? "pointer" : "default",
             padding: 0,
           }}
         >
@@ -439,6 +455,7 @@ export default function DashboardPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
+  const setupRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -677,10 +694,16 @@ export default function DashboardPage() {
                       {oneTimeKey}
                     </code>
                     <button
-                      onClick={async () => { await navigator.clipboard.writeText(oneTimeKey); setKeyCopied(true); setTimeout(() => setKeyCopied(false), 2000); }}
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(oneTimeKey);
+                        setKeyCopied(true);
+                        setTimeout(() => setKeyCopied(false), 2000);
+                        // Scroll to setup panel after a brief delay
+                        setTimeout(() => setupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+                      }}
                       style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
                     >
-                      {keyCopied ? "Copied ✓" : "Copy"}
+                      {keyCopied ? "Copied ✓ — scroll to setup ↓" : "Copy"}
                     </button>
                   </div>
                   <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)", lineHeight: 1.8 }}>
@@ -688,15 +711,19 @@ export default function DashboardPage() {
                   </p>
                 </div>
 
-                {/* CLI setup */}
-                <div>
-                  <span className="eyebrow">Configure AI tools</span>
-                  <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "20px", maxWidth: "60ch" }}>
-                    Paste the instruction below into Claude Code, Codex, or any AI agent
-                    to configure your environment automatically.
-                  </p>
-                  <CliSetupPanel apiKey={oneTimeKey} />
-                </div>
+              </div>
+            )}
+
+            {/* ── CLI Setup — always visible when key is active ── */}
+            {!loading && keyData?.hasActiveKey && (
+              <div ref={setupRef} style={{ marginTop: "40px" }}>
+                <span className="eyebrow">Configure AI tools</span>
+                <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "20px", maxWidth: "60ch" }}>
+                  {oneTimeKey
+                    ? "Your key is pre-filled. Paste the instruction into Claude Code, Codex, or any AI agent to configure your environment automatically."
+                    : "Paste your API key below to generate the setup instruction for Claude Code, Codex, or any AI agent."}
+                </p>
+                <CliSetupPanel apiKey={oneTimeKey ?? undefined} />
               </div>
             )}
 
