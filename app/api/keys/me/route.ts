@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
   const record = await kvGet<{
     liteLlmKeyId: string;
     hash: string;
+    keySlice?: string;
     createdAt: number;
     revokedAt?: number;
   }>(`key:${address}`);
@@ -33,6 +34,6 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     hasActiveKey: true,
     createdAt: new Date(record.createdAt).toISOString(),
-    lastFour: record.hash.slice(-4),
+    lastFour: record.keySlice ?? record.hash.slice(-4),
   });
 }

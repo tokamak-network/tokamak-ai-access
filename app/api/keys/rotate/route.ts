@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
   await kvSet(`key:${address}`, {
     liteLlmKeyId: keyId,
     hash: hashKey(key),
+    keySlice: key.slice(-4),
     createdAt: Date.now(),
   });
 

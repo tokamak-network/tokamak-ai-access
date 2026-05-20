@@ -10,6 +10,7 @@ const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
 interface KeyRecord {
   liteLlmKeyId: string;
   hash: string;
+  keySlice: string;
   createdAt: number;
   revokedAt?: number;
 }
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
   await kvSet(`key:${address}`, {
     liteLlmKeyId: keyId,
     hash: hashKey(key),
+    keySlice: key.slice(-4),
     createdAt: Date.now(),
   } satisfies KeyRecord);
 

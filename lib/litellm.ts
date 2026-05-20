@@ -56,7 +56,7 @@ export async function generateLiteLLMKey(
   const data: GenerateKeyResponse = await res.json();
   return {
     key: data.key,
-    keyId: data.key_name ?? data.key,   // use key_name as stable ID if available
+    keyId: data.key,   // actual token — required by /key/delete; key_name is a label only
     expiresAt: data.expires ?? new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
   };
 }
