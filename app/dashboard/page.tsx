@@ -535,7 +535,7 @@ function StakePanel({
 }
 
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
-function CliSetupPanel({ apiKey, showKey }: { apiKey?: string; showKey?: boolean }) {
+function CliSetupPanel({ apiKey }: { apiKey?: string }) {
   const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
   const [keyInput, setKeyInput] = useState("");
@@ -569,17 +569,13 @@ function CliSetupPanel({ apiKey, showKey }: { apiKey?: string; showKey?: boolean
 
   const scriptUrl = "https://tokamak-ai-access.vercel.app/configure-cli.sh";
 
-  // Display the actual key only when revealed; otherwise use a placeholder
-  const displayKey = (apiKey != null && !showKey) ? "[YOUR_API_KEY]" : effectiveKey;
-
-  // Agent instruction — always uses [YOUR_API_KEY] placeholder to avoid embedding the key in pasted text
-  // TON_MODEL is intentionally omitted — the script prompts the user to select a model interactively
+  // Keys are never rendered to the DOM — always use a placeholder in commands
   const agentInstruction = effectiveKey
-    ? `Please set up TON AI Access on this machine.\n\nStep 0 — [HUMAN STEP, do before running]\n  Replace [YOUR_API_KEY] in the commands below with the key from the dashboard.\n\nStep 1 — Preview the changes first (no files are modified):\n\n  TON_API_KEY="[YOUR_API_KEY]" \\\n  bash <(curl -fsSL ${scriptUrl}) \\\n    --non-interactive --target <claude|codex> --dry-run\n\n  Choose exactly one --target:\n    --target claude   (if you are running Claude Code right now)\n    --target codex    (if you are running Codex CLI right now)\n\n  The script will ask you to select a model from the available list.\n\nStep 2 — If the preview looks correct, apply it (same command, remove --dry-run):\n\n  TON_API_KEY="[YOUR_API_KEY]" \\\n  bash <(curl -fsSL ${scriptUrl}) \\\n    --non-interactive --target <claude|codex>\n\nStep 3 — Verify by reading the config files (do NOT echo env vars — they only appear after shell reload):\n\n  [Claude Code]\n    cat ~/.claude/settings.json\n    # → should contain an "env" block with ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_MODEL\n\n  [Codex CLI]\n    cat ~/.codex/config.toml\n    # → should show model = "<your selected model>" and a [model_providers.tokamak] block\n\nStep 4 — [HUMAN STEP, do AFTER this session ends]\n  Reload your shell and restart the CLI so the new env vars take effect:\n    source ~/.zshrc   # or: source ~/.bashrc\n    # then start a fresh Claude Code / Codex session`
+    ? `Please set up TON AI Access on this machine.\n\nStep 0 — [HUMAN STEP, do before running]\n  Replace [YOUR_API_KEY] in the commands below with your key (copy it from the dashboard).\n\nStep 1 — Preview the changes first (no files are modified):\n\n  TON_API_KEY="[YOUR_API_KEY]" \\\n  bash <(curl -fsSL ${scriptUrl}) \\\n    --non-interactive --target <claude|codex> --dry-run\n\n  Choose exactly one --target:\n    --target claude   (if you are running Claude Code right now)\n    --target codex    (if you are running Codex CLI right now)\n\n  The script will ask you to select a model from the available list.\n\nStep 2 — If the preview looks correct, apply it (same command, remove --dry-run):\n\n  TON_API_KEY="[YOUR_API_KEY]" \\\n  bash <(curl -fsSL ${scriptUrl}) \\\n    --non-interactive --target <claude|codex>\n\nStep 3 — Verify by reading the config files (do NOT echo env vars — they only appear after shell reload):\n\n  [Claude Code]\n    cat ~/.claude/settings.json\n    # → should contain an "env" block with ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_MODEL\n\n  [Codex CLI]\n    cat ~/.codex/config.toml\n    # → should show model = "<your selected model>" and a [model_providers.tokamak] block\n\nStep 4 — [HUMAN STEP, do AFTER this session ends]\n  Reload your shell and restart the CLI so the new env vars take effect:\n    source ~/.zshrc   # or: source ~/.bashrc\n    # then start a fresh Claude Code / Codex session`
     : "(Enter your API key to generate the setup command.)";
 
-  const directCommand = displayKey
-    ? `TON_API_KEY="${displayKey}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n# The script will prompt you to select a model.\n# After the script finishes, run in a NEW terminal:\n#   source ~/.zshrc   (or source ~/.bashrc)`
+  const directCommand = effectiveKey
+    ? `TON_API_KEY="[YOUR_API_KEY]" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n# Replace [YOUR_API_KEY] with your actual key.\n# The script will prompt you to select a model.\n# After the script finishes, run in a NEW terminal:\n#   source ~/.zshrc   (or source ~/.bashrc)`
     : "(Enter your API key to generate the command.)";
 
   const content = tab === "agent" ? agentInstruction : directCommand;
@@ -762,13 +758,6 @@ export default function DashboardPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
-  const [showKey, setShowKey] = useState(false);
-
-  function maskKey(key: string): string {
-    const prefix = key.slice(0, 13);
-    const suffix = key.slice(-4);
-    return `${prefix}****${suffix}`;
-  }
   const setupRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
@@ -983,43 +972,20 @@ export default function DashboardPage() {
                       To replace it later, use <strong>Rotate key</strong> from your dashboard.
                     </span>
                   </div>
-                  <div style={{
-                    background: "var(--surface-raised)",
-                    border: "1px solid #fde68a",
-                    borderRadius: "var(--radius)",
-                    padding: "20px 24px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "16px",
-                    marginBottom: "8px",
-                  }}>
-                    <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--ink)", flex: 1, wordBreak: "break-all" }}>
-                      {showKey ? oneTimeKey : maskKey(oneTimeKey)}
-                    </code>
-                    {!showKey && (
-                      <button
-                        onClick={() => setShowKey(true)}
-                        style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
-                      >
-                        Show Key
-                      </button>
-                    )}
-                    {showKey && (
-                      <button
-                        onClick={async () => {
-                          await navigator.clipboard.writeText(oneTimeKey);
-                          setKeyCopied(true);
-                          setTimeout(() => setKeyCopied(false), 2000);
-                          setTimeout(() => setupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
-                        }}
-                        style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
-                      >
-                        {keyCopied ? "Copied ✓ — scroll to setup ↓" : "Copy"}
-                      </button>
-                    )}
-                  </div>
+                  <button
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(oneTimeKey);
+                      setKeyCopied(true);
+                      setTimeout(() => setKeyCopied(false), 2000);
+                      setTimeout(() => setupRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+                    }}
+                    className="btn-primary"
+                    style={{ marginBottom: "8px" }}
+                  >
+                    {keyCopied ? "Copied ✓ — scroll to setup ↓" : "Copy API key →"}
+                  </button>
                   <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)", lineHeight: 1.8 }}>
-                    Endpoint: api2.ai.tokamak.network · Model: qwen-3.6
+                    Endpoint: api2.ai.tokamak.network
                   </p>
                 </div>
 
@@ -1035,7 +1001,7 @@ export default function DashboardPage() {
                     ? "Your key is pre-filled. Paste the instruction into Claude Code, Codex, or any AI agent to configure your environment automatically."
                     : "Paste your API key below to generate the setup instruction for Claude Code, Codex, or any AI agent."}
                 </p>
-                <CliSetupPanel apiKey={oneTimeKey ?? undefined} showKey={showKey} />
+                <CliSetupPanel apiKey={oneTimeKey ?? undefined} />
               </div>
             )}
 
