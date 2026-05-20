@@ -15,9 +15,11 @@
 #   TON_API_KEY="sk-litellm-xxx" bash scripts/configure-cli.sh --dry-run
 #
 # 사용법 (특정 CLI만 설정):
-#   bash scripts/configure-cli.sh --target claude   # Claude Code만
-#   bash scripts/configure-cli.sh --target codex    # Codex CLI만
-#   bash scripts/configure-cli.sh --target all      # 둘 다 (기본)
+#   bash scripts/configure-cli.sh --target claude    # Claude Code만
+#   bash scripts/configure-cli.sh --target codex     # Codex CLI만
+#   bash scripts/configure-cli.sh --target openclaw  # OpenClaw만
+#   bash scripts/configure-cli.sh --target hermes    # Hermes만
+#   bash scripts/configure-cli.sh --target all       # 전부 (기본)
 #
 # 사용법 (모델 목록만 출력):
 #   TON_API_KEY="sk-litellm-xxx" bash scripts/configure-cli.sh --list-models
@@ -25,6 +27,8 @@
 # 지원 대상:
 #   - Claude Code  (ANTHROPIC_API_KEY + ANTHROPIC_BASE_URL + ~/.claude/settings.json)
 #   - Codex CLI    (OPENAI_API_KEY + OPENAI_BASE_URL + ~/.codex/config.toml)
+#   - OpenClaw     (~/.openclaw/openclaw.json, JSON 병합)
+#   - Hermes       (~/.hermes/config.yaml, YAML 덮어쓰기)
 #   - 쉘 프로파일  (~/.zshrc / ~/.bashrc 영구 저장, 멱등성 보장)
 # =============================================================================
 
@@ -57,16 +61,16 @@ while [[ $# -gt 0 ]]; do
     --list-models)     LIST_MODELS_ONLY=true; shift ;;
     --dry-run)         DRY_RUN=true; shift ;;
     --target)
-      TARGET="${2:?'--target requires an argument: claude|codex|all'}"
-      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "all" ]]; then
-        log_error "--target 값은 claude, codex, all 중 하나여야 합니다."
+      TARGET="${2:?'--target requires an argument: claude|codex|openclaw|hermes|all'}"
+      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "openclaw" && "$TARGET" != "hermes" && "$TARGET" != "all" ]]; then
+        log_error "--target 값은 claude, codex, openclaw, hermes, all 중 하나여야 합니다."
         exit 1
       fi
       shift 2 ;;
     --target=*)
       TARGET="${1#--target=}"
-      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "all" ]]; then
-        log_error "--target 값은 claude, codex, all 중 하나여야 합니다."
+      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "openclaw" && "$TARGET" != "hermes" && "$TARGET" != "all" ]]; then
+        log_error "--target 값은 claude, codex, openclaw, hermes, all 중 하나여야 합니다."
         exit 1
       fi
       shift ;;
@@ -77,7 +81,7 @@ Usage:
 
 옵션:
   --dry-run            실제 변경 없이 무엇이 바뀌는지 미리 확인 (안전 점검용)
-  --target <대상>      설정 대상: claude | codex | all (기본: 자동 감지)
+  --target <대상>      설정 대상: claude | codex | openclaw | hermes | all (기본: 자동 감지)
   --non-interactive    환경변수(TON_API_KEY, TON_MODEL)로 비대화형 실행
   --list-models        사용 가능한 모델 목록만 출력
   --help, -h           이 도움말 출력
@@ -85,7 +89,9 @@ Usage:
 환경 자동 감지:
   CLAUDE_CODE_ENTRYPOINT 변수가 있으면 claude 전용으로 자동 감지합니다.
   CODEX_SHELL 변수가 있으면 codex 전용으로 자동 감지합니다.
-  둘 다 없으면 all(기본)로 동작합니다.
+  OPENCLAW_HOME 변수가 있으면 openclaw 전용으로 자동 감지합니다.
+  HERMES_HOME 변수가 있으면 hermes 전용으로 자동 감지합니다.
+  모두 없으면 all(기본)로 동작합니다.
 
 환경변수:
   TON_API_KEY   LiteLLM virtual key (--non-interactive / --list-models 필수)
@@ -127,11 +133,31 @@ detect_target() {
     return
   fi
 
+  # OpenClaw 내부 실행 감지
+  if [ -n "${OPENCLAW_HOME:-}" ]; then
+    echo "openclaw"
+    return
+  fi
+
+  # Hermes 내부 실행 감지
+  if [ -n "${HERMES_HOME:-}" ]; then
+    echo "hermes"
+    return
+  fi
+
   # 부모 프로세스명으로 추가 감지
   local ppid_cmd
   ppid_cmd=$(ps -o comm= -p "${PPID:-0}" 2>/dev/null || true)
   if echo "$ppid_cmd" | grep -qi "codex"; then
     echo "codex"
+    return
+  fi
+  if echo "$ppid_cmd" | grep -qi "openclaw"; then
+    echo "openclaw"
+    return
+  fi
+  if echo "$ppid_cmd" | grep -qi "hermes"; then
+    echo "hermes"
     return
   fi
 
@@ -376,6 +402,86 @@ preview_claude_settings_changes() {
   done
 }
 
+# openclaw config 변경 내용 프리뷰
+preview_openclaw_config_changes() {
+  local config="$HOME/.openclaw/openclaw.json"
+  echo -e "  ${BOLD}~/.openclaw/openclaw.json 변경 예정:${RESET}"
+
+  local cur_base="" cur_key="" cur_default=""
+  if [ -f "$config" ] && command -v python3 &>/dev/null; then
+    cur_base=$(python3 -c "
+import json
+try:
+    d = json.load(open('$config'))
+    print(d.get('models',{}).get('providers',{}).get('litellm',{}).get('baseUrl',''))
+except: pass
+" 2>/dev/null || true)
+    cur_key=$(python3 -c "
+import json
+try:
+    d = json.load(open('$config'))
+    print(d.get('models',{}).get('providers',{}).get('litellm',{}).get('apiKey',''))
+except: pass
+" 2>/dev/null || true)
+    cur_default=$(python3 -c "
+import json
+try:
+    d = json.load(open('$config'))
+    print(d.get('models',{}).get('default',''))
+except: pass
+" 2>/dev/null || true)
+  fi
+
+  local new_default="litellm/$MODEL"
+  local masked_new_key="${API_KEY:0:12}…"
+  local masked_cur_key="${cur_key:0:12}…"
+
+  if [ -z "$cur_base" ]; then
+    echo -e "    ${GREEN}+${RESET} models.providers.litellm.baseUrl: (미설정) → $BASE_URL"
+  elif [ "$cur_base" = "$BASE_URL" ]; then
+    echo -e "    ${DIM}= models.providers.litellm.baseUrl: $cur_base (변경 없음)${RESET}"
+  else
+    echo -e "    ${YELLOW}~${RESET} models.providers.litellm.baseUrl: $cur_base → $BASE_URL"
+  fi
+
+  if [ -z "$cur_key" ]; then
+    echo -e "    ${GREEN}+${RESET} models.providers.litellm.apiKey: (미설정) → $masked_new_key"
+  elif [ "$cur_key" = "$API_KEY" ]; then
+    echo -e "    ${DIM}= models.providers.litellm.apiKey: $masked_cur_key (변경 없음)${RESET}"
+  else
+    echo -e "    ${YELLOW}~${RESET} models.providers.litellm.apiKey: $masked_cur_key → $masked_new_key"
+  fi
+
+  if [ -z "$cur_default" ]; then
+    echo -e "    ${GREEN}+${RESET} models.default: (미설정) → $new_default"
+  elif [ "$cur_default" = "$new_default" ]; then
+    echo -e "    ${DIM}= models.default: $cur_default (변경 없음)${RESET}"
+  else
+    echo -e "    ${YELLOW}~${RESET} models.default: $cur_default → $new_default"
+  fi
+}
+
+# hermes config 변경 내용 프리뷰
+preview_hermes_config_changes() {
+  local config="$HOME/.hermes/config.yaml"
+  echo -e "  ${BOLD}~/.hermes/config.yaml 변경 예정:${RESET}"
+  if [ -f "$config" ]; then
+    echo -e "    ${YELLOW}(기존 파일을 덮어씁니다)${RESET}"
+    echo -e "    ${DIM}현재 내용:${RESET}"
+    sed 's/^/      /' "$config" | head -10
+    echo ""
+  fi
+  cat <<PREVIEW
+    새 내용:
+      model:
+        default: $MODEL
+        provider: custom
+        base_url: $BASE_URL/v1
+        api_key:  ${API_KEY:0:12}…
+        api_mode: chat_completions
+PREVIEW
+}
+
 # codex config 변경 내용 프리뷰
 preview_codex_config_changes() {
   local config="$HOME/.codex/config.toml"
@@ -531,6 +637,83 @@ TOML
   log_ok "Codex CLI 설정 완료 ($CODEX_CONFIG)"
 }
 
+# ── OpenClaw 설정 함수 ────────────────────────────────────────────────────────
+configure_openclaw() {
+  local dry="$1"
+  log_section "OpenClaw 설정"
+
+  local OPENCLAW_CONFIG_DIR="$HOME/.openclaw"
+  local OPENCLAW_CONFIG="$OPENCLAW_CONFIG_DIR/openclaw.json"
+
+  if ! command -v openclaw &>/dev/null; then
+    log_warn "openclaw CLI를 찾을 수 없습니다. 설치 후 쉘 재시작 시 자동 적용됩니다."
+    log_info "OpenClaw 설치: https://docs.litellm.ai/docs/tutorials/openclaw_integration"
+    return
+  fi
+
+  if [ "$dry" = true ]; then
+    log_dry "~/.openclaw/openclaw.json 수정 예정:"
+    preview_openclaw_config_changes
+    return
+  fi
+
+  mkdir -p "$OPENCLAW_CONFIG_DIR"
+  local EXISTING="{}"
+  [ -f "$OPENCLAW_CONFIG" ] && EXISTING=$(cat "$OPENCLAW_CONFIG")
+
+  python3 - <<PYEOF
+import json
+
+config = json.loads('''$EXISTING''')
+config.setdefault("models", {})
+config["models"].setdefault("providers", {})
+config["models"]["providers"]["litellm"] = {
+    "baseUrl": "$BASE_URL",
+    "apiKey":  "$API_KEY",
+    "api":     "openai-completions"
+}
+config["models"]["default"] = "litellm/$MODEL"
+
+with open("$OPENCLAW_CONFIG", "w") as f:
+    json.dump(config, f, indent=2)
+    f.write("\\n")
+print("  ~/.openclaw/openclaw.json 업데이트 완료")
+PYEOF
+  log_ok "OpenClaw 설정 완료 ($OPENCLAW_CONFIG)"
+}
+
+# ── Hermes 설정 함수 ──────────────────────────────────────────────────────────
+configure_hermes() {
+  local dry="$1"
+  log_section "Hermes 설정"
+
+  local HERMES_CONFIG_DIR="$HOME/.hermes"
+  local HERMES_CONFIG="$HERMES_CONFIG_DIR/config.yaml"
+
+  if ! command -v hermes &>/dev/null; then
+    log_warn "hermes CLI를 찾을 수 없습니다. 설치 후 쉘 재시작 시 자동 적용됩니다."
+    return
+  fi
+
+  if [ "$dry" = true ]; then
+    log_dry "~/.hermes/config.yaml 수정 예정:"
+    preview_hermes_config_changes
+    return
+  fi
+
+  mkdir -p "$HERMES_CONFIG_DIR"
+  cat > "$HERMES_CONFIG" <<YAML
+# TON AI Access — auto-configured $(date +%Y-%m-%d)
+model:
+  default: $MODEL
+  provider: custom
+  base_url: $BASE_URL/v1
+  api_key: $API_KEY
+  api_mode: chat_completions
+YAML
+  log_ok "Hermes 설정 완료 ($HERMES_CONFIG)"
+}
+
 # ═════════════════════════════════════════════════════════════════════════════
 # 메인 실행 흐름
 # ═════════════════════════════════════════════════════════════════════════════
@@ -556,7 +739,17 @@ if [[ "$EFFECTIVE_TARGET" == "codex" || "$EFFECTIVE_TARGET" == "all" ]]; then
   configure_codex "$DRY_RUN"
 fi
 
-# ── 4) 완료 및 안내 ───────────────────────────────────────────────────────────
+# ── 4) OpenClaw 설정 ──────────────────────────────────────────────────────────
+if [[ "$EFFECTIVE_TARGET" == "openclaw" || "$EFFECTIVE_TARGET" == "all" ]]; then
+  configure_openclaw "$DRY_RUN"
+fi
+
+# ── 5) Hermes 설정 ────────────────────────────────────────────────────────────
+if [[ "$EFFECTIVE_TARGET" == "hermes" || "$EFFECTIVE_TARGET" == "all" ]]; then
+  configure_hermes "$DRY_RUN"
+fi
+
+# ── 6) 완료 및 안내 ───────────────────────────────────────────────────────────
 if [ "$DRY_RUN" = true ]; then
   log_section "Dry-run 완료 — 아무것도 변경되지 않았습니다"
   echo ""
@@ -576,7 +769,7 @@ if [ "$DRY_RUN" = true ]; then
   exit 0
 fi
 
-log_section "4. 완료"
+log_section "6. 완료"
 echo ""
 log_ok "TON AI Access 설정 완료! (target: $EFFECTIVE_TARGET)"
 echo ""
@@ -598,3 +791,13 @@ echo ""
 log_info "사용 가능한 모델 목록 확인:"
 echo -e "  ${BOLD}TON_API_KEY=\"\$OPENAI_API_KEY\" bash scripts/configure-cli.sh --list-models${RESET}"
 echo ""
+if [[ "$EFFECTIVE_TARGET" == "openclaw" || "$EFFECTIVE_TARGET" == "all" ]]; then
+  log_info "OpenClaw 연결 확인:"
+  echo -e "  ${BOLD}openclaw health${RESET}"
+  echo ""
+fi
+if [[ "$EFFECTIVE_TARGET" == "hermes" || "$EFFECTIVE_TARGET" == "all" ]]; then
+  log_info "Hermes 설정 확인:"
+  echo -e "  ${BOLD}cat ~/.hermes/config.yaml${RESET}"
+  echo ""
+fi
