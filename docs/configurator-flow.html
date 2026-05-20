@@ -61,6 +61,120 @@
     margin-bottom: 40px;
   }
 
+  /* ── run sequence ────────────────────────────────────── */
+  .run-sequence {
+    width: 860px;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 20px 24px 16px;
+    background: var(--surface);
+    margin-bottom: 10px;
+  }
+  .run-seq-title {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .run-phases {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+  .phase {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .phase-dry  { border-color: #374151; background: #111827; }
+  .phase-live { border-color: #1e3a5f; background: #0c1828; }
+  .phase-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    color: var(--arrow);
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+  .phase-badge {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .phase-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .phase-dry  .phase-name { color: #94a3b8; }
+  .phase-live .phase-name { color: #7dd3fc; }
+  .phase-flag {
+    display: inline-block;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+    color: #fde68a;
+    margin-bottom: 10px;
+  }
+  .phase-points {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 10.5px;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+  .phase-points li { list-style: none; padding-left: 0; }
+  .phase-points li::before { content: '• '; color: var(--muted); }
+
+  .diff-preview {
+    margin-top: 12px;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid #1e293b;
+    border-radius: 6px;
+  }
+  .diff-title {
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .diff-row { font-size: 10px; line-height: 1.9; white-space: nowrap; }
+  .d-add  { color: #4ade80; }
+  .d-chg  { color: #fbbf24; }
+  .d-same { color: #374151; }
+  .d-sym  { display: inline-block; width: 14px; }
+
+  .agent-note {
+    margin-top: 14px;
+    padding: 7px 12px;
+    background: rgba(245,158,11,0.07);
+    border: 1px solid rgba(245,158,11,0.18);
+    border-radius: 6px;
+    font-size: 10.5px;
+    color: #fde68a;
+    text-align: center;
+  }
+
+  .section-header {
+    width: 860px;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 0;
+  }
+
   /* ── shared flow ─────────────────────────────────────────── */
   .shared-flow {
     display: flex;
@@ -410,7 +524,7 @@
   }
 
   /* center wrapper */
-  .center { display: flex; flex-direction: column; align-items: center; }
+  .center { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 
   /* conditional note */
   .cond-note {
@@ -427,10 +541,65 @@
 <body>
 
 <h1>TON AI Access — Configurator Flow</h1>
-<p class="subtitle">configure-cli.sh 실행 시 각 CLI별 설정 변경 흐름</p>
+<p class="subtitle">configure-cli.sh 실행 흐름 — dry-run 미리보기 · live 적용 · 대상별 설정 파일</p>
 
-<!-- ═══ SHARED FLOW ═══════════════════════════════════════════════════ -->
 <div class="center">
+
+  <!-- ═══ AGENT RUN SEQUENCE ═══════════════════════════════════════════════ -->
+  <div class="run-sequence">
+    <div class="run-seq-title">① 에이전트 실행 순서</div>
+    <div class="run-phases">
+
+      <!-- Phase 1: dry-run -->
+      <div class="phase phase-dry">
+        <div class="phase-badge">Phase 1</div>
+        <div class="phase-name">Dry-run</div>
+        <code class="phase-flag">--dry-run</code>
+        <ul class="phase-points">
+          <li>파일 변경 없음 — 읽기만</li>
+          <li>변경 예정 항목을 diff 형식으로 출력</li>
+          <li>적용 명령어 안내 후 즉시 종료</li>
+        </ul>
+        <div class="diff-preview">
+          <div class="diff-title">미리보기 출력 기호</div>
+          <div class="diff-row"><span class="d-sym d-add">+</span><span class="d-add">신규 추가</span><span style="color:#374151;"> — 미설정 → 새 값</span></div>
+          <div class="diff-row"><span class="d-sym d-chg">~</span><span class="d-chg">값 변경</span><span style="color:#374151;"> — 기존값 → 새 값</span></div>
+          <div class="diff-row"><span class="d-sym d-same">=</span><span class="d-same">변경 없음</span><span style="color:#2d3748;"> — 이미 최신</span></div>
+        </div>
+      </div>
+
+      <div class="phase-arrow">→</div>
+
+      <!-- Phase 2: live -->
+      <div class="phase phase-live">
+        <div class="phase-badge">Phase 2</div>
+        <div class="phase-name">Live Apply</div>
+        <code class="phase-flag">--dry-run 제거</code>
+        <ul class="phase-points">
+          <li>실제 파일 수정 진행</li>
+          <li>Shell profile + config 파일 모두 업데이트</li>
+          <li>완료 후 검증 명령어 안내</li>
+        </ul>
+        <div style="margin-top:12px;padding:8px 10px;background:var(--bg);border:1px solid #1e293b;border-radius:6px;">
+          <div class="diff-title">이하 상세 흐름 실행</div>
+          <div style="font-size:10px;color:#475569;line-height:1.9;">
+            ② Target 감지 → ③ 모델 선택<br>
+            ④ Shell profile 업데이트<br>
+            ⑤ 각 target config 파일 수정
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="agent-note">
+      ⚡ 에이전트가 Phase 1 → Phase 2 순서로 자동 실행합니다 — 사용자 개입 불필요
+    </div>
+  </div>
+
+  <!-- ═══ LIVE RUN SECTION HEADER ══════════════════════════════════════════ -->
+  <div class="section-header">② Live Run 상세 설정 흐름</div>
+
+  <!-- ═══ SHARED FLOW ═══════════════════════════════════════════════════ -->
   <div class="shared-flow">
 
     <!-- ENTRY -->
@@ -448,7 +617,7 @@
 
     <!-- DETECT -->
     <div class="block detect-block">
-      <div class="block-title" style="color:#fde68a;">① Target 자동 감지 — detect_target()</div>
+      <div class="block-title" style="color:#fde68a;">② Target 자동 감지 — detect_target()</div>
       <div class="priority-list">
         <div class="priority-row">
           <span class="priority-num">1</span>
@@ -492,7 +661,7 @@
 
     <!-- MODEL SELECTION -->
     <div class="block model-block">
-      <div class="block-title">② 모델 선택</div>
+      <div class="block-title">③ 모델 선택</div>
       <div class="mode-row">
         <div class="mode-box">
           <div class="mode-box-title">Non-Interactive<br><span style="color:#475569;">TON_MODEL 지정됨</span></div>
@@ -526,7 +695,7 @@
 
     <!-- SHELL PROFILE -->
     <div class="block shell-block">
-      <div class="block-title">③ Shell Profile 업데이트 — 공통 (멱등성 보장)</div>
+      <div class="block-title">④ Shell Profile 업데이트 — 공통 (멱등성 보장)</div>
       <div class="block-note" style="margin-bottom:8px;">~/.zshrc 또는 ~/.bashrc 에 블록 삽입 (기존 블록 자동 교체)</div>
       <div class="env-grid">
         <div class="env-col">
@@ -557,8 +726,7 @@
     <line x1="430" y1="0" x2="430" y2="20" stroke="#475569" stroke-width="2"/>
     <!-- horizontal bar -->
     <line x1="107" y1="20" x2="753" y2="20" stroke="#475569" stroke-width="2"/>
-    <!-- drops to each lane center: lane width=199px, gap=16px, 4 lanes in 860px -->
-    <!-- lane centers: 99.75, 315.25, 530.75, 746.25 ≈ 100, 315, 531, 746 -->
+    <!-- drops to each lane center -->
     <line x1="100"  y1="20" x2="100"  y2="50" stroke="#475569" stroke-width="2"/>
     <line x1="315"  y1="20" x2="315"  y2="50" stroke="#475569" stroke-width="2"/>
     <line x1="545"  y1="20" x2="545"  y2="50" stroke="#475569" stroke-width="2"/>
@@ -584,7 +752,7 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">④</span>
+            <span class="step-num">⑤</span>
             config 파일 수정
           </div>
           <code class="file-path">~/.claude/settings.json</code>
@@ -600,7 +768,7 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑤</span>
+            <span class="step-num">⑥</span>
             적용 방식
           </div>
           <div style="font-size:10.5px;color:#c4b5fd;line-height:1.8;">
@@ -614,7 +782,7 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑥</span>
+            <span class="step-num">⑦</span>
             사용처
           </div>
           <div style="font-size:10px;color:#a78bfa;line-height:1.8;">
@@ -639,7 +807,7 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">④</span>
+            <span class="step-num">⑤</span>
             config 파일 수정
           </div>
           <code class="file-path">~/.codex/config.toml</code>
@@ -655,7 +823,7 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑤</span>
+            <span class="step-num">⑥</span>
             적용 방식
           </div>
           <div style="font-size:10.5px;color:#86efac;line-height:1.8;">
@@ -668,7 +836,7 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑥</span>
+            <span class="step-num">⑦</span>
             사용처
           </div>
           <div style="font-size:10px;color:#4ade80;line-height:1.8;">
@@ -693,13 +861,13 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">④</span>
+            <span class="step-num">⑤</span>
             config 파일 수정
           </div>
           <code class="file-path">~/.openclaw/openclaw.json</code>
           <div class="kv-list">
             <div class="kv-row" style="color:#7c2d12;font-size:10px;">models.providers.litellm</div>
-            <div class="kv-row" style="padding-left:8px;"><span class="kv-key">baseUrl</span><span class="kv-op">:</span><span class="kv-val">"$BASE_URL"</span></div>
+            <div class="kv-row" style="padding-left:8px;"><span class="kv-key">baseUrl</span><span class="kv-op">:</span><span class="kv-val">"$BASE_URL/v1"</span></div>
             <div class="kv-row" style="padding-left:8px;"><span class="kv-key">apiKey</span><span class="kv-op">:</span><span class="kv-val">"$API_KEY"</span></div>
             <div class="kv-row" style="padding-left:8px;"><span class="kv-key">api</span><span class="kv-op">:</span><span class="kv-val">"openai-completions"</span></div>
             <div class="kv-row" style="margin-top:4px;"><span class="kv-key">models.default</span><span class="kv-op">:</span><span class="kv-val">"litellm/$MODEL"</span></div>
@@ -710,24 +878,25 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑤</span>
+            <span class="step-num">⑥</span>
             적용 방식
           </div>
           <div style="font-size:10.5px;color:#fdba74;line-height:1.8;">
             API key + base_url<br>
             <span style="color:#ea580c;">openclaw.json에 직접 저장</span><br>
             <span style="color:#64748b;font-size:9.5px;">(shell profile env 없음)</span><br>
-            재시작 없이 즉시 적용
+            provider/URL 변경 시:<br>
+            <span style="color:#c2410c;font-size:10px;">openclaw gateway restart --safe</span>
           </div>
         </div>
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑥</span>
+            <span class="step-num">⑦</span>
             사용처
           </div>
           <div style="font-size:10px;color:#fb923c;line-height:1.8;">
-            openclaw CLI 기동 시<br>
+            openclaw gateway 기동 시<br>
             openclaw.json → provider<br>
             models.default 우선<br>
             <span style="color:#ea580c;">LiteLLM 프록시 경유</span>
@@ -748,7 +917,7 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">④</span>
+            <span class="step-num">⑤</span>
             config 파일 수정
           </div>
           <code class="file-path">~/.hermes/config.yaml</code>
@@ -765,24 +934,25 @@
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑤</span>
+            <span class="step-num">⑥</span>
             적용 방식
           </div>
           <div style="font-size:10.5px;color:#93c5fd;line-height:1.8;">
             API key + base_url<br>
             <span style="color:#3b82f6;">config.yaml에 직접 저장</span><br>
             <span style="color:#64748b;font-size:9.5px;">(shell profile env 없음)</span><br>
-            재시작 없이 즉시 적용
+            model.* 변경 시 재시작 필수:<br>
+            <span style="color:#1d4ed8;font-size:10px;">hermes gateway restart</span>
           </div>
         </div>
 
         <div class="lane-step">
           <div class="step-title">
-            <span class="step-num">⑥</span>
+            <span class="step-num">⑦</span>
             사용처
           </div>
           <div style="font-size:10px;color:#60a5fa;line-height:1.8;">
-            hermes CLI 기동 시<br>
+            hermes gateway 기동 시<br>
             config.yaml → base_url<br>
             api_key 직접 로드<br>
             <span style="color:#3b82f6;">LiteLLM 프록시 경유</span>
