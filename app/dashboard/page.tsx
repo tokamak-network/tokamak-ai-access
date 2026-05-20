@@ -594,18 +594,7 @@ export default function DashboardPage() {
                   />
                 </div>
 
-                {/* Fallback external link */}
-                <p style={{ marginTop: "16px", fontSize: "0.8125rem", color: "var(--muted)" }}>
-                  Prefer to stake elsewhere?{" "}
-                  <a
-                    href="https://tokamak.network/staking"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: "var(--accent)", textDecoration: "underline" }}
-                  >
-                    Open tokamak.network →
-                  </a>
-                </p>
+
               </>
             )}
 
