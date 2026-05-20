@@ -191,6 +191,10 @@ $marker — $(date '+%Y-%m-%d') | model: $MODEL
 export ANTHROPIC_API_KEY="$API_KEY"
 export ANTHROPIC_BASE_URL="$BASE_URL"
 export ANTHROPIC_MODEL="$MODEL"
+export ANTHROPIC_SMALL_FAST_MODEL="$MODEL"
+export ANTHROPIC_DEFAULT_HAIKU_MODEL="$MODEL"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="$MODEL"
+export ANTHROPIC_DEFAULT_OPUS_MODEL="$MODEL"
 export OPENAI_API_KEY="$API_KEY"
 export OPENAI_BASE_URL="$BASE_URL/v1"
 $end_marker
@@ -203,6 +207,10 @@ apply_current_session() {
   export ANTHROPIC_API_KEY="$API_KEY"
   export ANTHROPIC_BASE_URL="$BASE_URL"
   export ANTHROPIC_MODEL="$MODEL"
+  export ANTHROPIC_SMALL_FAST_MODEL="$MODEL"
+  export ANTHROPIC_DEFAULT_HAIKU_MODEL="$MODEL"
+  export ANTHROPIC_DEFAULT_SONNET_MODEL="$MODEL"
+  export ANTHROPIC_DEFAULT_OPUS_MODEL="$MODEL"
   export OPENAI_API_KEY="$API_KEY"
   export OPENAI_BASE_URL="$BASE_URL/v1"
   log_ok "현재 세션에 환경변수 즉시 적용 완료"
@@ -237,13 +245,17 @@ settings.setdefault("env", {})
 settings["env"]["ANTHROPIC_API_KEY"] = "$API_KEY"
 settings["env"]["ANTHROPIC_BASE_URL"] = "$BASE_URL"
 settings["env"]["ANTHROPIC_MODEL"] = "$MODEL"
+settings["env"]["ANTHROPIC_SMALL_FAST_MODEL"] = "$MODEL"
+settings["env"]["ANTHROPIC_DEFAULT_HAIKU_MODEL"] = "$MODEL"
+settings["env"]["ANTHROPIC_DEFAULT_SONNET_MODEL"] = "$MODEL"
+settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"] = "$MODEL"
 
 with open("$CLAUDE_SETTINGS", "w") as f:
     json.dump(settings, f, indent=2)
     f.write("\\n")
 print("  ~/.claude/settings.json 업데이트 완료")
 PYEOF
-  log_ok "Claude Code 설정 완료 (ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_MODEL)"
+  log_ok "Claude Code 설정 완료 (ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_MODEL + 4개 모델 별칭)"
 else
   log_warn "claude CLI를 찾을 수 없습니다. 설치 후 쉘 재시작 시 자동 적용됩니다."
   log_info "Claude Code 설치: https://claude.ai/download"
@@ -259,10 +271,13 @@ if command -v codex &>/dev/null; then
   mkdir -p "$CODEX_CONFIG_DIR"
   cat > "$CODEX_CONFIG" <<TOML
 # TON AI Access — auto-configured $(date +%Y-%m-%d)
+model = "$MODEL"
+model_provider = "tokamak"
 
-[provider.openai]
-api_key  = "$API_KEY"
-base_url = "$BASE_URL"
+[model_providers.tokamak]
+name = "TON AI Access (LiteLLM)"
+base_url = "$BASE_URL/v1"
+env_key = "OPENAI_API_KEY"
 TOML
   log_ok "Codex CLI 설정 완료 ($CODEX_CONFIG)"
 else
