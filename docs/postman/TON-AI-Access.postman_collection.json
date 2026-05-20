@@ -1,0 +1,532 @@
+{
+  "info": {
+    "name": "TON AI Access — API",
+    "_postman_id": "ton-ai-access-v1",
+    "description": "TON AI Access PoC — LiteLLM 가상 키 발급 API 컬렉션\n\n## 사용 순서\n1. **Environment** 파일(`TON-AI-Access.postman_environment.json`)을 Import 후 활성화\n2. `POST /api/auth/nonce` 실행 → nonce 발급\n3. 지갑으로 SIWE 메시지 서명 후 `POST /api/auth/verify` 실행 → `session_id` 쿠키 자동 저장\n4. 이후 인증 필요 요청에 쿠키가 자동으로 첨부됨\n\n## Rate Limit\n- IP 기준: 100 req/15min (슬라이딩 윈도우)\n- 주소 기준: 30 req/15min\n- 초과 시 `429 Too Many Requests`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "배포 시 https://your-app.vercel.app 으로 변경"
+    },
+    {
+      "key": "testAddress",
+      "value": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+      "type": "string",
+      "description": "테스트용 EOA 주소 (vitalik.eth)"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "SIWE 인증 플로우 — nonce 발급 → 서명 검증 → 세션 쿠키",
+      "item": [
+        {
+          "name": "1. Nonce 발급",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('nonce 필드 존재', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.nonce).to.be.a('string').and.not.empty;",
+                  "    pm.expect(body.statement).to.include('Tokamak');",
+                  "    // 다음 요청에서 쓸 수 있도록 env에 저장",
+                  "    pm.collectionVariables.set('lastNonce', body.nonce);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"{{testAddress}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/nonce",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "nonce"]
+            },
+            "description": "지갑 주소로 SIWE nonce를 요청합니다.\n\n**Response:**\n```json\n{ \"nonce\": \"abc123\", \"statement\": \"Sign in to Tokamak LLM Access...\" }\n```\n\n**에러:**\n- `400` — address 형식 불일치 (regex `^0x[0-9a-fA-F]{40}$`)\n- `429` — Rate limit 초과"
+          },
+          "response": [
+            {
+              "name": "200 OK — nonce 발급 성공",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"address\": \"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045\"\n}"
+                },
+                "url": { "raw": "{{baseUrl}}/api/auth/nonce", "host": ["{{baseUrl}}"], "path": ["api", "auth", "nonce"] }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [{ "key": "Content-Type", "value": "application/json" }],
+              "body": "{\n  \"nonce\": \"dGhlIHF1aWNr\",\n  \"statement\": \"Sign in to Tokamak LLM Access with your Ethereum account.\"\n}"
+            },
+            {
+              "name": "400 Bad Request — 잘못된 주소",
+              "originalRequest": {
+                "method": "POST",
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"address\": \"not-an-address\"\n}" },
+                "url": { "raw": "{{baseUrl}}/api/auth/nonce", "host": ["{{baseUrl}}"], "path": ["api", "auth", "nonce"] }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "body": "{\n  \"error\": \"Invalid address\"\n}"
+            },
+            {
+              "name": "429 Too Many Requests",
+              "status": "Too Many Requests",
+              "code": 429,
+              "body": "{\n  \"error\": \"Too many requests\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "2. SIWE Verify (서명 검증)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 실제 사용 시: 지갑으로 서명한 message/signature 를 직접 입력",
+                  "// message: SiweMessage.prepareMessage() 결과",
+                  "// signature: eth_sign 또는 personal_sign 결과"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('ok: true 반환', () => {",
+                  "    pm.expect(pm.response.json().ok).to.be.true;",
+                  "});",
+                  "pm.test('session_id 쿠키 Set', () => {",
+                  "    pm.expect(pm.cookies.has('session_id')).to.be.true;",
+                  "    // Postman이 자동으로 쿠키를 저장 — 이후 요청에 자동 첨부됨",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"localhost wants you to sign in with your Ethereum account:\\n0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045\\n\\nSign in to Tokamak LLM Access with your Ethereum account.\\n\\nURI: http://localhost:3000\\nVersion: 1\\nChain ID: 1\\nNonce: {{lastNonce}}\\nIssued At: 2026-05-20T00:00:00.000Z\",\n  \"signature\": \"0x<지갑_서명값>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "verify"]
+            },
+            "description": "SIWE 메시지 + 서명으로 인증합니다.\n\n**Nonce 발급(`/api/auth/nonce`) 후 5분 내에 호출해야 합니다.**\n\n실제 사용 시 프론트엔드가 `SiweMessage.prepareMessage()`로 message를 구성하고, `eth_sign`/`personal_sign`으로 서명합니다.\n\n**성공 시:** `session_id` httpOnly 쿠키 발급 (24시간 유효)\n\n**에러:**\n- `400` — message/signature 누락 또는 SIWE 파싱 실패\n- `401` — 서명 불일치 또는 nonce 만료"
+          },
+          "response": [
+            {
+              "name": "200 OK — 인증 성공 (session_id 쿠키 발급)",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                { "key": "Set-Cookie", "value": "session_id=<uuid>; Path=/; HttpOnly; SameSite=Lax; Max-Age=86400" }
+              ],
+              "body": "{\n  \"ok\": true\n}"
+            },
+            {
+              "name": "401 Unauthorized — nonce 만료",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Expired or invalid nonce\"\n}"
+            },
+            {
+              "name": "401 Unauthorized — 서명 불일치",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Invalid signature\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Staking",
+      "description": "온체인 스테이킹 잔액 조회 — 인증 필요",
+      "item": [
+        {
+          "name": "3. 스테이킹 잔액 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('필수 필드 존재', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.address).to.be.a('string');",
+                  "    pm.expect(body.totalStakedTON).to.be.a('string');",
+                  "    pm.expect(body.eligible).to.be.a('boolean');",
+                  "    pm.expect(body.minTon).to.be.a('number');",
+                  "});",
+                  "pm.test('totalStakedTON 는 소수점 4자리 형식', () => {",
+                  "    const { totalStakedTON } = pm.response.json();",
+                  "    pm.expect(totalStakedTON).to.match(/^\\d+\\.\\d{4}$/);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staking/balance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staking", "balance"]
+            },
+            "description": "세션 쿠키로 인증된 주소의 TON 스테이킹 잔액을 반환합니다.\n\nSeigManager.stakeOf(layer2, address)를 모든 Layer2에 대해 multicall로 합산합니다 (27→18 decimal 변환).\n\n**Response:**\n```json\n{\n  \"address\": \"0x...\",\n  \"totalStakedTON\": \"25.3478\",\n  \"eligible\": true,\n  \"minTon\": 10\n}\n```\n\n**에러:**\n- `401` — 세션 쿠키 없음 또는 만료\n- `429` — Rate limit 초과"
+          },
+          "response": [
+            {
+              "name": "200 OK — 적격 스테이커",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"address\": \"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045\",\n  \"totalStakedTON\": \"1523.4200\",\n  \"eligible\": true,\n  \"minTon\": 10\n}"
+            },
+            {
+              "name": "200 OK — 미적격 (잔액 부족)",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"address\": \"0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045\",\n  \"totalStakedTON\": \"3.0000\",\n  \"eligible\": false,\n  \"minTon\": 10\n}"
+            },
+            {
+              "name": "401 Unauthorized — 세션 없음",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Unauthorized\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Keys",
+      "description": "LiteLLM 가상 키 라이프사이클 — 발급 / 조회 / 교체",
+      "item": [
+        {
+          "name": "4. 키 발급 (1회성)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "    pm.test('key 필드 존재 (sk- 형식)', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.key).to.be.a('string');",
+                  "        pm.expect(body.key).to.match(/^sk-/);",
+                  "        pm.expect(body.expiresAt).to.be.a('string');",
+                  "        pm.expect(body.model).to.equal('qwen-3.6');",
+                  "        // ⚠️  이 값은 다시 조회 불가 — 반드시 저장!",
+                  "        pm.collectionVariables.set('issuedKey', body.key);",
+                  "        console.log('발급된 키 (저장 필수!):', body.key);",
+                  "    });",
+                  "} else if (pm.response.code === 409) {",
+                  "    pm.test('409 — 이미 활성 키 존재', () => pm.response.to.have.status(409));",
+                  "} else if (pm.response.code === 403) {",
+                  "    pm.test('403 — 스테이킹 잔액 부족', () => pm.response.to.have.status(403));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/keys/issue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "keys", "issue"]
+            },
+            "description": "LiteLLM 가상 키를 발급합니다.\n\n**⚠️  중요: 응답의 `key` 값은 이 한 번만 반환됩니다. 서버는 SHA-256 hash만 저장합니다.**\n\n**사전 조건:**\n- 유효한 `session_id` 쿠키\n- SeigManager.stakeOf 기준 ≥ 10 TON\n- 기존 활성 키 없음\n\n**Response:**\n```json\n{\n  \"key\": \"sk-litellm-xxxx\",\n  \"expiresAt\": \"2027-05-20T00:00:00.000Z\",\n  \"model\": \"qwen-3.6\"\n}\n```\n\n**에러:**\n- `401` — 세션 없음\n- `403` — 스테이킹 잔액 부족 (< 10 TON)\n- `409` — 이미 활성 키 존재 (rotate 사용)\n- `429` — Rate limit"
+          },
+          "response": [
+            {
+              "name": "200 OK — 키 발급 성공 (1회성 응답)",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"key\": \"sk-litellm-abc123def456\",\n  \"expiresAt\": \"2027-05-20T00:00:00.000Z\",\n  \"model\": \"qwen-3.6\"\n}"
+            },
+            {
+              "name": "403 Forbidden — 스테이킹 부족",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Insufficient stake\"\n}"
+            },
+            {
+              "name": "409 Conflict — 이미 활성 키 존재",
+              "status": "Conflict",
+              "code": 409,
+              "body": "{\n  \"error\": \"Key already issued\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "5. 키 상태 조회",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('hasActiveKey 필드 boolean', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.hasActiveKey).to.be.a('boolean');",
+                  "    if (body.hasActiveKey) {",
+                  "        pm.expect(body.createdAt).to.be.a('string');",
+                  "        pm.expect(body.lastFour).to.be.a('string').with.lengthOf(4);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/keys/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "keys", "me"]
+            },
+            "description": "현재 세션 주소의 키 활성 상태를 반환합니다.\n\n실제 키 값은 서버에 저장되지 않으므로 `lastFour`는 SHA-256 hash의 마지막 4자리입니다.\n\n**Response (활성 키 있음):**\n```json\n{\n  \"hasActiveKey\": true,\n  \"createdAt\": \"2026-05-20T10:00:00.000Z\",\n  \"lastFour\": \"a3f7\"\n}\n```\n\n**Response (활성 키 없음):**\n```json\n{ \"hasActiveKey\": false }\n```"
+          },
+          "response": [
+            {
+              "name": "200 OK — 활성 키 있음",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"hasActiveKey\": true,\n  \"createdAt\": \"2026-05-20T10:00:00.000Z\",\n  \"lastFour\": \"a3f7\"\n}"
+            },
+            {
+              "name": "200 OK — 키 없음",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"hasActiveKey\": false\n}"
+            },
+            {
+              "name": "401 Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "body": "{\n  \"error\": \"Unauthorized\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "6. 키 교체 (Rotate)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "    pm.test('새 key 반환', () => {",
+                  "        const body = pm.response.json();",
+                  "        pm.expect(body.key).to.be.a('string').and.match(/^sk-/);",
+                  "        pm.expect(body.expiresAt).to.be.a('string');",
+                  "        pm.expect(body.model).to.equal('qwen-3.6');",
+                  "        // ⚠️  기존 키는 즉시 무효화됨!",
+                  "        pm.collectionVariables.set('issuedKey', body.key);",
+                  "        console.log('교체된 새 키 (저장 필수!):', body.key);",
+                  "    });",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/keys/rotate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "keys", "rotate"]
+            },
+            "description": "기존 LiteLLM 키를 폐기하고 새 키를 발급합니다.\n\n**⚠️  기존 키는 호출 즉시 LiteLLM에서 revoke됩니다. 응답의 새 `key`는 1회만 반환됩니다.**\n\nrevoke된 기존 키는 `key:{address}:prev` KV에 감사 기록으로 보관됩니다.\n\n**사전 조건:**\n- 유효한 session_id 쿠키\n- ≥ 10 TON 스테이킹 (재검증)\n\n**Response:** issue와 동일 형식\n\n**에러:**\n- `401` — 세션 없음\n- `403` — 스테이킹 잔액 부족\n- `429` — Rate limit"
+          },
+          "response": [
+            {
+              "name": "200 OK — 키 교체 성공 (기존 키 폐기됨)",
+              "status": "OK",
+              "code": 200,
+              "body": "{\n  \"key\": \"sk-litellm-newkey789xyz\",\n  \"expiresAt\": \"2027-05-20T00:00:00.000Z\",\n  \"model\": \"qwen-3.6\"\n}"
+            },
+            {
+              "name": "403 Forbidden — 스테이킹 부족",
+              "status": "Forbidden",
+              "code": 403,
+              "body": "{\n  \"error\": \"Insufficient stake\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "E2E 시나리오 — 적격자 전체 플로우",
+      "description": "TestPlan.md E1 시나리오: 적격 지갑의 연결 → 서명 → 잔액 확인 → 키 발급 → LiteLLM 호출",
+      "item": [
+        {
+          "name": "E1-1. nonce 발급",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[E1] nonce 발급 성공', () => {",
+                  "    pm.response.to.have.status(200);",
+                  "    const body = pm.response.json();",
+                  "    pm.collectionVariables.set('lastNonce', body.nonce);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"{{testAddress}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/nonce",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "nonce"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E1-2. 잔액 조회 (인증 후)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// 이 요청은 verify 후 실행 필요 (session_id 쿠키 필요)",
+                  "pm.test('[E1] 잔액 조회 성공', () => pm.response.to.have.status(200));",
+                  "pm.test('[E1] eligible: true', () => {",
+                  "    pm.expect(pm.response.json().eligible).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/staking/balance",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "staking", "balance"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E1-3. 키 발급",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('[E1] 키 발급 성공', () => pm.response.to.have.status(200));",
+                  "pm.test('[E1] sk- 형식 키 반환', () => {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.key).to.match(/^sk-/);",
+                  "    pm.collectionVariables.set('issuedKey', body.key);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/keys/issue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "keys", "issue"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "E1-4. LiteLLM 호출 검증 (curl 참고용)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{issuedKey}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"model\": \"qwen-3.6\",\n  \"messages\": [\n    { \"role\": \"user\", \"content\": \"Hello! Test from TON AI Access.\" }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{litellmBaseUrl}}/v1/chat/completions",
+              "host": ["{{litellmBaseUrl}}"],
+              "path": ["v1", "chat", "completions"]
+            },
+            "description": "발급된 키로 LiteLLM proxy에 직접 호출합니다.\n\n`litellmBaseUrl` 환경변수에 LiteLLM 서버 주소를 설정하세요.\n\n**curl 등가 명령:**\n```bash\ncurl -X POST {{litellmBaseUrl}}/v1/chat/completions \\\n  -H \"Authorization: Bearer {{issuedKey}}\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"model\":\"qwen-3.6\",\"messages\":[{\"role\":\"user\",\"content\":\"Hello\"}]}'\n```"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

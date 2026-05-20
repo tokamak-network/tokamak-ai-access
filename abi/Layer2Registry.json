@@ -1,0 +1,49 @@
+{
+  "_meta": {
+    "contract": "Layer2Registry",
+    "source": "https://github.com/tokamak-network/ton-staking-v2/blob/ton-staking-v2/docs/deployed-addresses-mainnet.md",
+    "addresses": {
+      "mainnet": {
+        "impl":  "0x296ef64487ecfddcdd03eab35c81c9262dab88ba",
+        "proxy": "0x7846c2248a7b4de77e9c2bae7fbb93bfc286837b"
+      },
+      "sepolia": {
+        "impl":  "0xAdA189ff3D973753971eff71F6F41A9419a4a1F8",
+        "proxy": "0xA0a9576b437E52114aDA8b0BC4149F2F5c604581"
+      }
+    },
+    "verified_selectors": {
+      "layer2sLength()":        "0x8dcbb0da",
+      "layer2sByIndex(uint256)":"0xac8d8c35",
+      "isLayer2(address)":      "0x95a97f48"
+    },
+    "note": "Call through Proxy. Use layer2sLength + layer2sByIndex to enumerate all registered Layer2s dynamically."
+  },
+  "abi": [
+    {
+      "inputs": [],
+      "name": "layer2sLength",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "index", "type": "uint256" }
+      ],
+      "name": "layer2sByIndex",
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2", "type": "address" }
+      ],
+      "name": "isLayer2",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}

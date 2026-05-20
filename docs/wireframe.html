@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TON AI Access — Wireframe</title>
+<!-- PATTERN: Asymmetric Editorial Split -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ──────────────────────────────────────────────────────────────────────────
+   DESIGN TOKENS — Asymmetric Editorial Split
+   Source of truth: PATTERN-asymmetric-split.md
+   Never substitute, approximate, or invent values outside this block.
+────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Layout */
+  --content-max: 1280px;
+  --section-y:   120px;
+  --gap:         48px;
+  --pad-x:       32px;
+
+  /* Grid lines */
+  --split-line:  rgba(15, 15, 15, 0.10);
+  --divider:     rgba(15, 15, 15, 0.08);
+
+  /* Colors */
+  --ink:      #0c1a2c;
+  --surface:  #f7f8fa;
+  --accent:   #1f4ed8;
+  --muted:    #6b7585;
+  --hairline: #e3e6ec;
+
+  /* Typography */
+  --font-display: 'Inter Tight', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* Shape */
+  --radius: 8px;
+
+  /* Elevated surface — white cards on #f7f8fa page background.
+     CTA spec explicitly uses #ffffff; this token captures that usage. */
+  --surface-raised: #ffffff;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ── WIREFRAME NAV (screen switcher — not part of design pattern) ────────── */
+.wf-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  background: var(--ink);
+  display: flex; align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  overflow-x: auto;
+  height: 40px;
+}
+.wf-nav__label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.18em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+  padding: 0 16px;
+  white-space: nowrap;
+  border-right: 1px solid rgba(255,255,255,0.1);
+  height: 100%;
+  display: flex; align-items: center;
+  flex-shrink: 0;
+}
+.wf-btn {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  background: none; border: none;
+  padding: 0 14px;
+  height: 100%;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 120ms, background 120ms;
+  border-right: 1px solid rgba(255,255,255,0.06);
+}
+.wf-btn:hover  { color: #fff; background: rgba(255,255,255,0.06); }
+.wf-btn.active { color: #fff; background: rgba(255,255,255,0.13); }
+
+/* ── PAGE SHELL ──────────────────────────────────────────────────────────── */
+.page {
+  position: relative;
+  min-height: 100vh;
+  padding-top: 40px; /* nav height */
+}
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* Single full-height hairline — positioned via JS to align with 1fr/2fr break */
+.split-line {
+  position: fixed;
+  top: 40px; bottom: 0;
+  width: 1px;
+  background: var(--split-line);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── TOPBAR ──────────────────────────────────────────────────────────────── */
+.topbar-wrap {
+  border-bottom: 1px solid var(--divider);
+  position: relative;
+  z-index: 10;
+  background: var(--surface);
+}
+.topbar {
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 18px var(--pad-x);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  font-weight: 500;
+}
+.wallet-pill {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: none;
+  border: 1px solid var(--hairline);
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 150ms, color 150ms;
+}
+.wallet-pill:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ── SECTION — ASYMMETRIC EDITORIAL GRID ─────────────────────────────────── */
+/* Columns: 1fr (narrow, metadata) | 2fr (wide, content) */
+.section {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  column-gap: var(--gap);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--section-y) var(--pad-x);
+  border-bottom: 1px solid var(--divider);
+}
+.section--compact { padding-top: 64px; padding-bottom: 64px; }
+
+/* Narrow column: metadata, eyebrows, captions only */
+.col-narrow { /* no body paragraphs */ }
+/* Wide column: headline, body, CTAs */
+.col-wide   { /* the voice */ }
+
+@media (max-width: 768px) {
+  .split-line { display: none; }
+  .section {
+    grid-template-columns: 1fr;
+    row-gap: 20px;
+    padding: 64px 24px;
+  }
+}
+
+/* ── TYPOGRAPHY ───────────────────────────────────────────────────────────── */
+/* Eyebrows: JetBrains Mono, uppercase, accent color */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+  display: block;
+}
+
+/* Meta labels: muted mono, narrower spacing */
+.meta {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* H1: Inter Tight, large display */
+h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw, 3.75rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+
+/* H2: Inter Tight, section heading */
+h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.625rem, 2.5vw, 2.125rem);
+  line-height: 1.08;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+/* Body: Inter, max 60ch, muted */
+.body-text {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+/* ── PRIMARY CTA — one per section ────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--ink);
+  color: var(--surface-raised);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 12px 24px;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 150ms;
+  white-space: nowrap;
+}
+.btn-primary:hover    { opacity: 0.84; }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 12px 24px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-decoration: none;
+  transition: border-color 150ms, background 150ms;
+  white-space: nowrap;
+}
+.btn-ghost:hover    { border-color: var(--ink); background: rgba(12,26,44,0.04); }
+.btn-ghost:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── NARROW COLUMN — list rows ───────────────────────────────────────────── */
+.n-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  gap: 12px;
+}
+.n-row:first-of-type { border-top: 1px solid var(--hairline); margin-top: 20px; }
+.n-row__k { color: var(--muted); }
+.n-row__v { color: var(--ink); font-weight: 500; text-align: right; }
+
+/* ── STAKING STATUS ROW ──────────────────────────────────────────────────── */
+.status-cluster {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.staked-num {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 3.5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  line-height: 1;
+}
+.staked-unit {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── BADGES ──────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  font-weight: 500;
+  border-radius: 4px;
+  line-height: 1;
+}
+.badge--ok   { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.badge--no   { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
+.badge--blue { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+
+/* ── CARD ────────────────────────────────────────────────────────────────── */
+.card {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  background: var(--surface-raised);
+  margin-top: 32px;
+}
+.card__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  display: block;
+}
+
+/* ── KEY REVEAL ──────────────────────────────────────────────────────────── */
+.key-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  background: var(--surface-raised);
+  margin-bottom: 16px;
+}
+.key-value {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  word-break: break-all;
+  flex: 1;
+}
+.key-warning {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 24px;
+}
+.key-warning__icon { font-size: 0.9rem; flex-shrink: 0; margin-top: 1px; }
+.key-warning__text {
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  color: #78350f;
+  line-height: 1.5;
+}
+
+/* ── CODE BLOCK ──────────────────────────────────────────────────────────── */
+.code-block {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  position: relative;
+  margin-bottom: 12px;
+}
+.code-block pre {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.65;
+  padding-right: 56px; /* room for copy btn */
+}
+.copy-btn {
+  position: absolute; top: 12px; right: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color 120ms, border-color 120ms;
+}
+.copy-btn:hover { color: var(--ink); border-color: var(--ink); }
+
+/* ── CLI PANEL ───────────────────────────────────────────────────────────── */
+.cli-panel {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+.cli-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
+}
+.cli-tab {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--muted);
+  border-right: 1px solid var(--hairline);
+  transition: color 120ms, background 120ms;
+}
+.cli-tab:hover  { color: var(--ink); background: rgba(12,26,44,0.03); }
+.cli-tab.active {
+  color: var(--ink);
+  background: var(--surface-raised);
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: -1px;
+}
+.cli-body { padding: 24px 28px; }
+.cli-heading {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.cli-sub { font-size: 0.875rem; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+.cli-note { font-size: 0.8125rem; color: var(--muted); line-height: 1.5; margin-top: 12px; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── STEPS (HOW IT WORKS) ────────────────────────────────────────────────── */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid var(--divider);
+}
+.step { padding-right: 32px; }
+.step + .step { padding-left: 32px; padding-right: 32px; border-left: 1px solid var(--divider); }
+.step__num {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.step__title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.step__body { font-size: 0.9375rem; color: var(--muted); line-height: 1.55; }
+
+@media (max-width: 600px) {
+  .steps { grid-template-columns: 1fr; }
+  .step + .step { border-left: none; border-top: 1px solid var(--divider); padding: 24px 0 0; margin-top: 24px; }
+}
+
+/* ── ENDPOINT / INFO GRID ────────────────────────────────────────────────── */
+.info-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 24px;
+  margin-top: 28px;
+  align-items: center;
+}
+.info-grid dt {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.info-grid dd {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+}
+
+/* ── BUTTON ROW ──────────────────────────────────────────────────────────── */
+.btn-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+/* ── LANDING — narrow column labels + values ─────────────────────────────── */
+.n-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+  display: block;
+}
+.n-val {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 18px;
+  display: block;
+}
+
+/* Accent rule — sits before H1, one per hero section */
+.h1-rule {
+  width: 28px;
+  height: 2px;
+  background: var(--accent);
+  margin-bottom: 28px;
+}
+
+/* Step numbers: use accent to signal progression */
+.step__num { color: var(--accent); }
+
+/* ── AGENT PROMPT BLOCK ──────────────────────────────────────────────────── */
+.agent-prompt {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface-raised);
+  margin-bottom: 16px;
+}
+.agent-prompt__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--hairline);
+}
+.agent-prompt__label {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.agent-prompt__body {
+  padding: 20px 24px;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.agent-prompt__body strong { color: var(--ink); font-weight: 600; }
+.agent-prompt__cmd {
+  margin: 14px 0 14px;
+  padding: 14px 18px;
+  background: var(--surface);
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  white-space: pre;
+  line-height: 1.75;
+  overflow-x: auto;
+}
+</style>
+</head>
+<body>
+
+<!-- WIREFRAME SCREEN SWITCHER -->
+<nav class="wf-nav" role="navigation" aria-label="Wireframe screens">
+  <span class="wf-nav__label">TON AI Access</span>
+  <button class="wf-btn active"  onclick="show('s-landing')">① Landing</button>
+  <button class="wf-btn"         onclick="show('s-eligible')">② Dashboard · Eligible</button>
+  <button class="wf-btn"         onclick="show('s-key-reveal')">③ Key Reveal</button>
+  <button class="wf-btn"         onclick="show('s-cli')">④ CLI Setup</button>
+  <button class="wf-btn"         onclick="show('s-key-active')">⑤ Key Active</button>
+  <button class="wf-btn"         onclick="show('s-ineligible')">⑥ Ineligible</button>
+</nav>
+
+<!-- Architectural hairline: single vertical rule from nav to page bottom -->
+<div class="split-line" aria-hidden="true"></div>
+
+<div class="page">
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 1 · LANDING                                                      -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="s-landing" class="screen active">
+
+  <!-- Topbar -->
+  <div class="topbar-wrap">
+    <div class="topbar">
+      <span class="logo">TON AI Access</span>
+    </div>
+  </div>
+
+  <!-- § Hero -->
+  <section class="section">
+    <!-- narrow: metadata spine -->
+    <aside class="col-narrow">
+      <span class="eyebrow">Tokamak Network</span>
+
+      <span class="n-lbl">Status</span>
+      <span class="n-val">Beta · 2026</span>
+
+      <span class="n-lbl">Access</span>
+      <span class="n-val">Free for TON stakers</span>
+
+      <span class="n-lbl">Minimum stake</span>
+      <span class="n-val">10 TON</span>
+
+      <span class="n-lbl">Network</span>
+      <span class="n-val">Ethereum Mainnet</span>
+    </aside>
+    <!-- wide: the argument -->
+    <div class="col-wide">
+      <div class="h1-rule"></div>
+      <h1>Your stake<br>earns you AI.</h1>
+      <p class="body-text" style="margin-bottom:48px; font-size:1.0625rem; line-height:1.65;">
+        TON stakers with 10 TON or more get a free LiteLLM API key —
+        no sign-up, no credit card. Just your wallet.
+      </p>
+      <button class="btn-primary" onclick="show('s-eligible')">
+        Connect wallet →
+      </button>
+    </div>
+  </section>
+
+  <!-- § How it works -->
+  <section class="section">
+    <aside class="col-narrow">
+      <span class="eyebrow">How it works</span>
+
+      <span class="n-lbl">Steps</span>
+      <span class="n-val">3</span>
+
+      <span class="n-lbl">Time</span>
+      <span class="n-val">~60 seconds</span>
+
+      <span class="n-lbl">Gas required</span>
+      <span class="n-val">None</span>
+
+      <span class="n-lbl">Supported wallets</span>
+      <span class="n-val" style="margin-bottom:0;">MetaMask, WalletConnect, Ledger</span>
+    </aside>
+    <div class="col-wide">
+      <p class="body-text" style="font-size:1.0625rem; line-height:1.65;">
+        Connect any EVM wallet, prove ownership with a single off-chain
+        signature, and receive your API key immediately — no transactions,
+        no waiting.
+      </p>
+      <div class="steps">
+        <div class="step">
+          <p class="step__num">01</p>
+          <p class="step__title">Connect wallet</p>
+          <p class="step__body">MetaMask, WalletConnect, or any EVM-compatible wallet.</p>
+        </div>
+        <div class="step">
+          <p class="step__num">02</p>
+          <p class="step__title">Sign a message</p>
+          <p class="step__body">One SIWE signature proves ownership. No gas, no transactions.</p>
+        </div>
+        <div class="step">
+          <p class="step__num">03</p>
+          <p class="step__title">Get your API key</p>
+          <p class="step__body">10 TON staked across any Layer2 qualifies. Key issued instantly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- § Endpoint details -->
+  <section class="section section--compact">
+    <aside class="col-narrow">
+      <span class="eyebrow">Endpoint</span>
+      <p class="meta">OpenAI-compatible<br>REST API</p>
+    </aside>
+    <div class="col-wide">
+      <dl class="info-grid" style="max-width:520px; margin-top:0;">
+        <dt>URL</dt>
+        <dd>https://api2.ai.tokamak.network</dd>
+        <dt>Model</dt>
+        <dd>qwen-3.6</dd>
+        <dt>Protocol</dt>
+        <dd>OpenAI-compatible REST</dd>
+        <dt>Auth</dt>
+        <dd>Bearer token (your LiteLLM key)</dd>
+      </dl>
+    </div>
+  </section>
+
+</div><!-- /s-landing -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 2 · DASHBOARD — ELIGIBLE, NO KEY                                 -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="s-eligible" class="screen">
+
+  <div class="topbar-wrap">
+    <div class="topbar">
+      <span class="logo">TON AI Access</span>
+      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+    </div>
+  </div>
+
+  <section class="section">
+    <!-- narrow: staking metadata + Layer2 breakdown -->
+    <aside class="col-narrow">
+      <span class="eyebrow">Staking status</span>
+      <p class="meta" style="margin-bottom:0;">Layer2 breakdown</p>
+
+      <div>
+        <div class="n-row">
+          <span class="n-row__k">tokamak1</span>
+          <span class="n-row__v">30.2 TON</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k">DSRV</span>
+          <span class="n-row__v">12.5 TON</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k">DXM Corp</span>
+          <span class="n-row__v">0 TON</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k">8 others</span>
+          <span class="n-row__v">0 TON</span>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <p class="meta" style="margin-bottom:6px;">Minimum required</p>
+        <p style="font-family:var(--font-mono); font-size:0.8125rem; color:var(--ink);">10 TON</p>
+      </div>
+    </aside>
+
+    <!-- wide: staking amount + key card -->
+    <div class="col-wide">
+      <div class="status-cluster">
+        <span class="staked-num">42.7</span>
+        <span class="staked-unit">TON staked</span>
+        <span class="badge badge--ok">Eligible</span>
+      </div>
+      <p class="body-text" style="margin-bottom:0;">
+        Staked across 2 Layer2s via SeigManager.
+      </p>
+
+      <!-- Key card — no key yet -->
+      <div class="card">
+        <span class="card__label">Your API key</span>
+        <p class="body-text" style="margin-bottom:24px; max-width:100%;">
+          No key issued yet. Issue one to access qwen-3.6 and other models
+          via the OpenAI-compatible API.
+        </p>
+        <button class="btn-primary" onclick="show('s-key-reveal')">
+          Issue API key
+        </button>
+      </div>
+
+      <!-- Endpoint quick reference -->
+      <dl class="info-grid" style="max-width:460px;">
+        <dt>Endpoint</dt>
+        <dd>https://api2.ai.tokamak.network</dd>
+        <dt>Model</dt>
+        <dd>qwen-3.6</dd>
+      </dl>
+    </div>
+  </section>
+
+</div><!-- /s-eligible -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 3 · KEY REVEAL (one-time display)                                -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="s-key-reveal" class="screen">
+
+  <div class="topbar-wrap">
+    <div class="topbar">
+      <span class="logo">TON AI Access</span>
+      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+    </div>
+  </div>
+
+  <section class="section">
+    <!-- narrow: context + key facts -->
+    <aside class="col-narrow">
+      <span class="eyebrow">API key issued</span>
+      <p class="meta" style="margin-bottom:16px;">One-time display</p>
+      <p style="font-family:var(--font-body); font-size:0.875rem; color:var(--muted); line-height:1.55; max-width:28ch;">
+        This is the only time your key will appear in full.
+        Copy it to a password manager or your shell profile before leaving.
+      </p>
+      <div style="margin-top:24px;">
+        <p class="meta" style="margin-bottom:6px;">Model</p>
+        <p style="font-family:var(--font-mono); font-size:0.8125rem; color:var(--ink);">qwen-3.6</p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="meta" style="margin-bottom:6px;">Expires</p>
+        <p style="font-family:var(--font-mono); font-size:0.8125rem; color:var(--ink);">2027-05-20</p>
+      </div>
+    </aside>
+
+    <!-- wide: key reveal + curl + actions -->
+    <div class="col-wide">
+      <h2>Save this key — it won't be shown again.</h2>
+      <p class="body-text" style="margin-bottom:28px;">
+        Once you navigate away, your key can't be recovered.
+        Use <strong style="color:var(--ink); font-weight:600;">Rotate key</strong> later to get a new one —
+        the old key will be revoked immediately.
+      </p>
+
+      <!-- Warning banner -->
+      <div class="key-warning">
+        <span class="key-warning__icon">⚠</span>
+        <span class="key-warning__text">
+          Copy and store this key now. It cannot be retrieved after you leave this page.
+          To replace it later, use <strong>Rotate key</strong> from your dashboard.
+        </span>
+      </div>
+
+      <!-- Key value -->
+      <div class="key-box">
+        <span class="key-value">sk-litellm-xK9mQpR7vT2nBfLw4JhYcD8eZ1aUoI3s</span>
+        <button class="btn-ghost" style="flex-shrink:0; font-size:0.875rem; padding:8px 18px;" onclick="this.textContent='Copied ✓'">
+          Copy
+        </button>
+      </div>
+
+      <!-- curl quickstart -->
+      <div class="code-block" style="margin-bottom:28px;">
+        <button class="copy-btn">Copy</button>
+        <pre>curl https://api2.ai.tokamak.network/v1/chat/completions \
+  -H "Authorization: Bearer sk-litellm-xK9m..." \
+  -H "Content-Type: application/json" \
+  -d '{"model":"qwen-3.6","messages":[{"role":"user","content":"Hello"}]}'</pre>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="show('s-cli')">Configure AI tools →</button>
+        <button class="btn-ghost" onclick="show('s-key-active')">I've saved my key</button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /s-key-reveal -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 4 · CLI SETUP PANEL                                              -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="s-cli" class="screen">
+
+  <div class="topbar-wrap">
+    <div class="topbar">
+      <span class="logo">TON AI Access</span>
+      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+    </div>
+  </div>
+
+  <section class="section">
+    <!-- narrow: 3-step delegation flow -->
+    <aside class="col-narrow">
+      <span class="eyebrow">Agent setup</span>
+      <p style="font-family:var(--font-body); font-size:0.875rem; color:var(--muted); line-height:1.6; max-width:26ch; margin-bottom:28px;">
+        에이전트에게 위임하면 환경 변수를 직접 편집할 필요가 없습니다.
+      </p>
+
+      <span class="n-lbl">실행 흐름</span>
+      <div>
+        <div class="n-row">
+          <span class="n-row__k" style="color:var(--accent); font-weight:600;">01</span>
+          <span class="n-row__v">지시문 복사</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k" style="color:var(--accent); font-weight:600;">02</span>
+          <span class="n-row__v">에이전트에 붙여넣기</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k" style="color:var(--accent); font-weight:600;">03</span>
+          <span class="n-row__v">스크립트 자동 실행</span>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <span class="n-lbl">스크립트 요건</span>
+        <span class="n-val" style="margin-bottom:0;">bash · curl · python3</span>
+      </div>
+    </aside>
+
+    <!-- wide: agent instruction panel -->
+    <div class="col-wide">
+      <h2>에이전트에게 설정을 맡기세요</h2>
+      <p class="body-text" style="margin-bottom:28px; font-size:1.0625rem; line-height:1.65;">
+        아래 지시문을 복사해 Claude Code나 Codex에 붙여넣으면
+        에이전트가 <code style="font-family:var(--font-mono); font-size:0.875rem; color:var(--ink);">configure-cli.sh</code>를
+        직접 실행합니다. 환경 변수를 수동으로 편집할 필요가 없습니다.
+      </p>
+
+      <div class="cli-panel">
+        <div class="cli-tabs">
+          <button class="cli-tab active" onclick="switchTab(this,'tab-agent')">에이전트 실행</button>
+          <button class="cli-tab" onclick="switchTab(this,'tab-manual')">직접 실행</button>
+        </div>
+
+        <!-- Tab: Agent instruction -->
+        <div id="tab-agent" class="cli-body tab-content active">
+          <p class="cli-heading">에이전트에게 붙여넣기</p>
+          <p class="cli-sub">Claude Code, Codex 등 어떤 AI 에이전트에나 복사·붙여넣기 하세요. 에이전트가 스크립트를 찾아 실행합니다.</p>
+
+          <div class="agent-prompt">
+            <div class="agent-prompt__header">
+              <span class="agent-prompt__label">Agent instruction — copy &amp; paste</span>
+              <button class="copy-btn" style="position:static;" onclick="copyAgentPrompt(this)">Copy</button>
+            </div>
+            <div class="agent-prompt__body" id="agent-instruction-text">
+              내 TON AI Access 설정을 도와줘. 아래 명령을 실행해서 Claude Code와 Codex에서 이 API 키를 쓸 수 있도록 환경 변수를 설정해줘.<div class="agent-prompt__cmd">TON_API_KEY="sk-litellm-xK9mQpR7vT2nBfLw4JhYcD8eZ1aUoI3s" \
+TON_MODEL="qwen-3.6" \
+bash &lt;(curl -fsSL https://ton-ai-access.vercel.app/configure-cli.sh) \
+  --non-interactive</div>
+              설정이 끝나면 <code style="font-family:var(--font-mono); font-size:0.875rem;">source ~/.zshrc</code> (또는 <code style="font-family:var(--font-mono); font-size:0.875rem;">~/.bashrc</code>)를 실행해서 현재 세션에도 적용해줘.
+            </div>
+          </div>
+
+          <p class="cli-note">
+            스크립트는 <strong style="color:var(--ink);">idempotent</strong>합니다 — 두 번 실행해도 블록이 중복되지 않습니다.
+            ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, OPENAI_API_KEY, OPENAI_BASE_URL이 자동으로 설정됩니다.
+            <a href="./agent-install-guide.md" style="color:var(--accent); text-decoration:none; margin-left:4px;">설치 가이드 →</a>
+          </p>
+        </div>
+
+        <!-- Tab: Direct execution (fallback) -->
+        <div id="tab-manual" class="cli-body tab-content">
+          <p class="cli-heading">직접 실행</p>
+          <p class="cli-sub">에이전트 없이 터미널에서 직접 실행하는 방법입니다.</p>
+          <div class="code-block">
+            <button class="copy-btn">Copy</button>
+            <pre>TON_API_KEY="sk-litellm-xK9mQpR7vT2nBfLw4JhYcD8eZ1aUoI3s" \
+TON_MODEL="qwen-3.6" \
+bash &lt;(curl -fsSL https://ton-ai-access.vercel.app/configure-cli.sh) \
+  --non-interactive</pre>
+          </div>
+          <p class="cli-note">
+            <code style="font-family:var(--font-mono);">curl</code>과
+            <code style="font-family:var(--font-mono);">python3</code>이 필요합니다.
+            두 번 실행해도 환경 변수 블록이 중복되지 않습니다.
+          </p>
+        </div>
+      </div><!-- /.cli-panel -->
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="show('s-key-active')">Done</button>
+        <button class="btn-ghost"   onclick="show('s-key-reveal')">← Back to key</button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /s-cli -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 5 · KEY ACTIVE (rotate state)                                    -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="s-key-active" class="screen">
+
+  <div class="topbar-wrap">
+    <div class="topbar">
+      <span class="logo">TON AI Access</span>
+      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+    </div>
+  </div>
+
+  <section class="section">
+    <!-- narrow: staking metadata -->
+    <aside class="col-narrow">
+      <span class="eyebrow">Staking status</span>
+      <p class="meta" style="margin-bottom:0;">Layer2 breakdown</p>
+      <div>
+        <div class="n-row">
+          <span class="n-row__k">tokamak1</span>
+          <span class="n-row__v">30.2 TON</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k">DSRV</span>
+          <span class="n-row__v">12.5 TON</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k">8 others</span>
+          <span class="n-row__v">0 TON</span>
+        </div>
+      </div>
+      <div style="margin-top:24px;">
+        <p class="meta" style="margin-bottom:6px;">Endpoint</p>
+        <p style="font-family:var(--font-mono); font-size:0.75rem; color:var(--ink); line-height:1.7; word-break:break-all;">
+          api2.ai.tokamak.network
+        </p>
+      </div>
+      <div style="margin-top:16px;">
+        <p class="meta" style="margin-bottom:6px;">Model</p>
+        <p style="font-family:var(--font-mono); font-size:0.8125rem; color:var(--ink);">qwen-3.6</p>
+      </div>
+    </aside>
+
+    <!-- wide: staking amount + active key card -->
+    <div class="col-wide">
+      <div class="status-cluster">
+        <span class="staked-num">42.7</span>
+        <span class="staked-unit">TON staked</span>
+        <span class="badge badge--ok">Eligible</span>
+      </div>
+      <p class="body-text" style="margin-bottom:0;">
+        Staked across 2 Layer2s via SeigManager.
+      </p>
+
+      <!-- Key card — active -->
+      <div class="card">
+        <span class="card__label">Your API key</span>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px;">
+          <div>
+            <h3>Active key</h3>
+            <p style="font-family:var(--font-mono); font-size:0.8125rem; color:var(--muted);">
+              Ends in …a3f8 · Issued 2026-05-19
+            </p>
+          </div>
+          <span class="badge badge--ok">Active</span>
+        </div>
+        <p class="body-text" style="margin-bottom:24px; max-width:100%;">
+          Lost your key? Rotate to revoke the current one and get a new one.
+          The new key is shown once — save it immediately.
+        </p>
+        <button class="btn-ghost" onclick="show('s-key-reveal')">Rotate key</button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /s-key-active -->
+
+
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<!-- SCREEN 6 · INELIGIBLE                                                   -->
+<!-- ═══════════════════════════════════════════════════════════════════════ -->
+<div id="s-ineligible" class="screen">
+
+  <div class="topbar-wrap">
+    <div class="topbar">
+      <span class="logo">TON AI Access</span>
+      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+    </div>
+  </div>
+
+  <section class="section">
+    <!-- narrow: shortfall calculation -->
+    <aside class="col-narrow">
+      <span class="eyebrow">Staking status</span>
+      <div>
+        <div class="n-row">
+          <span class="n-row__k">Current stake</span>
+          <span class="n-row__v">3.2 TON</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k">Required</span>
+          <span class="n-row__v">10 TON</span>
+        </div>
+        <div class="n-row">
+          <span class="n-row__k">Shortfall</span>
+          <span class="n-row__v" style="color:#9f1239;">6.8 TON</span>
+        </div>
+      </div>
+      <div style="margin-top:24px;">
+        <p class="meta" style="margin-bottom:6px;">Eligible Layer2s</p>
+        <p style="font-family:var(--font-mono); font-size:0.75rem; color:var(--muted); line-height:1.8;">
+          tokamak1<br>DSRV<br>DXM Corp<br>+ 7 more
+        </p>
+      </div>
+    </aside>
+
+    <!-- wide: explanation + action -->
+    <div class="col-wide">
+      <div class="status-cluster">
+        <span class="staked-num">3.2</span>
+        <span class="staked-unit">TON staked</span>
+        <span class="badge badge--no">Not eligible</span>
+      </div>
+      <p class="body-text" style="margin-bottom:0;">
+        You need at least <strong style="color:var(--ink); font-weight:600;">10 TON</strong> staked
+        across any Layer2 on Tokamak Network to receive an API key.
+        You're <strong style="color:var(--ink); font-weight:600;">6.8 TON</strong> short.
+      </p>
+
+      <!-- Action card -->
+      <div class="card">
+        <span class="card__label">Your API key</span>
+        <p class="body-text" style="margin-bottom:24px; max-width:100%;">
+          Stake at least 10 TON across any Layer2 on Tokamak Network,
+          then return here to issue your key. Staking changes are
+          reflected within 60 seconds.
+        </p>
+        <div class="btn-row" style="margin-top:0;">
+          <a href="https://tokamak.network/staking" class="btn-primary" target="_blank">
+            Stake on Tokamak →
+          </a>
+          <button class="btn-ghost" disabled>Issue API key</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div><!-- /s-ineligible -->
+
+</div><!-- /.page -->
+
+<script>
+/* ── Screen switcher ──────────────────────────────────────────────────── */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.wf-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.wf-btn').forEach(b => {
+    if (b.getAttribute('onclick') === `show('${id}')`) b.classList.add('active');
+  });
+  window.scrollTo(0, 0);
+}
+
+/* ── CLI tab switcher ─────────────────────────────────────────────────── */
+function switchTab(btn, tabId) {
+  const panel = btn.closest('.cli-panel');
+  panel.querySelectorAll('.cli-tab').forEach(t => t.classList.remove('active'));
+  panel.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+/* ── Copy buttons ─────────────────────────────────────────────────────── */
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('copy-btn')) return;
+  const pre = e.target.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+    const orig = e.target.textContent;
+    e.target.textContent = 'Copied ✓';
+    setTimeout(() => e.target.textContent = orig, 1800);
+  });
+});
+
+/* ── Hairline positioning ─────────────────────────────────────────────── */
+/* Aligns the fixed split-line with the 1fr/2fr column boundary.          */
+/* Section grid: max-width 1280px, padding 32px, gap 48px                 */
+function positionHairline() {
+  const vw          = window.innerWidth;
+  const contentW    = Math.min(vw, 1280);
+  const contentLeft = (vw - contentW) / 2 + 32;          /* left padding  */
+  const innerW      = contentW - 64;                      /* minus 2×32px  */
+  /* 1fr 2fr with 48px gap → col1 = (innerW - 48) / 3    */
+  const col1W       = (innerW - 48) / 3;
+  const lineX       = contentLeft + col1W + 24;           /* center of gap */
+  document.querySelector('.split-line').style.left = lineX + 'px';
+}
+positionHairline();
+window.addEventListener('resize', positionHairline);
+</script>
+</body>
+</html>

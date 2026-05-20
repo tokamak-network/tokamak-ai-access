@@ -1,0 +1,104 @@
+{
+  "_meta": {
+    "contract": "DepositManagerV1_1",
+    "source": "https://github.com/tokamak-network/ton-staking-v2/blob/ton-staking-v2/docs/deployed-addresses-mainnet.md",
+    "addresses": {
+      "mainnet": {
+        "impl":  "0x74bC3031b9369e6b898e82784106257D4D37Eac5",
+        "proxy": "0x0b58ca72b12f01fc05f8f252e226f3e2089bd00e"
+      },
+      "sepolia": {
+        "impl":  "0xfd0c0AA6505125eFab34A2195F1b9C99AFE8fB06",
+        "proxy": "0x90ffcc7F168DceDBEF1Cb6c6eB00cA73F922956F"
+      }
+    },
+    "verified_topics": {
+      "Deposited(address,address,uint256)":           "0x8752a472e571a816aea92eec8dae9baf628e840f4929fbcc2d155e6233ff68a7",
+      "WithdrawalRequested(address,address,uint256)": "0x04c56a409d50971e45c5a2d96e5d557d2b0f1d66d40f14b141e4c958b0f39b32",
+      "WithdrawalProcessed(address,address,uint256)": "0xcd1fce47d5ad89dd70b04c75bd6bdb8114d4d4ff7b4393f9fb5937e733ba9582"
+    },
+    "note": "topic0 hashes confirmed via keccak256('EventSig'). Snapshot script uses Deposited topic0 for Phase 1 log scan."
+  },
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true,  "internalType": "address", "name": "layer2",  "type": "address" },
+        { "indexed": true,  "internalType": "address", "name": "account", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "amount",  "type": "uint256" }
+      ],
+      "name": "Deposited",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true,  "internalType": "address", "name": "layer2",  "type": "address" },
+        { "indexed": true,  "internalType": "address", "name": "account", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "amount",  "type": "uint256" }
+      ],
+      "name": "WithdrawalRequested",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        { "indexed": true,  "internalType": "address", "name": "layer2",  "type": "address" },
+        { "indexed": true,  "internalType": "address", "name": "account", "type": "address" },
+        { "indexed": false, "internalType": "uint256", "name": "amount",  "type": "uint256" }
+      ],
+      "name": "WithdrawalProcessed",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2", "type": "address" },
+        { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      ],
+      "name": "deposit",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2", "type": "address" },
+        { "internalType": "uint256", "name": "amount", "type": "uint256" }
+      ],
+      "name": "requestWithdrawal",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2",     "type": "address" },
+        { "internalType": "bool",    "name": "receiveTON", "type": "bool" }
+      ],
+      "name": "processRequest",
+      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2",  "type": "address" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "pendingUnstaked",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2",  "type": "address" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "pendingUnstakedRequest",
+      "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "_meta": {
+    "contract": "SeigManagerV1_3",
+    "source": "https://github.com/tokamak-network/ton-staking-v2/blob/ton-staking-v2/docs/deployed-addresses-mainnet.md",
+    "addresses": {
+      "mainnet": {
+        "impl":  "0xce18C6F84F10881eA47A43AF7311A29bb116F628",
+        "proxy": "0x0b55a0f463b6defb81c6063973763951712d0e5f"
+      },
+      "sepolia": {
+        "impl":  "0x8C29A0C04a6A3dfee84b602fA13CD4A5a764B3dA",
+        "proxy": "0x2320542ae933FbAdf8f5B97cA348c7CeDA90fAd7"
+      }
+    },
+    "verified_selectors": {
+      "stakeOf(address,address)": "0xce4cb876",
+      "totalStakedAmount()":      "0x567e98f9"
+    },
+    "wton_decimals": 27,
+    "note": "Always call through the Proxy address. stakeOf returns WTON in ray (1e27). Divide by 1e9 to get TON (1e18)."
+  },
+  "abi": [
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2",  "type": "address" },
+        { "internalType": "address", "name": "account", "type": "address" }
+      ],
+      "name": "stakeOf",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalStakedAmount",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "layer2", "type": "address" }
+      ],
+      "name": "totalStakedAmountOnLayer2",
+      "outputs": [
+        { "internalType": "uint256", "name": "", "type": "uint256" }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "wton",
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "depositManager",
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "layer2Registry",
+      "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}

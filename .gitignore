@@ -1,0 +1,24 @@
+# deps
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+
+# env — never commit real secrets
+.env
+.env.local
+.env.*.local
+
+# Snapshot output — may contain wallet addresses; keep locally
+data/eligible_holders.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel
