@@ -25,14 +25,14 @@ function CliSetupPanel({ apiKey }: { apiKey: string }) {
   const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
 
-  const agentInstruction = `내 TON AI Access 설정을 도와줘. 아래 명령을 실행해서 Claude Code와 Codex에서 이 API 키를 쓸 수 있도록 환경 변수를 설정해줘.
+  const agentInstruction = `Help me set up TON AI Access. Run the command below to configure my environment variables so I can use this API key with Claude Code and Codex.
 
 TON_API_KEY="${apiKey}" \\
 TON_MODEL="qwen-3.6" \\
 bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \\
   --non-interactive
 
-설정이 끝나면 source ~/.zshrc (또는 ~/.bashrc)를 실행해서 현재 세션에도 적용해줘.`;
+Once it's done, run source ~/.zshrc (or ~/.bashrc) to apply the changes to the current session.`;
 
   const directCommand = `TON_API_KEY="${apiKey}" \\
 TON_MODEL="qwen-3.6" \\
@@ -66,18 +66,18 @@ bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \\
     <div style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius)", overflow: "hidden" }}>
       {/* Tab bar */}
       <div style={{ display: "flex", borderBottom: "1px solid var(--hairline)" }}>
-        <button style={tabStyle(tab === "agent")} onClick={() => setTab("agent")}>에이전트 실행</button>
-        <button style={tabStyle(tab === "direct")} onClick={() => setTab("direct")}>직접 실행</button>
+        <button style={tabStyle(tab === "agent")} onClick={() => setTab("agent")}>Agent Setup</button>
+        <button style={tabStyle(tab === "direct")} onClick={() => setTab("direct")}>Direct</button>
       </div>
       {/* Body */}
       <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
         {tab === "agent" ? (
           <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
-            아래 지시문을 복사해서 Claude, Codex 등 AI 에이전트에 붙여넣으세요.
+            Copy and paste this into Claude Code, Codex, or any AI agent. The agent will find and run the script automatically.
           </p>
         ) : (
           <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
-            터미널에 직접 붙여넣어 실행합니다.
+            Paste this directly into your terminal to configure your environment without an agent.
           </p>
         )}
         <pre style={{
@@ -207,9 +207,11 @@ export default function DashboardPage() {
                 <span className="n-val">{balance.totalStakedTON} TON</span>
                 <span className="n-lbl">Minimum</span>
                 <span className="n-val">{balance.minTon} TON</span>
-                <span className="n-lbl">Eligibility</span>
-                <span className="n-val" style={{ color: balance.eligible ? "#16a34a" : "#dc2626" }}>
-                  {balance.eligible ? "Eligible ✓" : "Not eligible ✗"}
+                <span className="n-lbl">Status</span>
+                <span className="n-val" style={{ marginBottom: "18px" }}>
+                  <span className={`badge ${balance.eligible ? "badge--ok" : "badge--no"}`}>
+                    {balance.eligible ? "Eligible" : "Not eligible"}
+                  </span>
                 </span>
                 <span className="n-lbl">Network</span>
                 <span className="n-val" style={{ marginBottom: 0 }}>Ethereum Mainnet</span>
@@ -238,41 +240,82 @@ export default function DashboardPage() {
 
             {!loading && balance && !balance.eligible && (
               <>
-                <h2 className="section-heading">스테이킹이 부족합니다.</h2>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.25rem, 3.5vw, 3rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1 }}>
+                    {balance.totalStakedTON}
+                  </span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)" }}>
+                    TON staked
+                  </span>
+                  <span className="badge badge--no">Not eligible</span>
+                </div>
                 <p className="body-lead">
-                  API 키를 받으려면 최소 <strong style={{ color: "var(--ink)" }}>{balance.minTon} TON</strong>이 스테이킹되어 있어야 합니다.
-                  현재 스테이킹: <strong style={{ color: "var(--ink)" }}>{balance.totalStakedTON} TON</strong>
+                  You need at least <strong style={{ color: "var(--ink)" }}>{balance.minTon} TON</strong> staked
+                  across any Layer2 on Tokamak Network to receive an API key.
+                  You&apos;re <strong style={{ color: "var(--ink)" }}>{(balance.minTon - parseFloat(balance.totalStakedTON)).toFixed(1)} TON</strong> short.
                 </p>
                 <a
                   href="https://tokamak.network/staking"
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Stake on Tokamak (opens in new tab)"
                   className="btn-primary"
                 >
-                  Stake at tokamak.network →
+                  Stake on Tokamak →
                 </a>
               </>
             )}
 
             {!loading && balance?.eligible && !oneTimeKey && (
               <>
-                <h2 className="section-heading">
-                  {keyData?.hasActiveKey ? "API 키가 있습니다." : "API 키를 발급받으세요."}
-                </h2>
-                <p className="body-lead">
-                  {keyData?.hasActiveKey
-                    ? `활성 키: …${keyData.lastFour}${keyData.createdAt ? ` · ${new Date(keyData.createdAt).toLocaleDateString()}` : ""}`
-                    : "스테이킹이 확인됐습니다. 아래 버튼으로 LiteLLM API 키를 발급받으세요."}
+                {/* Staking amount + badge */}
+                <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.25rem, 3.5vw, 3rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1 }}>
+                    {balance?.totalStakedTON}
+                  </span>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)" }}>
+                    TON staked
+                  </span>
+                  <span className="badge badge--ok">Eligible</span>
+                </div>
+                <p style={{ fontSize: "0.9375rem", color: "var(--muted)", marginBottom: "32px", lineHeight: 1.6 }}>
+                  Staked across Tokamak Layer2s via SeigManager.
                 </p>
-                {keyData?.hasActiveKey ? (
-                  <button className="btn-secondary" onClick={rotateKey} disabled={actionLoading}>
-                    {actionLoading ? "Rotating…" : "Rotate API Key"}
-                  </button>
-                ) : (
-                  <button className="btn-primary" onClick={issueKey} disabled={actionLoading}>
-                    {actionLoading ? "Issuing…" : "Issue API Key →"}
-                  </button>
-                )}
+
+                {/* Key card */}
+                <div className="card">
+                  <span className="card__label">Your API key</span>
+                  {keyData?.hasActiveKey ? (
+                    <>
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", marginBottom: "12px" }}>
+                        <div>
+                          <p style={{ fontFamily: "var(--font-display)", fontSize: "1.0625rem", fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>Active key</p>
+                          <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--muted)" }}>
+                            Ends in …{keyData.lastFour}{keyData.createdAt ? ` · Issued ${new Date(keyData.createdAt).toLocaleDateString()}` : ""}
+                          </p>
+                        </div>
+                        <span className="badge badge--ok">Active</span>
+                      </div>
+                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "24px" }}>
+                        Lost your key? Rotate to revoke the current one and get a new one.
+                        The new key is shown once — save it immediately.
+                      </p>
+                      <button className="btn-secondary" onClick={rotateKey} disabled={actionLoading}>
+                        {actionLoading ? "Rotating…" : "Rotate key"}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "24px" }}>
+                        No key issued yet. Issue one to access qwen-3.6 and other models
+                        via the OpenAI-compatible API.
+                      </p>
+                      <button className="btn-primary" onClick={issueKey} disabled={actionLoading}>
+                        {actionLoading ? "Issuing…" : "Issue API key →"}
+                      </button>
+                    </>
+                  )}
+                </div>
               </>
             )}
 
@@ -280,10 +323,20 @@ export default function DashboardPage() {
             {oneTimeKey && (
               <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                 <div>
-                  <h2 className="section-heading">키가 발급됐습니다.</h2>
+                  <h2 className="section-heading">Save this key — it won&apos;t be shown again.</h2>
                   <p className="body-lead" style={{ marginBottom: "20px" }}>
-                    이 키는 지금 한 번만 표시됩니다. 반드시 저장하세요.
+                    Once you navigate away, your key can&apos;t be recovered.
+                    Use <strong style={{ color: "var(--ink)" }}>Rotate key</strong> later to get a new one —
+                    the old key will be revoked immediately.
                   </p>
+                  {/* Warning banner */}
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "var(--radius)", padding: "14px 18px", marginBottom: "20px" }}>
+                    <span aria-hidden="true" style={{ fontSize: "0.9rem", flexShrink: 0, marginTop: "1px" }}>⚠</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: "0.875rem", color: "#78350f", lineHeight: 1.5 }}>
+                      Copy and store this key now. It cannot be retrieved after you leave this page.
+                      To replace it later, use <strong>Rotate key</strong> from your dashboard.
+                    </span>
+                  </div>
                   <div style={{
                     background: "var(--surface-raised)",
                     border: "1px solid #fde68a",
@@ -311,7 +364,11 @@ export default function DashboardPage() {
 
                 {/* CLI setup */}
                 <div>
-                  <span className="eyebrow" style={{ marginBottom: "16px" }}>CLI Setup</span>
+                  <span className="eyebrow">Configure AI tools</span>
+                  <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "20px", maxWidth: "60ch" }}>
+                    Paste the instruction below into Claude Code, Codex, or any AI agent
+                    to configure your environment automatically.
+                  </p>
                   <CliSetupPanel apiKey={oneTimeKey} />
                 </div>
               </div>

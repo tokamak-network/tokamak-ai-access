@@ -85,11 +85,11 @@ export default function LandingPage() {
           <div>
             <div className="h1-rule" />
             <h1 className="display">
-              Stake TON.<br />Access AI.
+              Your stake<br />earns you AI.
             </h1>
             <p className="body-lead">
-              TON 스테이커는 LiteLLM API 키를 무료로 받습니다.
-              지갑을 연결하고, 서명하고, 키를 받으세요. 가스비 없음.
+              TON stakers with 10 TON or more get a free LiteLLM API key —
+              no sign-up, no credit card. Just your wallet.
             </p>
 
             {!isConnected ? (
@@ -136,7 +136,11 @@ export default function LandingPage() {
           </aside>
 
           <div>
-            <h2 className="section-heading">세 단계로 끝납니다.</h2>
+            <p className="body-lead" style={{ marginBottom: "48px" }}>
+              Connect any EVM wallet, prove ownership with a single off-chain
+              signature, and receive your API key immediately — no transactions,
+              no waiting.
+            </p>
             <ol style={{
               listStyle: "none",
               display: "flex",
@@ -145,9 +149,9 @@ export default function LandingPage() {
               marginBottom: "40px",
             }}>
               {[
-                ["01", "지갑 연결", "MetaMask 또는 다른 EVM 지갑을 연결합니다."],
-                ["02", "서명", "SIWE 메시지에 서명합니다. 가스비가 없고 온체인 트랜잭션도 아닙니다."],
-                ["03", "키 수령", "10 TON 이상 스테이킹된 경우 LiteLLM API 키가 즉시 발급됩니다."],
+                ["01", "Connect wallet", "MetaMask, WalletConnect, or any EVM-compatible wallet."],
+                ["02", "Sign a message", "One SIWE signature proves ownership. No gas, no transactions."],
+                ["03", "Get your API key", "10 TON staked across any Layer2 qualifies. Key issued instantly."],
               ].map(([num, title, desc]) => (
                 <li key={num} style={{ display: "flex", gap: "20px" }}>
                   <span style={{
