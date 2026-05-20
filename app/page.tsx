@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
 import { useSiwe } from "@/lib/hooks/useSiwe";
 
 // Inlined at build time: 10 in dev (.env.local), 200 in production (.env.production)
@@ -24,8 +24,11 @@ export default function LandingPage() {
   const { disconnect } = useDisconnect();
   const { status: siweStatus, error: siweError, signIn } = useSiwe();
 
-  const primaryConnector =
-    connectors.find((c) => c.name === "MetaMask") ?? connectors[0];
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (isConnected) setModalOpen(false);
+  }, [isConnected]);
 
   const isSiweLoading =
     siweStatus === "fetching-nonce" ||
@@ -96,13 +99,22 @@ export default function LandingPage() {
             </p>
 
             {!isConnected ? (
-              <button
-                className="btn-primary"
-                onClick={() => primaryConnector && connect({ connector: primaryConnector })}
-                disabled={isConnecting || !primaryConnector}
-              >
-                {isConnecting ? "Connecting…" : "Connect Wallet →"}
-              </button>
+              <>
+                <button
+                  className="btn-primary"
+                  onClick={() => setModalOpen(true)}
+                >
+                  Connect Wallet →
+                </button>
+                {modalOpen && (
+                  <WalletModal
+                    connectors={connectors}
+                    isPending={isConnecting}
+                    onConnect={(c) => connect({ connector: c })}
+                    onClose={() => setModalOpen(false)}
+                  />
+                )}
+              </>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
                 <button
@@ -134,7 +146,7 @@ export default function LandingPage() {
             <span className="n-val">None</span>
             <span className="n-lbl">Supported wallets</span>
             <span className="n-val" style={{ marginBottom: 0 }}>
-              MetaMask, WalletConnect, Ledger
+              MetaMask, OKX Wallet, Browser Wallet
             </span>
           </aside>
 
@@ -218,6 +230,137 @@ export default function LandingPage() {
         </section>
       </main>
     </>
+  );
+}
+
+const WALLET_ICONS: Record<string, string> = {
+  MetaMask: "🦊",
+  "OKX Wallet": "⭕",
+};
+
+function WalletModal({
+  connectors,
+  isPending,
+  onConnect,
+  onClose,
+}: {
+  connectors: readonly Connector[];
+  isPending: boolean;
+  onConnect: (c: Connector) => void;
+  onClose: () => void;
+}) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const [connecting, setConnecting] = useState<string | null>(null);
+
+  function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
+    if (e.target === overlayRef.current) onClose();
+  }
+
+  async function handleConnect(c: Connector) {
+    setConnecting(c.id);
+    onConnect(c);
+  }
+
+  const seen = new Set<string>();
+  const unique = connectors.filter((c) => {
+    if (seen.has(c.name)) return false;
+    seen.add(c.name);
+    return true;
+  });
+
+  return (
+    <div
+      ref={overlayRef}
+      onClick={handleOverlayClick}
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(12,26,44,0.45)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+      }}
+    >
+      <div
+        style={{
+          width: 360,
+          background: "var(--surface-raised)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "var(--radius)",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            padding: "16px 20px",
+            borderBottom: "1px solid var(--hairline)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span style={{ fontWeight: 600, color: "var(--ink)", fontSize: "0.9375rem" }}>
+            Connect Wallet
+          </span>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: "var(--muted)",
+              fontSize: "1.125rem",
+              lineHeight: 1,
+              padding: "0 2px",
+            }}
+          >
+            ×
+          </button>
+        </div>
+        <div style={{ padding: "8px 0" }}>
+          {unique.map((c) => {
+            const isConnecting = isPending && connecting === c.id;
+            const icon = WALLET_ICONS[c.name] ?? "🔗";
+            return (
+              <button
+                key={c.id}
+                onClick={() => handleConnect(c)}
+                disabled={isPending}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  padding: "14px 20px",
+                  background: "none",
+                  border: "none",
+                  cursor: isPending ? "not-allowed" : "pointer",
+                  textAlign: "left",
+                  color: "var(--ink)",
+                  opacity: isPending && !isConnecting ? 0.45 : 1,
+                  transition: "background 0.1s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isPending) (e.currentTarget as HTMLButtonElement).style.background = "var(--hairline)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "none";
+                }}
+              >
+                <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>{icon}</span>
+                <span style={{ fontSize: "0.9375rem", fontWeight: 500 }}>{c.name}</span>
+                {isConnecting && (
+                  <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "var(--muted)" }}>
+                    Connecting…
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
