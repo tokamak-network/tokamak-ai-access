@@ -50,14 +50,14 @@ function CliSetupPanel({ apiKey }: { apiKey: string }) {
 
 TON_API_KEY="${apiKey}" \\
 TON_MODEL="qwen-3.6" \\
-bash <(curl -fsSL https://ton-ai-access.vercel.app/configure-cli.sh) \\
+bash <(curl -fsSL https://tokamak-ai-access-theo-3096s-projects.vercel.app/configure-cli.sh) \\
   --non-interactive
 
 설정이 끝나면 source ~/.zshrc (또는 ~/.bashrc)를 실행해서 현재 세션에도 적용해줘.`;
 
   const directCommand = `TON_API_KEY="${apiKey}" \\
 TON_MODEL="qwen-3.6" \\
-bash <(curl -fsSL https://ton-ai-access.vercel.app/configure-cli.sh) \\
+bash <(curl -fsSL https://tokamak-ai-access-theo-3096s-projects.vercel.app/configure-cli.sh) \\
   --non-interactive`;
 
   const content = tab === "agent" ? agentInstruction : directCommand;
