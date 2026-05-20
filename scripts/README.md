@@ -1,3 +1,9 @@
+# Scripts
+
+> **주의**: `configure-cli.sh`를 수정할 때는 `public/configure-cli.sh`도 동일하게 갱신해야 합니다. `public/` 파일이 Vercel에서 그대로 서빙됩니다.
+
+---
+
 # Eligible Stakers Snapshot
 
 ## Prerequisites

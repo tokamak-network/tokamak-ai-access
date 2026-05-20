@@ -72,9 +72,10 @@ API 키 발급 후 대시보드에서 에이전트 실행 지시문을 복사해
 ```bash
 TON_API_KEY="sk-litellm-..." \
 TON_MODEL="qwen-3.6" \
-bash <(curl -fsSL https://ton-ai-access.vercel.app/configure-cli.sh) \
-  --non-interactive
-source ~/.zshrc   # 현재 세션 적용
+bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
+  --non-interactive --target claude   # or --target codex
+# 새 터미널(또는 세션 종료 후)에서 실행:
+#   source ~/.zshrc
 ```
 
 자세한 내용은 `docs/agent-install-guide.md` 참조.

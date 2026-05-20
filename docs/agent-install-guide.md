@@ -17,51 +17,44 @@
 ---
 
 ```
-당신은 TON AI Access 설치 에이전트입니다. 아래 지시를 순서대로 실행하세요.
+Please set up TON AI Access on this machine.
 
-목표: TON AI Access API를 Claude Code와 Codex에서 바로 사용할 수 있도록
-      환경 변수와 설정 파일을 자동으로 구성합니다.
+Step 0 — [HUMAN STEP, do before running]
+  Replace [YOUR_API_KEY] in the commands below with the key from the dashboard.
 
-──────────────────────────────────────────────────
-[1] 사용자에게 다음을 출력하세요:
-    "TON AI Access 설치를 시작합니다.
-     발급받은 API 키를 입력해 주세요. (sk-litellm-... 형식)"
+Step 1 — Preview the changes first (no files are modified):
 
-[2] 사용자가 API 키를 입력하면:
-    - API_KEY 변수에 저장
-    - "사용 가능한 모델을 불러옵니다..." 출력
-    - 다음 명령으로 모델 목록 탐색:
-      curl -s https://api2.ai.tokamak.network/v1/models \
-        -H "Authorization: Bearer $API_KEY" | \
-        python3 -c "
-      import sys,json
-      d=json.load(sys.stdin)
-      models=[m['id'] for m in d.get('data',[])]
-      print('사용 가능한 모델:')
-      for i,m in enumerate(models,1): print(f'  {i}. {m}')
-      "
-    - 탐색 실패 시 기본값 qwen-3.6 사용
+  TON_API_KEY="[YOUR_API_KEY]" \
+  TON_MODEL="<MODEL>" \
+  bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
+    --non-interactive --target <claude|codex> --dry-run
 
-[3] 모델 선택:
-    "사용할 모델 번호를 입력하거나 Enter → qwen-3.6 (기본)"
-    선택을 MODEL 변수에 저장
+  Choose exactly one --target:
+    --target claude   (if you are running Claude Code right now)
+    --target codex    (if you are running Codex CLI right now)
 
-[4] 다음 bash 명령을 실행하세요 ($API_KEY, $MODEL 대입):
-    TON_API_KEY="$API_KEY" \
-    TON_MODEL="$MODEL" \
-    bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
-      --non-interactive
+Step 2 — If the preview looks correct, apply it (same command, remove --dry-run):
 
-[5] 실행 후 현재 세션에 적용:
-    source ~/.zshrc   # zsh 사용 시
-    source ~/.bashrc  # bash 사용 시
+  TON_API_KEY="[YOUR_API_KEY]" \
+  TON_MODEL="<MODEL>" \
+  bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
+    --non-interactive --target <claude|codex>
 
-[6] 검증:
-    echo $OPENAI_BASE_URL    # → https://api2.ai.tokamak.network
-    echo $TON_AI_MODEL       # → 선택한 모델명
+Step 3 — Verify by reading the config files
+  (do NOT echo env vars — they only appear after shell reload):
 
-완료 후: "설정이 완료되었습니다! $MODEL 모델로 TON AI Access를 사용할 수 있습니다." 출력
-──────────────────────────────────────────────────
+  [Claude Code]
+    cat ~/.claude/settings.json
+    # → should contain an "env" block with ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_MODEL
+
+  [Codex CLI]
+    cat ~/.codex/config.toml
+    # → should show model = "<MODEL>" and a [model_providers.tokamak] block
+
+Step 4 — [HUMAN STEP, do AFTER this session ends]
+  Reload your shell and restart the CLI so the new env vars take effect:
+    source ~/.zshrc   # or: source ~/.bashrc
+    # then start a fresh Claude Code / Codex session
 ```
 
 ---
@@ -103,18 +96,21 @@ FIXED:          BASE_URL  → https://api2.ai.tokamak.network
 아래 명령 하나로 Step 2–4를 모두 수행한다.
 
 ```bash
-# 저장소 클론 없이 원격 실행
+# 1) 미리보기 — 실제 파일 변경 없음
 TON_API_KEY="<API_KEY>" \
 TON_MODEL="<MODEL>" \
-TON_BASE_URL="https://api2.ai.tokamak.network" \
-bash <(curl -fsSL https://<DEPLOYED_URL>/configure-cli.sh) --non-interactive
+bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
+  --non-interactive --target <claude|codex> --dry-run
+
+# 2) 미리보기 확인 후 적용 (--dry-run 제거)
+TON_API_KEY="<API_KEY>" \
+TON_MODEL="<MODEL>" \
+bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
+  --non-interactive --target <claude|codex>
 ```
 
-> 저장소가 이미 로컬에 있는 경우:
-> ```bash
-> TON_API_KEY="<API_KEY>" TON_MODEL="<MODEL>" \
->   bash scripts/configure-cli.sh --non-interactive
-> ```
+> `--target`에는 현재 실행 중인 CLI를 지정합니다: `claude` 또는 `codex`.  
+> 저장소가 이미 로컬에 있는 경우: `bash scripts/configure-cli.sh --non-interactive --target <claude|codex>`.
 
 ### VERIFY (Step 1)
 ```bash
@@ -148,11 +144,9 @@ source "$PROFILE_FILE"
 
 ### VERIFY (Step 2)
 ```bash
-echo $ANTHROPIC_BASE_URL
-# 기대 출력: https://api2.ai.tokamak.network
-
-echo $OPENAI_BASE_URL
-# 기대 출력: https://api2.ai.tokamak.network
+# env vars는 새 셸에서만 보임 — 파일로 검증
+grep "TON AI Access" ~/.zshrc || grep "TON AI Access" ~/.bashrc
+# 기대 출력: # TON AI Access — auto-configured 블록이 존재
 ```
 
 ---
@@ -226,9 +220,11 @@ cat > ~/.codex/config.toml <<TOML
 # TON AI Access — auto-configured
 model = "<MODEL>"
 
-[provider.openai]
-api_key  = "<API_KEY>"
-base_url = "https://api2.ai.tokamak.network"
+[model_providers.tokamak]
+name         = "TON AI Access"
+api_key      = "<API_KEY>"
+base_url     = "https://api2.ai.tokamak.network/v1"
+wire_api     = "openai"
 TOML
 ```
 
@@ -300,7 +296,8 @@ codex "respond with: ok"
 | `python3: command not found` | Python 미설치 | `brew install python3` |
 | `claude: command not found` | Claude Code 미설치 | https://claude.ai/download |
 | `codex: command not found` | Codex CLI 미설치 | `npm install -g @openai/codex` |
-| 환경변수가 새 터미널에서 사라짐 | `source` 안 함 | `source ~/.zshrc` 또는 터미널 재시작 |
+| 환경변수가 에이전트 세션 내에서 안 보임 | Bash 툴 호출마다 새 subprocess — env 비휘발 | **[HUMAN STEP]** 세션 종료 후 `source ~/.zshrc` 또는 새 터미널 시작 |
+| 환경변수가 새 터미널에서 사라짐 | `source` 안 함 | **[HUMAN STEP]** `source ~/.zshrc` 또는 터미널 재시작 |
 
 ---
 
