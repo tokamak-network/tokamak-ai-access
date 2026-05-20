@@ -37,9 +37,10 @@ function StakePanel({
   const [layer2, setLayer2] = useState<`0x${string}`>(DEFAULT_LAYER2);
 
   const isLoading = status === "pending" || status === "confirming";
+  const balanceReady = !tonBalance.isLoading && !tonBalance.isError;
   const walletTON = parseFloat(tonBalance.formatted);
   const inputAmount = parseFloat(amount) || 0;
-  const hasEnough = inputAmount > 0 && walletTON >= inputAmount;
+  const hasEnough = balanceReady && inputAmount > 0 && walletTON >= inputAmount;
 
   // Auto-notify parent on success
   useEffect(() => {
@@ -178,7 +179,12 @@ function StakePanel({
       </div>
 
       {/* Validation hint */}
-      {amount && !hasEnough && (
+      {tonBalance.isError && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>
+          Could not read wallet balance — check your network connection and refresh.
+        </p>
+      )}
+      {amount && balanceReady && !hasEnough && (
         <p style={{ fontSize: "0.8125rem", color: "#dc2626" }}>
           {inputAmount <= 0
             ? "Enter an amount greater than 0."

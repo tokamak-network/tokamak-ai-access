@@ -62,9 +62,11 @@ export const LAYER2_OPTIONS: { label: string; address: `0x${string}` }[] = [
 export interface TonBalanceResult {
   /** Raw balance in 18-decimal wei */
   rawBalance: bigint | undefined;
-  /** Human-readable string with 4 decimal places */
+  /** Human-readable string with 4 decimal places; "0.0000" only when read succeeds and balance is zero */
   formatted: string;
   isLoading: boolean;
+  /** True when the RPC read failed — caller should not treat this as a real zero balance */
+  isError: boolean;
   refetch: () => void;
 }
 
@@ -73,7 +75,7 @@ export interface TonBalanceResult {
  * Staked amount comes from the server-side /api/staking/balance endpoint.
  */
 export function useTonBalance(address?: `0x${string}`): TonBalanceResult {
-  const { data, isLoading, refetch } = useReadContract({
+  const { data, isLoading, isError, refetch } = useReadContract({
     address: TON_ADDRESS,
     abi: tonAbi.abi,
     functionName: "balanceOf",
@@ -88,6 +90,7 @@ export function useTonBalance(address?: `0x${string}`): TonBalanceResult {
       ? Number(formatUnits(raw, 18)).toFixed(4)
       : "0.0000",
     isLoading,
+    isError,
     refetch,
   };
 }

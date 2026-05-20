@@ -6,12 +6,18 @@
  *   2. OKX Wallet    — injected({ target }) targeting window.okxwallet
  *   3. Browser Wallet — generic injected() fallback for any other EVM wallet
  *
+ * Transport: uses NEXT_PUBLIC_RPC_URL when set, falling back to reliable
+ * public endpoints. http() alone without a URL uses cloudflare-eth.com which
+ * can be rate-limited, causing useReadContract to silently return undefined.
+ *
  * Sepolia support is intentionally excluded from the production config;
  * staking balances are read from Ethereum mainnet SeigManagerV1_3.
  */
-import { createConfig, http } from "wagmi";
+import { createConfig, http, fallback } from "wagmi";
 import { mainnet } from "wagmi/chains";
 import { injected, metaMask } from "wagmi/connectors";
+
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
 export const wagmiConfig = createConfig({
   chains: [mainnet],
@@ -33,7 +39,9 @@ export const wagmiConfig = createConfig({
     injected(), // generic browser wallet fallback
   ],
   transports: {
-    [mainnet.id]: http(),
+    [mainnet.id]: rpcUrl
+      ? fallback([http(rpcUrl), http("https://eth.llamarpc.com"), http()])
+      : fallback([http("https://eth.llamarpc.com"), http("https://rpc.ankr.com/eth"), http()]),
   },
   ssr: true,
 });
