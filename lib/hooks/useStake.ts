@@ -4,8 +4,8 @@
  * useStake — in-app TON staking via approveAndCall
  *
  * Flow:
- *   1. TON.approveAndCall(DepositManager, amount18dec, abi.encode(layer2))
- *      → DepositManager.onApprove fires in the same tx, depositing TON
+ *   1. TON.approveAndCall(WTON, amount18dec, abi.encode(DepositManager, layer2))
+ *      → WTON.onApprove wraps TON→WTON and calls DepositManager.deposit in the same tx
  *   2. Wait for tx confirmation (useWaitForTransactionReceipt)
  *   3. Caller calls invalidate/refetch on the balance query
  *
@@ -35,6 +35,15 @@ const TON_ADDRESS = (
 const DEPOSIT_MANAGER_ADDRESS = (
   depositManagerAbi._meta.addresses[CHAIN as "mainnet" | "sepolia"].proxy
 ) as `0x${string}`;
+
+// WTON wraps TON (18 dec → 27 dec ray) and is the only accepted caller for
+// DepositManager.onApprove. approveAndCall must target WTON, not DepositManager.
+const WTON_ADDRESS: Record<"mainnet" | "sepolia", `0x${string}`> = {
+  mainnet: "0xc4A11aaf6ea915Ed7Ac194161d2fC9384F15bff2",
+  sepolia: "0xe3a87a9343D262F5f11280058ae807B45aa34669",
+} as const;
+
+const WTON = WTON_ADDRESS[CHAIN as "mainnet" | "sepolia"];
 
 /**
  * Default Layer2 operator for new stakers: tokamak1 (highest TVL operator).
@@ -143,18 +152,19 @@ export function useStake(): UseStakeResult {
 
     const amount = parseUnits(amountTON, 18);
 
-    // DepositManager.onApprove(owner, spender, amount, data)
-    // data = abi.encode(address layer2) = 32-byte left-padded address
+    // Correct flow: TON.approveAndCall(WTON, amount, abi.encode(DepositManager, layer2))
+    //   → WTON.onApprove wraps TON to WTON, then calls DepositManager.deposit(layer2, amount)
+    // Passing DepositManager directly as spender reverts: "only accept WTON approve callback"
     const data = encodeAbiParameters(
-      [{ type: "address" }],
-      [layer2]
+      [{ type: "address" }, { type: "address" }],
+      [DEPOSIT_MANAGER_ADDRESS, layer2]
     );
 
     return writeContractAsync({
       address: TON_ADDRESS,
       abi: tonAbi.abi,
       functionName: "approveAndCall",
-      args: [DEPOSIT_MANAGER_ADDRESS, amount, data],
+      args: [WTON, amount, data],
     });
   }
 
