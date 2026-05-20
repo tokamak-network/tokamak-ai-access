@@ -235,7 +235,6 @@ export default function LandingPage() {
 
 const WALLET_ICONS: Record<string, string> = {
   MetaMask: "🦊",
-  "OKX Wallet": "⭕",
 };
 
 function WalletModal({
@@ -348,7 +347,12 @@ function WalletModal({
                   (e.currentTarget as HTMLButtonElement).style.background = "none";
                 }}
               >
-                <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>{icon}</span>
+                {c.icon ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={c.icon} alt={c.name} style={{ width: "1.5rem", height: "1.5rem", borderRadius: "4px", flexShrink: 0 }} />
+                ) : (
+                  <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>{icon}</span>
+                )}
                 <span style={{ fontSize: "0.9375rem", fontWeight: 500 }}>{c.name}</span>
                 {isConnecting && (
                   <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "var(--muted)" }}>

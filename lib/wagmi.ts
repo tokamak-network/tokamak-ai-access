@@ -31,6 +31,7 @@ export const wagmiConfig = createConfig({
         return {
           id: "okxwallet",
           name: "OKX Wallet",
+          icon: "/okx-icon.svg",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           provider: okx as any,
         };
