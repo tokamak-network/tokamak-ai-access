@@ -28,3 +28,6 @@ Thumbs.db
 # Next.js build artifacts
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Local docs
+docs/superpowers

@@ -48,6 +48,31 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 
+/* ── ACCESSIBILITY UTILITIES ─────────────────────────────────────────────── */
+/* P1-5: Skip navigation link */
+.skip-link {
+  position: absolute; top: -48px; left: 8px;
+  background: var(--surface-raised); color: var(--ink);
+  border: 1px solid var(--hairline);
+  padding: 8px 16px; border-radius: var(--radius);
+  font-family: var(--font-body); font-size: 0.875rem; font-weight: 600;
+  z-index: 999; transition: top 120ms;
+  text-decoration: none;
+}
+.skip-link:focus { top: 8px; outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* P1-1: Screen-reader-only class for live regions */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* P2-4: Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
 body {
   font-family: var(--font-body);
   background: var(--surface);
@@ -83,7 +108,7 @@ body {
   font-size: 0.5625rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.45);
+  color: rgba(255,255,255,0.60); /* P0-4: raised from 0.45 → 0.60 for ≥5.2:1 contrast */
   background: none; border: none;
   padding: 0 14px;
   height: 100%;
@@ -94,6 +119,7 @@ body {
 }
 .wf-btn:hover  { color: #fff; background: rgba(255,255,255,0.06); }
 .wf-btn.active { color: #fff; background: rgba(255,255,255,0.13); }
+.wf-btn:focus-visible { outline: 2px solid #60a5fa; outline-offset: -2px; } /* P0-1 */
 
 /* ── PAGE SHELL ──────────────────────────────────────────────────────────── */
 .page {
@@ -238,6 +264,20 @@ h3 {
   line-height: 1.6;
   color: var(--muted);
   max-width: 60ch;
+}
+
+/* ── FOCUS INDICATORS — P0-1 ─────────────────────────────────────────────── */
+.btn-primary:focus-visible,
+.btn-ghost:focus-visible,
+.cli-tab:focus-visible,
+.wallet-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+/* copy-btn is small; use inner outline to stay within bounds */
+.copy-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* ── PRIMARY CTA — one per section ────────────────────────────────────────── */
@@ -412,10 +452,16 @@ h3 {
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: 4px;
-  padding: 4px 10px;
+  padding: 4px 10px; /* visual size kept; hit area expanded via ::before — P0-5 */
   cursor: pointer;
   color: var(--muted);
   transition: color 120ms, border-color 120ms;
+}
+/* P0-5: expand touch target to 44×44px without changing visual size */
+.copy-btn::before {
+  content: '';
+  position: absolute;
+  inset: -12px -10px;
 }
 .copy-btn:hover { color: var(--ink); border-color: var(--ink); }
 
@@ -530,8 +576,8 @@ h3 {
 /* ── LANDING — narrow column labels + values ─────────────────────────────── */
 .n-lbl {
   font-family: var(--font-mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.2em;
+  font-size: 0.625rem; /* P0-2: raised from 0.5rem (8px) → 0.625rem (10px); still compact */
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--muted);
   margin-bottom: 3px;
@@ -575,7 +621,7 @@ h3 {
 }
 .agent-prompt__label {
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.625rem; /* P0-3: raised from 0.5625rem (9px) → 0.625rem (10px) */
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
@@ -605,21 +651,28 @@ h3 {
 </head>
 <body>
 
+<!-- P1-5: Skip navigation link (visible on focus) -->
+<a href="#main-content" class="skip-link">Skip to content</a>
+
 <!-- WIREFRAME SCREEN SWITCHER -->
 <nav class="wf-nav" role="navigation" aria-label="Wireframe screens">
   <span class="wf-nav__label">TON AI Access</span>
-  <button class="wf-btn active"  onclick="show('s-landing')">① Landing</button>
-  <button class="wf-btn"         onclick="show('s-eligible')">② Dashboard · Eligible</button>
-  <button class="wf-btn"         onclick="show('s-key-reveal')">③ Key Reveal</button>
-  <button class="wf-btn"         onclick="show('s-cli')">④ CLI Setup</button>
-  <button class="wf-btn"         onclick="show('s-key-active')">⑤ Key Active</button>
-  <button class="wf-btn"         onclick="show('s-ineligible')">⑥ Ineligible</button>
+  <!-- P1-8: emoji digits hidden from AT so screen readers don't announce "circled digit N" -->
+  <button class="wf-btn active"  onclick="show('s-landing')"><span aria-hidden="true">① </span>Landing</button>
+  <button class="wf-btn"         onclick="show('s-eligible')"><span aria-hidden="true">② </span>Dashboard · Eligible</button>
+  <button class="wf-btn"         onclick="show('s-key-reveal')"><span aria-hidden="true">③ </span>Key Reveal</button>
+  <button class="wf-btn"         onclick="show('s-cli')"><span aria-hidden="true">④ </span>CLI Setup</button>
+  <button class="wf-btn"         onclick="show('s-key-active')"><span aria-hidden="true">⑤ </span>Key Active</button>
+  <button class="wf-btn"         onclick="show('s-ineligible')"><span aria-hidden="true">⑥ </span>Ineligible</button>
 </nav>
 
 <!-- Architectural hairline: single vertical rule from nav to page bottom -->
 <div class="split-line" aria-hidden="true"></div>
 
-<div class="page">
+<!-- P1-1: aria-live region for copy feedback -->
+<div role="status" aria-live="polite" class="sr-only" id="copy-feedback"></div>
+
+<div class="page" id="main-content">
 
 
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -740,7 +793,10 @@ h3 {
   <div class="topbar-wrap">
     <div class="topbar">
       <span class="logo">TON AI Access</span>
-      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+      <!-- P1-3: label separates address from action for screen readers -->
+      <button class="wallet-pill" aria-label="Disconnect wallet 0xabcd…1234">
+        <span aria-hidden="true">0xabcd…1234 · Disconnect</span>
+      </button>
     </div>
   </div>
 
@@ -819,7 +875,10 @@ h3 {
   <div class="topbar-wrap">
     <div class="topbar">
       <span class="logo">TON AI Access</span>
-      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+      <!-- P1-3: label separates address from action for screen readers -->
+      <button class="wallet-pill" aria-label="Disconnect wallet 0xabcd…1234">
+        <span aria-hidden="true">0xabcd…1234 · Disconnect</span>
+      </button>
     </div>
   </div>
 
@@ -853,7 +912,7 @@ h3 {
 
       <!-- Warning banner -->
       <div class="key-warning">
-        <span class="key-warning__icon">⚠</span>
+        <span class="key-warning__icon" aria-hidden="true">⚠</span><!-- P1-6 -->
         <span class="key-warning__text">
           Copy and store this key now. It cannot be retrieved after you leave this page.
           To replace it later, use <strong>Rotate key</strong> from your dashboard.
@@ -895,7 +954,10 @@ h3 {
   <div class="topbar-wrap">
     <div class="topbar">
       <span class="logo">TON AI Access</span>
-      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+      <!-- P1-3: label separates address from action for screen readers -->
+      <button class="wallet-pill" aria-label="Disconnect wallet 0xabcd…1234">
+        <span aria-hidden="true">0xabcd…1234 · Disconnect</span>
+      </button>
     </div>
   </div>
 
@@ -1007,7 +1069,10 @@ bash &lt;(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
   <div class="topbar-wrap">
     <div class="topbar">
       <span class="logo">TON AI Access</span>
-      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+      <!-- P1-3: label separates address from action for screen readers -->
+      <button class="wallet-pill" aria-label="Disconnect wallet 0xabcd…1234">
+        <span aria-hidden="true">0xabcd…1234 · Disconnect</span>
+      </button>
     </div>
   </div>
 
@@ -1085,7 +1150,10 @@ bash &lt;(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
   <div class="topbar-wrap">
     <div class="topbar">
       <span class="logo">TON AI Access</span>
-      <button class="wallet-pill">0xabcd…1234 · Disconnect</button>
+      <!-- P1-3: label separates address from action for screen readers -->
+      <button class="wallet-pill" aria-label="Disconnect wallet 0xabcd…1234">
+        <span aria-hidden="true">0xabcd…1234 · Disconnect</span>
+      </button>
     </div>
   </div>
 
@@ -1137,7 +1205,9 @@ bash &lt;(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
           reflected within 60 seconds.
         </p>
         <div class="btn-row" style="margin-top:0;">
-          <a href="https://tokamak.network/staking" class="btn-primary" target="_blank">
+          <!-- P1-4: new-tab warning in aria-label -->
+          <a href="https://tokamak.network/staking" class="btn-primary" target="_blank"
+             aria-label="Stake on Tokamak (opens in new tab)">
             Stake on Tokamak →
           </a>
           <button class="btn-ghost" disabled>Issue API key</button>
@@ -1173,12 +1243,19 @@ function switchTab(btn, tabId) {
 
 /* ── Copy buttons ─────────────────────────────────────────────────────── */
 document.addEventListener('click', e => {
-  if (!e.target.classList.contains('copy-btn')) return;
-  const pre = e.target.closest('.code-block').querySelector('pre');
+  const btn = e.target.closest('.copy-btn');
+  if (!btn) return;
+  const block = btn.closest('.code-block');
+  if (!block) return;
+  const pre = block.querySelector('pre');
+  if (!pre) return;
   navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
-    const orig = e.target.textContent;
-    e.target.textContent = 'Copied ✓';
-    setTimeout(() => e.target.textContent = orig, 1800);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied ✓';
+    /* P1-1: announce to screen readers via aria-live region */
+    const feedback = document.getElementById('copy-feedback');
+    if (feedback) { feedback.textContent = ''; feedback.textContent = 'Code copied to clipboard'; }
+    setTimeout(() => { btn.textContent = orig; }, 1800);
   });
 });
 
