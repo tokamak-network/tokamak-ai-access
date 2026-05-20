@@ -8,7 +8,7 @@ import { checkRateLimit } from "@/lib/with-rate-limit";
  * Auth: session cookie
  * Response: { hasActiveKey: boolean, createdAt?: string, lastFour?: string }
  *
- * NOTE: 실제 key 값은 서버에 저장되지 않음 (§1 D6). lastFour는 hash slice 일부.
+ * NOTE: The actual key value is never stored server-side (§1 D6). lastFour is a slice of the hash.
  */
 export async function GET(req: NextRequest) {
   const address = await getSessionAddress(req);

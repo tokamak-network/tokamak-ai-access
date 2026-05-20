@@ -4,16 +4,16 @@
  * §2 assumptions:
  *  - SeigManagerV1_3.stakeOf(layer2, account) returns WTON in ray (27 decimals)
  *  - We normalize to 18-decimal bigint (same unit as ETH/TON ERC-20)
- *  - Layer2 목록은 Layer2Registry.layer2sLength + layer2sByIndex 로 온체인에서 동적 조회
+ *  - Layer2 list is fetched on-chain dynamically via Layer2Registry.layer2sLength + layer2sByIndex
  *
- * Dune 쿼리 (#3298440) 분석 결과:
- *  - Dune sWTON 방식 = protocol-level 총량 (per-address 직접 조회 불가)
- *  - stakeOf(layer2, addr) 합산 = per-address에 적합, 원리적 동치
- *  - 차이 원인: 하드코딩 10개 Layer2로 40.8%만 커버 → 동적 조회로 해결
+ * Dune query (#3298440) analysis:
+ *  - Dune sWTON method = protocol-level total (cannot query per-address directly)
+ *  - Summing stakeOf(layer2, addr) = correct for per-address, conceptually equivalent
+ *  - Discrepancy cause: hardcoded 10 Layer2s covered only 40.8% → resolved with dynamic lookup
  *
  * Cache strategy:
- *  - Layer2 주소 목록: 1시간 캐시 (Layer2 등록은 드물게 변경)
- *  - 잔액(stakeOf 합산): 60초 캐시 (잔액은 자주 변할 수 있음)
+ *  - Layer2 address list: 1-hour cache (Layer2 registrations change infrequently)
+ *  - Balance (stakeOf sum): 60-second cache (balances can change frequently)
  *
  * Multi-network: set NEXT_PUBLIC_CHAIN=sepolia to target Sepolia testnet.
  */

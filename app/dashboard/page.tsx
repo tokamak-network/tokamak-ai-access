@@ -243,7 +243,7 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
   // Effective key: prop takes precedence, else user-entered
   const effectiveKey = apiKey || keyInput;
 
-  // 모델 목록 자동탐색 — /api/proxy/models 를 통해 서버사이드 프록시
+  // Auto-discover available models via server-side proxy at /api/proxy/models
   useEffect(() => {
     if (!effectiveKey) return;
     setModelsLoading(true);
@@ -259,7 +259,7 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
           }
         }
       })
-      .catch(() => { /* 탐색 실패 시 기본값(qwen-3.6) 유지 */ })
+      .catch(() => { /* Discovery failed — keep default (qwen-3.6) */ })
       .finally(() => setModelsLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveKey]);
@@ -268,12 +268,12 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
 
   // Agent instruction — no backtick fences, plain text for pasting into agent chat
   const agentInstruction = effectiveKey
-    ? `TON AI Access 설정을 시작해 주세요.\n\n아래 명령을 그대로 실행하면 Claude Code와 Codex 환경이 자동으로 설정됩니다.\n\nTON_API_KEY="${effectiveKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n\n실행 후, 현재 터미널에 적용하려면:\n\nsource ~/.zshrc   # zsh\n# 또는\nsource ~/.bashrc  # bash\n\n검증:\necho $OPENAI_BASE_URL   # → https://api2.ai.tokamak.network\necho $TON_AI_MODEL      # → ${selectedModel}`
-    : "(API 키를 입력하면 설치 명령이 생성됩니다.)";
+    ? `Please set up TON AI Access.\n\nRunning the command below will automatically configure your Claude Code and Codex environment.\n\nTON_API_KEY="${effectiveKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n\nAfter running, apply to the current terminal:\n\nsource ~/.zshrc   # zsh\n# or\nsource ~/.bashrc  # bash\n\nVerify:\necho $OPENAI_BASE_URL   # → https://api2.ai.tokamak.network\necho $TON_AI_MODEL      # → ${selectedModel}`
+    : "(Enter your API key to generate the setup command.)";
 
   const directCommand = effectiveKey
     ? `TON_API_KEY="${effectiveKey}" \\\nTON_MODEL="${selectedModel}" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive`
-    : "(API 키를 입력하면 명령이 생성됩니다.)";
+    : "(Enter your API key to generate the command.)";
 
   const content = tab === "agent" ? agentInstruction : directCommand;
 
@@ -344,7 +344,7 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
           </div>
         )}
 
-        {/* 모델 선택 */}
+        {/* Model selector */}
         <div style={{ marginBottom: "18px" }}>
           <label style={{
             display: "block",
@@ -389,7 +389,7 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
           )}
         </div>
 
-        {/* 설명 */}
+        {/* Description */}
         {tab === "agent" ? (
           <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
             Paste into Claude Code, Codex, or any AI agent chat. The agent will run the script and configure your environment automatically.
@@ -400,7 +400,7 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
           </p>
         )}
 
-        {/* 코드 블록 */}
+        {/* Code block */}
         <pre style={{
           fontFamily: "var(--font-mono)",
           fontSize: "0.8125rem",

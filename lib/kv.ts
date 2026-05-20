@@ -1,17 +1,17 @@
 /**
  * Upstash Redis wrapper (via @vercel/kv)
  *
- * Vercel KV는 2024-12 종료. 신규 프로젝트는 Vercel Marketplace → Upstash Redis 연결.
- * @vercel/kv 패키지는 내부적으로 Upstash REST API를 사용하므로 코드 변경 불필요.
- * 환경변수: KV_REST_API_URL, KV_REST_API_TOKEN (vercel env pull 또는 Marketplace 자동 주입)
+ * Vercel KV was discontinued in Dec 2024. New projects connect via Vercel Marketplace → Upstash Redis.
+ * The @vercel/kv package uses the Upstash REST API internally — no code changes required.
+ * Env vars: KV_REST_API_URL, KV_REST_API_TOKEN (injected automatically via Marketplace or vercel env pull)
  *
- * 키 스키마 (§8):
+ * Key schema (§8):
  *   nonce:{address}          TTL 5 min
  *   session:{sessionId}      TTL 24 h
- *   key:{address}            no TTL (키 메타데이터)
- *   key:{address}:prev       no TTL (rotate 시 이전 키 아카이브)
- *   ratelimit:ip:{ip}        TTL 60 s  (Upstash 내부 관리)
- *   ratelimit:addr:{addr}    TTL 60 s  (Upstash 내부 관리)
+ *   key:{address}            no TTL (key metadata)
+ *   key:{address}:prev       no TTL (archived previous key on rotate)
+ *   ratelimit:ip:{ip}        TTL 60 s  (managed by Upstash internally)
+ *   ratelimit:addr:{addr}    TTL 60 s  (managed by Upstash internally)
  */
 import { kv } from "@vercel/kv";
 import { createHash } from "crypto";

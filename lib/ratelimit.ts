@@ -2,7 +2,7 @@
  * Rate-limit helpers — §1 D8
  *
  * Strategy: sliding window, 60 req/min per IP and per wallet address.
- * Uses @upstash/ratelimit backed by Upstash Redis (Vercel Marketplace 연결).
+ * Uses @upstash/ratelimit backed by Upstash Redis (connected via Vercel Marketplace).
  *
  * Usage in a route handler:
  *   const ip = req.headers.get("x-forwarded-for") ?? "unknown";

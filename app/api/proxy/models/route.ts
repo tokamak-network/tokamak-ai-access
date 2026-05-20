@@ -1,10 +1,10 @@
 /**
  * GET /api/proxy/models
  *
- * 서버사이드에서 LiteLLM /v1/models 를 프록시합니다.
- * - CORS 없이 대시보드(클라이언트)에서 모델 목록 탐색 가능
- * - Authorization 헤더를 그대로 전달 (클라이언트가 Bearer <key> 전달)
- * - 응답: { models: string[] }
+ * Server-side proxy for LiteLLM /v1/models.
+ * - Allows dashboard (client) to fetch model list without CORS issues
+ * - Forwards Authorization header as-is (client sends Bearer <key>)
+ * - Response: { models: string[] }
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
         Authorization: authHeader,
         "Content-Type": "application/json",
       },
-      // Vercel Edge 환경에서는 cache: "no-store" 권장
+      // Recommended: cache: "no-store" in Vercel Edge environments
       cache: "no-store",
     });
 
