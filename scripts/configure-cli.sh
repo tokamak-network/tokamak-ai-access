@@ -48,7 +48,7 @@ DEFAULT_MODEL="qwen-3.6"
 NON_INTERACTIVE=false
 LIST_MODELS_ONLY=false
 DRY_RUN=false
-TARGET=""  # claude | codex | all (빈 문자열이면 자동 감지)
+TARGET=""  # claude | codex | openclaw | hermes | all (빈 문자열이면 자동 감지)
 
 # ── 인자 파싱 ─────────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -182,8 +182,37 @@ log_section "TON AI Access — CLI Configurator"
 # dry-run이면 API 키 없어도 프리뷰 가능하도록 처리
 if [ "$NON_INTERACTIVE" = true ]; then
   API_KEY="${TON_API_KEY:?'TON_API_KEY env var required in non-interactive mode'}"
-  MODEL="${TON_MODEL:-$DEFAULT_MODEL}"
   BASE_URL="${TON_BASE_URL:-$DEFAULT_BASE_URL}"
+
+  if [ -n "${TON_MODEL:-}" ]; then
+    MODEL="$TON_MODEL"
+  else
+    # TON_MODEL not provided — ask interactively
+    log_info "사용 가능한 모델 목록을 불러오는 중..."
+    DISCOVERED=$(fetch_models "$API_KEY" "$BASE_URL")
+    if [ -n "$DISCOVERED" ]; then
+      echo ""
+      echo -e "${BOLD}사용 가능한 모델:${RESET}"
+      echo "$DISCOVERED" | awk '{printf "  %2d. %s\n", NR, $0}'
+      echo ""
+      read -rp "$(echo -e "${BOLD}모델 번호 또는 이름${RESET} [Enter → $DEFAULT_MODEL]: ")" MODEL_INPUT
+      if [ -z "$MODEL_INPUT" ]; then
+        MODEL="$DEFAULT_MODEL"
+      elif echo "$MODEL_INPUT" | grep -qE '^[0-9]+$'; then
+        MODEL=$(echo "$DISCOVERED" | sed -n "${MODEL_INPUT}p")
+        if [ -z "$MODEL" ]; then
+          log_warn "잘못된 번호. 기본값 사용: $DEFAULT_MODEL"
+          MODEL="$DEFAULT_MODEL"
+        fi
+      else
+        MODEL="$MODEL_INPUT"
+      fi
+    else
+      log_warn "모델 목록 탐색 실패. API 키 또는 네트워크를 확인하세요."
+      read -rp "$(echo -e "${BOLD}모델명${RESET} [Enter → $DEFAULT_MODEL]: ")" MODEL
+      MODEL="${MODEL:-$DEFAULT_MODEL}"
+    fi
+  fi
 elif [ "$DRY_RUN" = true ] && [ -z "${TON_API_KEY:-}" ]; then
   # dry-run 전용: 키 없으면 현재 값으로 프리뷰
   API_KEY="${ANTHROPIC_API_KEY:-${OPENAI_API_KEY:-<현재_설정된_키>}}"
