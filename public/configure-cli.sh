@@ -647,7 +647,7 @@ configure_openclaw() {
 
   if ! command -v openclaw &>/dev/null; then
     log_warn "openclaw CLI를 찾을 수 없습니다. 설치 후 쉘 재시작 시 자동 적용됩니다."
-    log_info "OpenClaw 설치: https://docs.litellm.ai/docs/tutorials/openclaw_integration"
+    log_info "OpenClaw 설치: https://docs.openclaw.ai/"
     return
   fi
 
@@ -792,18 +792,20 @@ log_info "사용 가능한 모델 목록 확인:"
 echo -e "  ${BOLD}TON_API_KEY=\"\$OPENAI_API_KEY\" bash scripts/configure-cli.sh --list-models${RESET}"
 echo ""
 if [[ "$EFFECTIVE_TARGET" == "openclaw" || "$EFFECTIVE_TARGET" == "all" ]]; then
-  log_warn "OpenClaw gateway를 재시작해야 설정이 반영됩니다:"
-  echo -e "  ${BOLD}openclaw restart${RESET}   # 또는: openclaw stop && openclaw start"
+  log_warn "OpenClaw gateway 재시작 (provider/URL/key 변경 시 필요):"
+  echo -e "  ${BOLD}openclaw gateway restart --safe${RESET}"
   echo ""
-  log_info "OpenClaw 연결 확인:"
-  echo -e "  ${BOLD}openclaw health${RESET}"
+  log_info "OpenClaw 상태 및 연결 확인:"
+  echo -e "  ${BOLD}openclaw gateway status${RESET}"
+  echo -e "  ${BOLD}openclaw gateway health${RESET}"
   echo ""
 fi
 if [[ "$EFFECTIVE_TARGET" == "hermes" || "$EFFECTIVE_TARGET" == "all" ]]; then
-  log_warn "Hermes gateway를 재시작해야 설정이 반영됩니다:"
-  echo -e "  ${BOLD}hermes restart${RESET}   # 또는: hermes stop && hermes start"
+  log_warn "Hermes gateway 재시작 필요 (model.* 변경은 재시작 후 반영됩니다):"
+  echo -e "  ${BOLD}hermes gateway restart${RESET}"
   echo ""
-  log_info "Hermes 설정 확인:"
-  echo -e "  ${BOLD}cat ~/.hermes/config.yaml${RESET}"
+  log_info "Hermes 상태 확인:"
+  echo -e "  ${BOLD}hermes gateway status${RESET}"
+  echo -e "  ${BOLD}curl http://localhost:8642/health${RESET}"
   echo ""
 fi
