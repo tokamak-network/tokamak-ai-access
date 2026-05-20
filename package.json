@@ -11,7 +11,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "next": "14.2.29",
+    "next": "^15.5.18",
     "react": "^18",
     "react-dom": "^18",
     "siwe": "^2.3.2",
@@ -34,8 +34,8 @@
     "postcss": "^8",
     "autoprefixer": "^10.0.1",
     "eslint": "^8",
-    "eslint-config-next": "14.2.29",
-    "vitest": "^2.1.9",
-    "@vitejs/plugin-react": "^4.3.4"
+    "eslint-config-next": "^15.5.18",
+    "vitest": "^4.1.6",
+    "@vitejs/plugin-react": "^5.0.0"
   }
 }
