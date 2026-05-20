@@ -220,11 +220,14 @@ export async function getTotalStakedTON(address: string): Promise<bigint> {
 
   const results = await client.multicall({ contracts: calls, allowFailure: true });
 
+  // Round to nearest 1e18 (TON unit) to avoid off-by-one when SeigManager returns
+  // a ray value 1 unit below an exact TON amount (e.g. 10*10^27 - 1 instead of 10*10^27).
+  // Using round-half-up: (ray + WTON_TO_TON/2) / WTON_TO_TON.
+  const HALF_RAY = WTON_TO_TON / 2n; // 5 * 10^8
   let total = 0n;
   for (const res of results) {
     if (res.status === "success") {
-      // Convert 27-dec WTON ray → 18-dec TON: divide by 10^9
-      total += (res.result as bigint) / WTON_TO_TON;
+      total += ((res.result as bigint) + HALF_RAY) / WTON_TO_TON;
     }
   }
 
