@@ -437,11 +437,11 @@ except: pass
   local masked_cur_key="${cur_key:0:12}…"
 
   if [ -z "$cur_base" ]; then
-    echo -e "    ${GREEN}+${RESET} models.providers.litellm.baseUrl: (미설정) → $BASE_URL"
-  elif [ "$cur_base" = "$BASE_URL" ]; then
+    echo -e "    ${GREEN}+${RESET} models.providers.litellm.baseUrl: (미설정) → $BASE_URL/v1"
+  elif [ "$cur_base" = "$BASE_URL/v1" ]; then
     echo -e "    ${DIM}= models.providers.litellm.baseUrl: $cur_base (변경 없음)${RESET}"
   else
-    echo -e "    ${YELLOW}~${RESET} models.providers.litellm.baseUrl: $cur_base → $BASE_URL"
+    echo -e "    ${YELLOW}~${RESET} models.providers.litellm.baseUrl: $cur_base → $BASE_URL/v1"
   fi
 
   if [ -z "$cur_key" ]; then
@@ -668,7 +668,7 @@ config = json.loads('''$EXISTING''')
 config.setdefault("models", {})
 config["models"].setdefault("providers", {})
 config["models"]["providers"]["litellm"] = {
-    "baseUrl": "$BASE_URL",
+    "baseUrl": "$BASE_URL/v1",
     "apiKey":  "$API_KEY",
     "api":     "openai-completions"
 }
@@ -792,11 +792,17 @@ log_info "사용 가능한 모델 목록 확인:"
 echo -e "  ${BOLD}TON_API_KEY=\"\$OPENAI_API_KEY\" bash scripts/configure-cli.sh --list-models${RESET}"
 echo ""
 if [[ "$EFFECTIVE_TARGET" == "openclaw" || "$EFFECTIVE_TARGET" == "all" ]]; then
+  log_warn "OpenClaw gateway를 재시작해야 설정이 반영됩니다:"
+  echo -e "  ${BOLD}openclaw restart${RESET}   # 또는: openclaw stop && openclaw start"
+  echo ""
   log_info "OpenClaw 연결 확인:"
   echo -e "  ${BOLD}openclaw health${RESET}"
   echo ""
 fi
 if [[ "$EFFECTIVE_TARGET" == "hermes" || "$EFFECTIVE_TARGET" == "all" ]]; then
+  log_warn "Hermes gateway를 재시작해야 설정이 반영됩니다:"
+  echo -e "  ${BOLD}hermes restart${RESET}   # 또는: hermes stop && hermes start"
+  echo ""
   log_info "Hermes 설정 확인:"
   echo -e "  ${BOLD}cat ~/.hermes/config.yaml${RESET}"
   echo ""
