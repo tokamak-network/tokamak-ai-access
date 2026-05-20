@@ -1,13 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <rect width="48" height="48" rx="8" fill="#8AE836"/>
-  <!-- top row: left, right -->
-  <rect x="7"  y="7"  width="10" height="10" rx="2" fill="#000"/>
-  <rect x="31" y="7"  width="10" height="10" rx="2" fill="#000"/>
-  <!-- middle row: left, center, right -->
-  <rect x="7"  y="19" width="10" height="10" rx="2" fill="#000"/>
-  <rect x="19" y="19" width="10" height="10" rx="2" fill="#000"/>
-  <rect x="31" y="19" width="10" height="10" rx="2" fill="#000"/>
-  <!-- bottom row: left, right -->
-  <rect x="7"  y="31" width="10" height="10" rx="2" fill="#000"/>
-  <rect x="31" y="31" width="10" height="10" rx="2" fill="#000"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <rect width="240" height="240" rx="45" fill="#8AE836"/>
+  <g transform="translate(0,240) scale(0.1,-0.1)" fill="#000" stroke="none">
+    <path d="M515 1877 c-3 -7 -4 -109 -3 -227 l3 -215 216 -3 c175 -2 218 0 228
+12 8 9 11 76 9 227 l-3 214 -223 3 c-175 2 -224 0 -227 -11z"/>
+    <path d="M1437 1884 c-4 -4 -7 -103 -7 -219 0 -168 3 -215 14 -224 9 -8 78
+-11 227 -9 l214 3 0 225 0 225 -221 3 c-121 1 -223 -1 -227 -4z"/>
+    <path d="M975 1417 c-3 -7 -4 -109 -3 -227 l3 -215 225 0 225 0 0 225 0 225
+-223 3 c-175 2 -224 0 -227 -11z"/>
+    <path d="M514 957 c-2 -7 -3 -109 -2 -227 l3 -215 225 0 225 0 3 214 c2 149
+-1 218 -9 227 -16 20 -437 21 -445 1z"/>
+    <path d="M1441 956 c-8 -9 -11 -76 -9 -227 l3 -214 225 0 225 0 0 225 0 225
+-216 3 c-175 2 -218 0 -228 -12z"/>
+  </g>
 </svg>
