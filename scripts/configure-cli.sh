@@ -190,9 +190,9 @@ write_env_block() {
 $marker — $(date '+%Y-%m-%d') | model: $MODEL
 export ANTHROPIC_API_KEY="$API_KEY"
 export ANTHROPIC_BASE_URL="$BASE_URL"
+export ANTHROPIC_MODEL="$MODEL"
 export OPENAI_API_KEY="$API_KEY"
 export OPENAI_BASE_URL="$BASE_URL/v1"
-export TON_AI_MODEL="$MODEL"
 $end_marker
 EOF
   log_ok "$(basename "$profile") 에 환경변수 블록 추가 완료"
@@ -202,9 +202,9 @@ EOF
 apply_current_session() {
   export ANTHROPIC_API_KEY="$API_KEY"
   export ANTHROPIC_BASE_URL="$BASE_URL"
+  export ANTHROPIC_MODEL="$MODEL"
   export OPENAI_API_KEY="$API_KEY"
   export OPENAI_BASE_URL="$BASE_URL/v1"
-  export TON_AI_MODEL="$MODEL"
   log_ok "현재 세션에 환경변수 즉시 적용 완료"
 }
 
@@ -236,13 +236,14 @@ settings = json.loads('''$EXISTING''')
 settings.setdefault("env", {})
 settings["env"]["ANTHROPIC_API_KEY"] = "$API_KEY"
 settings["env"]["ANTHROPIC_BASE_URL"] = "$BASE_URL"
+settings["env"]["ANTHROPIC_MODEL"] = "$MODEL"
 
 with open("$CLAUDE_SETTINGS", "w") as f:
     json.dump(settings, f, indent=2)
     f.write("\\n")
 print("  ~/.claude/settings.json 업데이트 완료")
 PYEOF
-  log_ok "Claude Code 설정 완료 (ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL)"
+  log_ok "Claude Code 설정 완료 (ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_MODEL)"
 else
   log_warn "claude CLI를 찾을 수 없습니다. 설치 후 쉘 재시작 시 자동 적용됩니다."
   log_info "Claude Code 설치: https://claude.ai/download"
@@ -258,11 +259,10 @@ if command -v codex &>/dev/null; then
   mkdir -p "$CODEX_CONFIG_DIR"
   cat > "$CODEX_CONFIG" <<TOML
 # TON AI Access — auto-configured $(date +%Y-%m-%d)
-model = "$MODEL"
 
 [provider.openai]
 api_key  = "$API_KEY"
-base_url = "$BASE_URL/v1"
+base_url = "$BASE_URL"
 TOML
   log_ok "Codex CLI 설정 완료 ($CODEX_CONFIG)"
 else

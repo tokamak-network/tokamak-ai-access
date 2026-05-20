@@ -34,9 +34,11 @@ export async function generateLiteLLMKey(
   const { baseUrl, masterKey } = getConfig();
 
   const body = {
-    models: ["qwen-3.6"],          // §1 D7
+    models: ["qwen-3.6"],                     // §1 D7
+    user_id:   ownerAddress,                  // LiteLLM user entity — enables per-user budget/rate tracking
+    key_alias: ownerAddress,                  // display label in admin UI
     metadata: { owner: ownerAddress },
-    // duration: "30d",            // uncomment to set expiry
+    // duration: "30d",                       // uncomment to set expiry
   };
 
   const res = await fetch(`${baseUrl}/key/generate`, {
@@ -76,6 +78,7 @@ export async function revokeLiteLLMKey(keyId: string): Promise<void> {
     body: JSON.stringify({ keys: [keyId] }),
   });
 
+  if (res.status === 404) return; // already deleted — treat as success
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`LiteLLM /key/delete failed (${res.status}): ${text}`);
