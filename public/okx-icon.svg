@@ -1,11 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-  <rect width="48" height="48" rx="10" fill="#000"/>
-  <rect x="8"  y="8"  width="12" height="12" rx="2" fill="#fff"/>
-  <rect x="22" y="8"  width="12" height="12" rx="2" fill="#fff"/>
-  <rect x="36" y="8"  width="4"  height="12" rx="2" fill="#fff"/>
-  <rect x="8"  y="22" width="12" height="12" rx="2" fill="#fff"/>
-  <rect x="22" y="22" width="12" height="12" rx="2" fill="#fff"/>
-  <rect x="8"  y="36" width="12" height="4"  rx="2" fill="#fff"/>
-  <rect x="22" y="36" width="12" height="4"  rx="2" fill="#fff"/>
-  <rect x="36" y="22" width="4"  height="18" rx="2" fill="#fff"/>
+  <rect width="48" height="48" rx="8" fill="#8AE836"/>
+  <!-- top row: left, right -->
+  <rect x="7"  y="7"  width="10" height="10" rx="2" fill="#000"/>
+  <rect x="31" y="7"  width="10" height="10" rx="2" fill="#000"/>
+  <!-- middle row: left, center, right -->
+  <rect x="7"  y="19" width="10" height="10" rx="2" fill="#000"/>
+  <rect x="19" y="19" width="10" height="10" rx="2" fill="#000"/>
+  <rect x="31" y="19" width="10" height="10" rx="2" fill="#000"/>
+  <!-- bottom row: left, right -->
+  <rect x="7"  y="31" width="10" height="10" rx="2" fill="#000"/>
+  <rect x="31" y="31" width="10" height="10" rx="2" fill="#000"/>
 </svg>
