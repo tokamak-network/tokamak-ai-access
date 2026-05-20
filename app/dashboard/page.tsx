@@ -535,53 +535,19 @@ function StakePanel({
 }
 
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
-function CliSetupPanel({ apiKey }: { apiKey?: string }) {
+function CliSetupPanel() {
   const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
-  const [keyInput, setKeyInput] = useState("");
-  const [models, setModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState("qwen-3.6");
-  const [modelsLoading, setModelsLoading] = useState(false);
-
-  // Effective key: prop takes precedence, else user-entered
-  const effectiveKey = apiKey || keyInput;
-
-  // Auto-discover available models via server-side proxy at /api/proxy/models
-  useEffect(() => {
-    if (!effectiveKey) return;
-    setModelsLoading(true);
-    fetch("/api/proxy/models", {
-      headers: { Authorization: `Bearer ${effectiveKey}` },
-    })
-      .then((r) => r.ok ? r.json() : Promise.reject(r.status))
-      .then((data: { models: string[] }) => {
-        if (data.models?.length) {
-          setModels(data.models);
-          if (!data.models.includes(selectedModel)) {
-            setSelectedModel(data.models[0]);
-          }
-        }
-      })
-      .catch(() => { /* Discovery failed — keep default (qwen-3.6) */ })
-      .finally(() => setModelsLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveKey]);
 
   const scriptUrl = "https://tokamak-ai-access.vercel.app/configure-cli.sh";
 
-  // Keys are never rendered to the DOM — always use a placeholder in commands
-  const agentInstruction = effectiveKey
-    ? `Please set up TON AI Access on this machine.\n\nStep 0 — [HUMAN STEP, do before running]\n  Replace [YOUR_API_KEY] in the commands below with your key (copy it from the dashboard).\n\nStep 1 — Preview the changes first (no files are modified):\n\n  TON_API_KEY="[YOUR_API_KEY]" \\\n  bash <(curl -fsSL ${scriptUrl}) \\\n    --non-interactive --target <claude|codex> --dry-run\n\n  Choose exactly one --target:\n    --target claude   (if you are running Claude Code right now)\n    --target codex    (if you are running Codex CLI right now)\n\n  The script will ask you to select a model from the available list.\n\nStep 2 — If the preview looks correct, apply it (same command, remove --dry-run):\n\n  TON_API_KEY="[YOUR_API_KEY]" \\\n  bash <(curl -fsSL ${scriptUrl}) \\\n    --non-interactive --target <claude|codex>\n\nStep 3 — Verify by reading the config files (do NOT echo env vars — they only appear after shell reload):\n\n  [Claude Code]\n    cat ~/.claude/settings.json\n    # → should contain an "env" block with ANTHROPIC_API_KEY, ANTHROPIC_BASE_URL, ANTHROPIC_MODEL\n\n  [Codex CLI]\n    cat ~/.codex/config.toml\n    # → should show model = "<your selected model>" and a [model_providers.tokamak] block\n\nStep 4 — [HUMAN STEP, do AFTER this session ends]\n  Reload your shell and restart the CLI so the new env vars take effect:\n    source ~/.zshrc   # or: source ~/.bashrc\n    # then start a fresh Claude Code / Codex session`
-    : "(Enter your API key to generate the setup command.)";
+  const agentInstruction = `Please set up TON AI Access on this machine.\n\nRun this command — the script will interactively prompt you for the CLI\n(Claude Code / Codex / OpenClaw / Hermes), your API key, and the model:\n\n  bash <(curl -fsSL ${scriptUrl}) --dry-run\n\nIf the dry-run preview looks correct, re-run without --dry-run to apply:\n\n  bash <(curl -fsSL ${scriptUrl})\n\nAfter the script finishes, reload your shell in a NEW terminal:\n  source ~/.zshrc   # or: source ~/.bashrc`;
 
-  const directCommand = effectiveKey
-    ? `TON_API_KEY="[YOUR_API_KEY]" \\\nbash <(curl -fsSL ${scriptUrl}) \\\n  --non-interactive\n# Replace [YOUR_API_KEY] with your actual key.\n# The script will prompt you to select a model.\n# After the script finishes, run in a NEW terminal:\n#   source ~/.zshrc   (or source ~/.bashrc)`
-    : "(Enter your API key to generate the command.)";
+  const directCommand = `bash <(curl -fsSL ${scriptUrl}) --dry-run\n# If the preview looks correct, re-run without --dry-run:\n#   bash <(curl -fsSL ${scriptUrl})\n# After the script finishes, run in a NEW terminal:\n#   source ~/.zshrc   (or source ~/.bashrc)`;
 
   const content = tab === "agent" ? agentInstruction : directCommand;
 
   async function handleCopy() {
-    if (!effectiveKey) return;
     await navigator.clipboard.writeText(content);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -612,86 +578,6 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
 
       {/* Body */}
       <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
-        {/* Key input — only shown when no apiKey prop */}
-        {!apiKey && (
-          <div style={{ marginBottom: "18px" }}>
-            <label style={{
-              display: "block",
-              fontFamily: "var(--font-mono)",
-              fontSize: "0.625rem",
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "var(--muted)",
-              marginBottom: "8px",
-            }}>
-              Your API key
-            </label>
-            <input
-              type="text"
-              placeholder="sk-litellm-…"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value.trim())}
-              style={{
-                width: "100%",
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.8125rem",
-                color: "var(--ink)",
-                background: "var(--surface)",
-                border: "1px solid var(--hairline)",
-                borderRadius: "calc(var(--radius) - 2px)",
-                padding: "10px 14px",
-                outline: "none",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-        )}
-
-        {/* Model selector */}
-        <div style={{ marginBottom: "18px" }}>
-          <label style={{
-            display: "block",
-            fontFamily: "var(--font-mono)",
-            fontSize: "0.625rem",
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--muted)",
-            marginBottom: "8px",
-          }}>
-            Model
-          </label>
-          {modelsLoading ? (
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.8rem", color: "var(--muted)" }}>
-              Fetching models…
-            </span>
-          ) : models.length > 0 ? (
-            <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.8125rem",
-                color: "var(--ink)",
-                background: "var(--surface)",
-                border: "1px solid var(--hairline)",
-                borderRadius: "calc(var(--radius) - 2px)",
-                padding: "8px 12px",
-                cursor: "pointer",
-                minWidth: "220px",
-              }}
-            >
-              {models.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          ) : (
-            <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--ink)" }}>
-              {selectedModel}
-              <span style={{ color: "var(--muted)", marginLeft: "8px" }}>(default)</span>
-            </span>
-          )}
-        </div>
-
         {/* Description */}
         {tab === "agent" ? (
           <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
@@ -725,16 +611,15 @@ function CliSetupPanel({ apiKey }: { apiKey?: string }) {
 
         <button
           onClick={handleCopy}
-          disabled={!effectiveKey}
           style={{
             fontFamily: "var(--font-mono)",
             fontSize: "0.625rem",
             letterSpacing: "0.12em",
             textTransform: "uppercase",
-            color: effectiveKey ? "var(--accent)" : "var(--muted)",
+            color: "var(--accent)",
             background: "none",
             border: "none",
-            cursor: effectiveKey ? "pointer" : "default",
+            cursor: "pointer",
             padding: 0,
           }}
         >
@@ -997,11 +882,9 @@ export default function DashboardPage() {
               <div ref={setupRef} style={{ marginTop: "40px" }}>
                 <span className="eyebrow">Configure AI tools</span>
                 <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "20px", maxWidth: "60ch" }}>
-                  {oneTimeKey
-                    ? "Your key is pre-filled. Paste the instruction into Claude Code, Codex, or any AI agent to configure your environment automatically."
-                    : "Paste your API key below to generate the setup instruction for Claude Code, Codex, or any AI agent."}
+                  Paste the instruction below into Claude Code, Codex, or any AI agent. The script will guide you through the rest.
                 </p>
-                <CliSetupPanel apiKey={oneTimeKey ?? undefined} />
+                <CliSetupPanel />
               </div>
             )}
 

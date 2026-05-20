@@ -19,7 +19,6 @@
 #   bash scripts/configure-cli.sh --target codex     # Codex CLI만
 #   bash scripts/configure-cli.sh --target openclaw  # OpenClaw만
 #   bash scripts/configure-cli.sh --target hermes    # Hermes만
-#   bash scripts/configure-cli.sh --target all       # 전부 (기본)
 #
 # 사용법 (모델 목록만 출력):
 #   TON_API_KEY="sk-litellm-xxx" bash scripts/configure-cli.sh --list-models
@@ -52,7 +51,7 @@ DEFAULT_MODEL="qwen-3.6"
 NON_INTERACTIVE=false
 LIST_MODELS_ONLY=false
 DRY_RUN=false
-TARGET=""  # claude | codex | openclaw | hermes | all (빈 문자열이면 자동 감지)
+TARGET=""  # claude | codex | openclaw | hermes (빈 문자열이면 대화형 선택)
 
 # ── 인자 파싱 ─────────────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
@@ -61,16 +60,16 @@ while [[ $# -gt 0 ]]; do
     --list-models)     LIST_MODELS_ONLY=true; shift ;;
     --dry-run)         DRY_RUN=true; shift ;;
     --target)
-      TARGET="${2:?'--target requires an argument: claude|codex|openclaw|hermes|all'}"
-      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "openclaw" && "$TARGET" != "hermes" && "$TARGET" != "all" ]]; then
-        log_error "--target 값은 claude, codex, openclaw, hermes, all 중 하나여야 합니다."
+      TARGET="${2:?'--target requires an argument: claude|codex|openclaw|hermes'}"
+      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "openclaw" && "$TARGET" != "hermes" ]]; then
+        log_error "--target 값은 claude, codex, openclaw, hermes 중 하나여야 합니다."
         exit 1
       fi
       shift 2 ;;
     --target=*)
       TARGET="${1#--target=}"
-      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "openclaw" && "$TARGET" != "hermes" && "$TARGET" != "all" ]]; then
-        log_error "--target 값은 claude, codex, openclaw, hermes, all 중 하나여야 합니다."
+      if [[ "$TARGET" != "claude" && "$TARGET" != "codex" && "$TARGET" != "openclaw" && "$TARGET" != "hermes" ]]; then
+        log_error "--target 값은 claude, codex, openclaw, hermes 중 하나여야 합니다."
         exit 1
       fi
       shift ;;
@@ -81,17 +80,14 @@ Usage:
 
 옵션:
   --dry-run            실제 변경 없이 무엇이 바뀌는지 미리 확인 (안전 점검용)
-  --target <대상>      설정 대상: claude | codex | openclaw | hermes | all (기본: 자동 감지)
+  --target <대상>      설정 대상: claude | codex | openclaw | hermes (기본: 대화형 선택)
   --non-interactive    환경변수(TON_API_KEY, TON_MODEL)로 비대화형 실행
   --list-models        사용 가능한 모델 목록만 출력
   --help, -h           이 도움말 출력
 
-환경 자동 감지:
-  CLAUDE_CODE_ENTRYPOINT 변수가 있으면 claude 전용으로 자동 감지합니다.
-  CODEX_SHELL 변수가 있으면 codex 전용으로 자동 감지합니다.
-  OPENCLAW_HOME 변수가 있으면 openclaw 전용으로 자동 감지합니다.
-  HERMES_HOME 변수가 있으면 hermes 전용으로 자동 감지합니다.
-  모두 없으면 all(기본)로 동작합니다.
+대상 선택:
+  --target 없이 실행하면 설정할 CLI를 대화형으로 선택합니다.
+  --non-interactive 모드에서는 --target이 필수입니다.
 
 환경변수:
   TON_API_KEY   LiteLLM virtual key (--non-interactive / --list-models 필수)
@@ -113,58 +109,43 @@ HELP
   esac
 done
 
-# ── 실행 환경 자동 감지 ────────────────────────────────────────────────────────
+# ── 설정 대상 결정 (명시적 --target 또는 대화형 선택) ────────────────────────
 detect_target() {
-  # 명시적 --target 지정 우선
   if [ -n "$TARGET" ]; then
     echo "$TARGET"
     return
   fi
 
-  # Claude Code 내부 실행 감지
-  if [ -n "${CLAUDE_CODE_ENTRYPOINT:-}" ]; then
-    echo "claude"
-    return
+  if [ "$NON_INTERACTIVE" = true ]; then
+    log_error "--non-interactive 모드에서는 --target을 반드시 지정해야 합니다."
+    log_error "예: --target claude | codex | openclaw | hermes"
+    exit 1
   fi
 
-  # Codex 내부 실행 감지
-  if [ -n "${CODEX_SHELL:-}" ]; then
-    echo "codex"
-    return
-  fi
+  echo "" >&2
+  echo -e "${BOLD}설정할 CLI를 선택하세요:${RESET}" >&2
+  echo -e "  ${CYAN}1)${RESET} Claude Code" >&2
+  echo -e "  ${CYAN}2)${RESET} Codex CLI" >&2
+  echo -e "  ${CYAN}3)${RESET} OpenClaw" >&2
+  echo -e "  ${CYAN}4)${RESET} Hermes" >&2
+  echo "" >&2
 
-  # OpenClaw 내부 실행 감지
-  if [ -n "${OPENCLAW_HOME:-}" ]; then
-    echo "openclaw"
-    return
-  fi
+  local choice
+  read -rp "$(echo -e "${BOLD}번호 입력${RESET} [1-4]: ")" choice
 
-  # Hermes 내부 실행 감지
-  if [ -n "${HERMES_HOME:-}" ]; then
-    echo "hermes"
-    return
-  fi
-
-  # 부모 프로세스명으로 추가 감지
-  local ppid_cmd
-  ppid_cmd=$(ps -o comm= -p "${PPID:-0}" 2>/dev/null || true)
-  if echo "$ppid_cmd" | grep -qi "codex"; then
-    echo "codex"
-    return
-  fi
-  if echo "$ppid_cmd" | grep -qi "openclaw"; then
-    echo "openclaw"
-    return
-  fi
-  if echo "$ppid_cmd" | grep -qi "hermes"; then
-    echo "hermes"
-    return
-  fi
-
-  echo "all"
+  case "$choice" in
+    1) echo "claude" ;;
+    2) echo "codex" ;;
+    3) echo "openclaw" ;;
+    4) echo "hermes" ;;
+    *)
+      log_error "잘못된 선택입니다. 1~4 중 하나를 입력하세요."
+      exit 1
+      ;;
+  esac
 }
 
-EFFECTIVE_TARGET=$(detect_target)
+EFFECTIVE_TARGET=$(detect_target) || exit 1
 
 # ── 모델 자동탐색 헬퍼 ────────────────────────────────────────────────────────
 fetch_models() {
@@ -352,7 +333,7 @@ preview_profile_changes() {
   local target="$1"
   echo -e "  ${BOLD}$(basename "$SHELL_PROFILE") 에 추가될 환경변수:${RESET}"
 
-  if [[ "$target" == "claude" || "$target" == "all" ]]; then
+  if [[ "$target" == "claude" ]]; then
     show_env_diff "ANTHROPIC_API_KEY"               "$API_KEY"
     show_env_diff "ANTHROPIC_BASE_URL"              "$BASE_URL"
     show_env_diff "ANTHROPIC_MODEL"                 "$MODEL"
@@ -362,7 +343,7 @@ preview_profile_changes() {
     show_env_diff "ANTHROPIC_DEFAULT_OPUS_MODEL"    "$MODEL"
   fi
 
-  if [[ "$target" == "codex" || "$target" == "all" ]]; then
+  if [[ "$target" == "codex" ]]; then
     show_env_diff "OPENAI_API_KEY"  "$API_KEY"
     show_env_diff "OPENAI_BASE_URL" "$BASE_URL/v1"
   fi
@@ -520,7 +501,7 @@ write_env_block() {
   {
     echo ""
     echo "$marker — $(date '+%Y-%m-%d') | target: $target | model: $MODEL"
-    if [[ "$target" == "claude" || "$target" == "all" ]]; then
+    if [[ "$target" == "claude" ]]; then
       echo "export ANTHROPIC_API_KEY=\"$API_KEY\""
       echo "export ANTHROPIC_BASE_URL=\"$BASE_URL\""
       echo "export ANTHROPIC_MODEL=\"$MODEL\""
@@ -529,7 +510,7 @@ write_env_block() {
       echo "export ANTHROPIC_DEFAULT_SONNET_MODEL=\"$MODEL\""
       echo "export ANTHROPIC_DEFAULT_OPUS_MODEL=\"$MODEL\""
     fi
-    if [[ "$target" == "codex" || "$target" == "all" ]]; then
+    if [[ "$target" == "codex" ]]; then
       echo "export OPENAI_API_KEY=\"$API_KEY\""
       echo "export OPENAI_BASE_URL=\"$BASE_URL/v1\""
     fi
@@ -542,7 +523,7 @@ write_env_block() {
 # ── 현재 세션 즉시 적용 ───────────────────────────────────────────────────────
 apply_current_session() {
   local target="$1"
-  if [[ "$target" == "claude" || "$target" == "all" ]]; then
+  if [[ "$target" == "claude" ]]; then
     export ANTHROPIC_API_KEY="$API_KEY"
     export ANTHROPIC_BASE_URL="$BASE_URL"
     export ANTHROPIC_MODEL="$MODEL"
@@ -551,7 +532,7 @@ apply_current_session() {
     export ANTHROPIC_DEFAULT_SONNET_MODEL="$MODEL"
     export ANTHROPIC_DEFAULT_OPUS_MODEL="$MODEL"
   fi
-  if [[ "$target" == "codex" || "$target" == "all" ]]; then
+  if [[ "$target" == "codex" ]]; then
     export OPENAI_API_KEY="$API_KEY"
     export OPENAI_BASE_URL="$BASE_URL/v1"
   fi
@@ -730,22 +711,22 @@ else
 fi
 
 # ── 2) Claude Code 설정 ───────────────────────────────────────────────────────
-if [[ "$EFFECTIVE_TARGET" == "claude" || "$EFFECTIVE_TARGET" == "all" ]]; then
+if [[ "$EFFECTIVE_TARGET" == "claude" ]]; then
   configure_claude "$DRY_RUN"
 fi
 
 # ── 3) Codex CLI 설정 ─────────────────────────────────────────────────────────
-if [[ "$EFFECTIVE_TARGET" == "codex" || "$EFFECTIVE_TARGET" == "all" ]]; then
+if [[ "$EFFECTIVE_TARGET" == "codex" ]]; then
   configure_codex "$DRY_RUN"
 fi
 
 # ── 4) OpenClaw 설정 ──────────────────────────────────────────────────────────
-if [[ "$EFFECTIVE_TARGET" == "openclaw" || "$EFFECTIVE_TARGET" == "all" ]]; then
+if [[ "$EFFECTIVE_TARGET" == "openclaw" ]]; then
   configure_openclaw "$DRY_RUN"
 fi
 
 # ── 5) Hermes 설정 ────────────────────────────────────────────────────────────
-if [[ "$EFFECTIVE_TARGET" == "hermes" || "$EFFECTIVE_TARGET" == "all" ]]; then
+if [[ "$EFFECTIVE_TARGET" == "hermes" ]]; then
   configure_hermes "$DRY_RUN"
 fi
 
@@ -791,7 +772,7 @@ echo ""
 log_info "사용 가능한 모델 목록 확인:"
 echo -e "  ${BOLD}TON_API_KEY=\"\$OPENAI_API_KEY\" bash scripts/configure-cli.sh --list-models${RESET}"
 echo ""
-if [[ "$EFFECTIVE_TARGET" == "openclaw" || "$EFFECTIVE_TARGET" == "all" ]]; then
+if [[ "$EFFECTIVE_TARGET" == "openclaw" ]]; then
   log_warn "OpenClaw gateway 재시작 (provider/URL/key 변경 시 필요):"
   echo -e "  ${BOLD}openclaw gateway restart --safe${RESET}"
   echo ""
@@ -800,7 +781,7 @@ if [[ "$EFFECTIVE_TARGET" == "openclaw" || "$EFFECTIVE_TARGET" == "all" ]]; then
   echo -e "  ${BOLD}openclaw gateway health${RESET}"
   echo ""
 fi
-if [[ "$EFFECTIVE_TARGET" == "hermes" || "$EFFECTIVE_TARGET" == "all" ]]; then
+if [[ "$EFFECTIVE_TARGET" == "hermes" ]]; then
   log_warn "Hermes gateway 재시작 필요 (model.* 변경은 재시작 후 반영됩니다):"
   echo -e "  ${BOLD}hermes gateway restart${RESET}"
   echo ""
