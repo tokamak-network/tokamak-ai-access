@@ -1,24 +1,8 @@
 "use client";
 
-/**
- * Dashboard page — T3.3
- *
- * Auth guard: if no session cookie, /api/staking/balance returns 401
- * and we redirect back to the landing page.
- *
- * States:
- *   loading         → skeleton
- *   ineligible      → staked amount + stake link
- *   eligible/no-key → "Issue API Key" button
- *   eligible/issued → 1-time key reveal + copy + CLI setup panel
- *   eligible/active → last-four + rotate button
- */
-
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
-
-/* ── Types ─────────────────────────────────────────────────────────── */
 
 interface BalanceData {
   address: string;
@@ -26,22 +10,17 @@ interface BalanceData {
   eligible: boolean;
   minTon: number;
 }
-
 interface KeyData {
   hasActiveKey: boolean;
   createdAt?: string;
   lastFour?: string;
 }
 
-/* ── Helpers ────────────────────────────────────────────────────────── */
-
 function shortAddr(addr: string) {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
-/* ── CLI Setup Panel ─────────────────────────────────────────────────
- * Two tabs: "에이전트 실행" / "직접 실행"
- */
+/* ── CLI Setup Panel ──────────────────────────────────────────────── */
 function CliSetupPanel({ apiKey }: { apiKey: string }) {
   const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
@@ -68,57 +47,76 @@ bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \\
     setTimeout(() => setCopied(false), 2000);
   }
 
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: "10px 0",
+    fontFamily: "var(--font-mono)",
+    fontSize: "0.625rem",
+    letterSpacing: "0.12em",
+    textTransform: "uppercase" as const,
+    background: active ? "var(--ink)" : "transparent",
+    color: active ? "var(--surface-raised)" : "var(--muted)",
+    border: "none",
+    borderBottom: `1px solid ${active ? "var(--ink)" : "var(--hairline)"}`,
+    cursor: "pointer",
+    transition: "all 120ms",
+  });
+
   return (
-    <div className="border border-gray-700 rounded-xl overflow-hidden">
-      <div className="flex border-b border-gray-700">
-        {(["agent", "direct"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 py-2.5 text-xs font-semibold transition-colors
-              ${tab === t
-                ? "bg-gray-800 text-white"
-                : "bg-gray-900 text-gray-500 hover:text-gray-300"
-              }`}
-          >
-            {t === "agent" ? "에이전트 실행" : "직접 실행 (터미널)"}
-          </button>
-        ))}
+    <div style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+      {/* Tab bar */}
+      <div style={{ display: "flex", borderBottom: "1px solid var(--hairline)" }}>
+        <button style={tabStyle(tab === "agent")} onClick={() => setTab("agent")}>에이전트 실행</button>
+        <button style={tabStyle(tab === "direct")} onClick={() => setTab("direct")}>직접 실행</button>
       </div>
-      <div className="bg-gray-900 p-5 space-y-3">
+      {/* Body */}
+      <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
         {tab === "agent" ? (
-          <>
-            <p className="text-xs text-gray-400">
-              아래 지시문을 복사해서 Claude, Codex 등 AI 에이전트에 붙여넣으세요.
-              에이전트가 <code className="text-gray-200">configure-cli.sh</code>를 직접 실행합니다.
-            </p>
-            <pre className="bg-gray-950 rounded-lg p-4 text-xs text-gray-200 whitespace-pre-wrap break-words leading-relaxed">
-              {agentInstruction}
-            </pre>
-          </>
+          <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
+            아래 지시문을 복사해서 Claude, Codex 등 AI 에이전트에 붙여넣으세요.
+          </p>
         ) : (
-          <>
-            <p className="text-xs text-gray-400">
-              터미널에서 직접 실행합니다. Claude Code와 Codex 환경 변수가 자동으로 설정됩니다.
-            </p>
-            <pre className="bg-gray-950 rounded-lg p-4 text-xs text-gray-200 whitespace-pre leading-relaxed overflow-x-auto">
-              {directCommand}
-            </pre>
-          </>
+          <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
+            터미널에 직접 붙여넣어 실행합니다.
+          </p>
         )}
+        <pre style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.8125rem",
+          color: "var(--ink)",
+          background: "var(--surface)",
+          border: "1px solid var(--hairline)",
+          borderRadius: "calc(var(--radius) - 2px)",
+          padding: "16px 18px",
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+          lineHeight: 1.75,
+          marginBottom: "16px",
+        }}>
+          {content}
+        </pre>
         <button
           onClick={handleCopy}
-          className="text-xs font-semibold text-brand hover:underline"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.625rem",
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--accent)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            padding: 0,
+          }}
         >
-          {copied ? "Copied!" : "Copy"}
+          {copied ? "Copied ✓" : "Copy"}
         </button>
       </div>
     </div>
   );
 }
 
-/* ── Main Component ─────────────────────────────────────────────────── */
-
+/* ── Dashboard ────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const router = useRouter();
   const { address } = useAccount();
@@ -140,10 +138,7 @@ export default function DashboardPage() {
         fetch("/api/staking/balance"),
         fetch("/api/keys/me"),
       ]);
-      if (balRes.status === 401) {
-        router.push("/");
-        return;
-      }
+      if (balRes.status === 401) { router.push("/"); return; }
       if (!balRes.ok) throw new Error(`Balance error ${balRes.status}`);
       if (!keyRes.ok) throw new Error(`Key status error ${keyRes.status}`);
       setBalance(await balRes.json());
@@ -158,154 +153,185 @@ export default function DashboardPage() {
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
   async function issueKey() {
-    setActionLoading(true);
-    setError(null);
+    setActionLoading(true); setError(null);
     try {
       const res = await fetch("/api/keys/issue", { method: "POST" });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setOneTimeKey(data.key);
       setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4) });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Key issue failed");
-    } finally {
-      setActionLoading(false);
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : "Key issue failed"); }
+    finally { setActionLoading(false); }
   }
 
   async function rotateKey() {
-    setActionLoading(true);
-    setError(null);
+    setActionLoading(true); setError(null);
     try {
       const res = await fetch("/api/keys/rotate", { method: "POST" });
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setOneTimeKey(data.key);
       setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4) });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Key rotation failed");
-    } finally {
-      setActionLoading(false);
-    }
+    } catch (e) { setError(e instanceof Error ? e.message : "Key rotation failed"); }
+    finally { setActionLoading(false); }
   }
 
-  async function copyKey() {
-    if (!oneTimeKey) return;
-    await navigator.clipboard.writeText(oneTimeKey);
-    setKeyCopied(true);
-    setTimeout(() => setKeyCopied(false), 2000);
-  }
-
-  function handleDisconnect() {
-    disconnect();
-    router.push("/");
-  }
+  function handleDisconnect() { disconnect(); router.push("/"); }
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white p-6 sm:p-10">
-      <div className="max-w-xl mx-auto space-y-6">
-
-        {/* Top bar */}
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-mono text-brand uppercase tracking-widest">Tokamak Network</p>
-            <h1 className="text-lg font-bold">TON AI Access</h1>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-gray-400">
-            {address && <span className="font-mono text-xs">{shortAddr(address)}</span>}
-            <button onClick={handleDisconnect} className="hover:text-white transition-colors">Sign out</button>
+    <>
+      {/* Top bar */}
+      <header className="topbar">
+        <div className="topbar-inner">
+          <span className="topbar-logo">TON AI Access</span>
+          <div className="topbar-meta">
+            {address && <span>{shortAddr(address)}</span>}
+            <button
+              onClick={handleDisconnect}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.08em" }}
+            >
+              Sign out
+            </button>
           </div>
         </div>
+      </header>
 
-        {/* Loading */}
-        {loading && (
-          <div className="border border-gray-800 rounded-xl p-8 text-center text-gray-500 text-sm">Loading…</div>
-        )}
+      <main>
+        {/* ── Balance section ── */}
+        <section className="section">
+          <aside>
+            <span className="eyebrow">Staking status</span>
+            {balance && (
+              <>
+                <span className="n-lbl">Total staked</span>
+                <span className="n-val">{balance.totalStakedTON} TON</span>
+                <span className="n-lbl">Minimum</span>
+                <span className="n-val">{balance.minTon} TON</span>
+                <span className="n-lbl">Eligibility</span>
+                <span className="n-val" style={{ color: balance.eligible ? "#16a34a" : "#dc2626" }}>
+                  {balance.eligible ? "Eligible ✓" : "Not eligible ✗"}
+                </span>
+                <span className="n-lbl">Network</span>
+                <span className="n-val" style={{ marginBottom: 0 }}>Ethereum Mainnet</span>
+              </>
+            )}
+            {loading && <span className="n-val" style={{ color: "var(--muted)" }}>Loading…</span>}
+          </aside>
 
-        {/* Error */}
-        {error && (
-          <div className="border border-red-800 bg-red-950 rounded-xl p-4 text-red-300 text-sm flex justify-between items-start gap-4">
-            <span>{error}</span>
-            <button onClick={fetchAll} className="text-xs underline shrink-0">Retry</button>
-          </div>
-        )}
-
-        {/* Balance card */}
-        {!loading && balance && (
-          <div className="border border-gray-800 rounded-xl p-6 space-y-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-mono text-gray-500 uppercase tracking-widest mb-1">Total Staked</p>
-                <p className="text-2xl font-bold">{balance.totalStakedTON} TON</p>
+          <div>
+            {error && (
+              <div style={{
+                border: "1px solid #fca5a5",
+                background: "#fef2f2",
+                borderRadius: "var(--radius)",
+                padding: "16px 20px",
+                marginBottom: "24px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "16px",
+              }}>
+                <span style={{ fontSize: "0.9rem", color: "#dc2626" }}>{error}</span>
+                <button onClick={fetchAll} style={{ fontSize: "0.8rem", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline", flexShrink: 0 }}>Retry</button>
               </div>
-              {balance.eligible
-                ? <span className="px-2.5 py-1 rounded-full bg-green-900 text-green-300 text-xs font-semibold">✓ Eligible</span>
-                : <span className="px-2.5 py-1 rounded-full bg-red-900 text-red-300 text-xs font-semibold">✗ Not eligible</span>
-              }
-            </div>
-            <button onClick={fetchAll} className="text-xs text-gray-500 hover:text-gray-300 transition-colors">Refresh ↻</button>
-          </div>
-        )}
+            )}
 
-        {/* Ineligible */}
-        {!loading && balance && !balance.eligible && (
-          <div className="border border-gray-800 rounded-xl p-6 space-y-3">
-            <p className="text-sm text-gray-400">
-              You need at least <strong className="text-white">{balance.minTon} TON</strong> staked.
-              Currently: <strong className="text-white">{balance.totalStakedTON} TON</strong>
-            </p>
-            <a href="https://tokamak.network/staking" target="_blank" rel="noopener noreferrer"
-               className="inline-block text-sm text-brand hover:underline">
-              → Stake at tokamak.network/staking
-            </a>
-          </div>
-        )}
+            {!loading && balance && !balance.eligible && (
+              <>
+                <h2 className="section-heading">스테이킹이 부족합니다.</h2>
+                <p className="body-lead">
+                  API 키를 받으려면 최소 <strong style={{ color: "var(--ink)" }}>{balance.minTon} TON</strong>이 스테이킹되어 있어야 합니다.
+                  현재 스테이킹: <strong style={{ color: "var(--ink)" }}>{balance.totalStakedTON} TON</strong>
+                </p>
+                <a
+                  href="https://tokamak.network/staking"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary"
+                >
+                  Stake at tokamak.network →
+                </a>
+              </>
+            )}
 
-        {/* Key section (eligible, no one-time key showing) */}
-        {!loading && balance?.eligible && !oneTimeKey && (
-          <div className="border border-gray-800 rounded-xl p-6 space-y-4">
-            {keyData?.hasActiveKey
-              ? <p className="text-sm text-gray-400">Active key: …{keyData.lastFour}{keyData.createdAt && ` · issued ${new Date(keyData.createdAt).toLocaleDateString()}`}</p>
-              : <p className="text-sm text-gray-400">No active key yet.</p>
-            }
-            {keyData?.hasActiveKey
-              ? <button onClick={rotateKey} disabled={actionLoading}
-                  className="w-full py-2.5 px-4 rounded-lg border border-gray-700 hover:border-gray-500 text-sm font-semibold transition-colors disabled:opacity-50">
-                  {actionLoading ? "Rotating…" : "Rotate API Key"}
-                </button>
-              : <button onClick={issueKey} disabled={actionLoading}
-                  className="w-full py-2.5 px-4 rounded-lg bg-brand hover:bg-brand/90 text-sm font-semibold transition-colors disabled:opacity-50">
-                  {actionLoading ? "Issuing…" : "Issue API Key"}
-                </button>
-            }
-          </div>
-        )}
+            {!loading && balance?.eligible && !oneTimeKey && (
+              <>
+                <h2 className="section-heading">
+                  {keyData?.hasActiveKey ? "API 키가 있습니다." : "API 키를 발급받으세요."}
+                </h2>
+                <p className="body-lead">
+                  {keyData?.hasActiveKey
+                    ? `활성 키: …${keyData.lastFour}${keyData.createdAt ? ` · ${new Date(keyData.createdAt).toLocaleDateString()}` : ""}`
+                    : "스테이킹이 확인됐습니다. 아래 버튼으로 LiteLLM API 키를 발급받으세요."}
+                </p>
+                {keyData?.hasActiveKey ? (
+                  <button className="btn-secondary" onClick={rotateKey} disabled={actionLoading}>
+                    {actionLoading ? "Rotating…" : "Rotate API Key"}
+                  </button>
+                ) : (
+                  <button className="btn-primary" onClick={issueKey} disabled={actionLoading}>
+                    {actionLoading ? "Issuing…" : "Issue API Key →"}
+                  </button>
+                )}
+              </>
+            )}
 
-        {/* One-time key reveal + CLI setup */}
-        {oneTimeKey && (
-          <div className="space-y-4">
-            <div className="border border-yellow-700 bg-yellow-950 rounded-xl p-6 space-y-4">
-              <p className="text-yellow-300 font-semibold text-sm">⚠ Save this key now — it won&apos;t be shown again.</p>
-              <div className="flex items-center gap-3 bg-gray-900 rounded-lg px-4 py-3">
-                <code className="flex-1 text-xs break-all text-gray-200">{oneTimeKey}</code>
-                <button onClick={copyKey} className="text-xs font-semibold text-brand hover:underline shrink-0">
-                  {keyCopied ? "Copied!" : "Copy"}
-                </button>
+            {/* One-time key reveal */}
+            {oneTimeKey && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+                <div>
+                  <h2 className="section-heading">키가 발급됐습니다.</h2>
+                  <p className="body-lead" style={{ marginBottom: "20px" }}>
+                    이 키는 지금 한 번만 표시됩니다. 반드시 저장하세요.
+                  </p>
+                  <div style={{
+                    background: "var(--surface-raised)",
+                    border: "1px solid #fde68a",
+                    borderRadius: "var(--radius)",
+                    padding: "20px 24px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    marginBottom: "8px",
+                  }}>
+                    <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--ink)", flex: 1, wordBreak: "break-all" }}>
+                      {oneTimeKey}
+                    </code>
+                    <button
+                      onClick={async () => { await navigator.clipboard.writeText(oneTimeKey); setKeyCopied(true); setTimeout(() => setKeyCopied(false), 2000); }}
+                      style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}
+                    >
+                      {keyCopied ? "Copied ✓" : "Copy"}
+                    </button>
+                  </div>
+                  <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)", lineHeight: 1.8 }}>
+                    Endpoint: api2.ai.tokamak.network · Model: qwen-3.6
+                  </p>
+                </div>
+
+                {/* CLI setup */}
+                <div>
+                  <span className="eyebrow" style={{ marginBottom: "16px" }}>CLI Setup</span>
+                  <CliSetupPanel apiKey={oneTimeKey} />
+                </div>
               </div>
-              <div className="text-xs text-gray-400 space-y-1">
-                <p>Endpoint: <code className="text-gray-200">https://api2.ai.tokamak.network</code></p>
-                <p>Model: <code className="text-gray-200">qwen-3.6</code></p>
-              </div>
-            </div>
+            )}
 
-            <div className="space-y-2">
-              <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">CLI Setup</p>
-              <CliSetupPanel apiKey={oneTimeKey} />
-            </div>
+            {loading && (
+              <p style={{ color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "0.8125rem" }}>Loading…</p>
+            )}
+
+            {!loading && (
+              <button
+                onClick={fetchAll}
+                style={{ marginTop: "32px", fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)", background: "none", border: "none", cursor: "pointer", display: "block" }}
+              >
+                Refresh ↻
+              </button>
+            )}
           </div>
-        )}
-
-      </div>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }
