@@ -1,3 +1,229 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── PATTERN: Asymmetric Editorial Split ─────────────────────────────────
+   Source of truth: PATTERN-asymmetric-split.md
+   Never substitute, approximate, or invent values outside this block.
+──────────────────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* Layout */
+  --content-max: 1280px;
+  --section-y:   120px;
+  --gap:         48px;
+  --pad-x:       32px;
+
+  /* Grid lines */
+  --split-line:  rgba(15, 15, 15, 0.10);
+  --divider:     rgba(15, 15, 15, 0.08);
+
+  /* Colors */
+  --ink:            #0c1a2c;
+  --surface:        #f7f8fa;
+  --surface-raised: #ffffff;
+  --accent:         #1f4ed8;
+  --muted:          #6b7585;
+  --hairline:       #e3e6ec;
+
+  /* Typography */
+  --font-display: 'Inter Tight', sans-serif;
+  --font-body:    'Inter', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* Shape */
+  --radius: 8px;
+}
+
+html, body {
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ── Layout primitives ───────────────────────────────────────────────── */
+
+/* Full-height vertical hairline — positioned via JS */
+.split-line {
+  position: fixed;
+  top: 0; bottom: 0;
+  width: 1px;
+  background: var(--split-line);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Two-column editorial section */
+.section {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  column-gap: var(--gap);
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--section-y) var(--pad-x);
+  border-bottom: 1px solid var(--divider);
+}
+.section--compact {
+  padding-top:    64px;
+  padding-bottom: 64px;
+}
+
+/* Mobile: collapse to single column */
+@media (max-width: 768px) {
+  .split-line { display: none; }
+  .section {
+    grid-template-columns: 1fr;
+    row-gap: 24px;
+    padding: 64px 24px;
+  }
+}
+
+/* ── Typography ──────────────────────────────────────────────────────── */
+
+.eyebrow {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 24px;
+}
+
+.h1-rule {
+  width: 28px;
+  height: 2px;
+  background: var(--accent);
+  margin-bottom: 28px;
+}
+
+h1.display {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 4.5vw, 3.75rem);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  margin-bottom: 24px;
+}
+
+h2.section-heading {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin-bottom: 16px;
+}
+
+.body-lead {
+  font-family: var(--font-body);
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 60ch;
+  margin-bottom: 36px;
+}
+
+/* Narrow column metadata labels */
+.n-lbl {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 3px;
+}
+.n-val {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--ink);
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+
+/* ── CTA — exactly one per section ──────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ink);
+  color: var(--surface-raised);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 12px 24px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: opacity 140ms;
+  text-decoration: none;
+}
+.btn-primary:hover    { opacity: 0.84; }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 11px 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline);
+  cursor: pointer;
+  transition: border-color 140ms;
+}
+.btn-secondary:hover    { border-color: var(--ink); }
+.btn-secondary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid var(--divider);
+  background: var(--surface);
+}
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: 0 var(--pad-x);
+  height: 56px;
+}
+.topbar-logo {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.topbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted);
+}

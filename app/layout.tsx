@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 
-const inter = Inter({ subsets: ["latin"] });
+// Font is loaded via globals.css @import (Google Fonts) to match
+// the Asymmetric Editorial Split pattern spec exactly.
 
 export const metadata: Metadata = {
   title: "TON AI Access",
@@ -16,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
+    <html lang="ko">
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

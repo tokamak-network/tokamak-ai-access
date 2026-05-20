@@ -44,12 +44,13 @@
   - [ ] `python scripts/snapshot_eligible_stakers.py` 실행
   - [ ] `data/eligible_holders.csv` 결과 검토
   - [ ] Dune SQL 병행 실행 → cross-check
-- ⬜ **T1.8** Vercel 프로젝트 생성 + env 설정 (0.5h)
-  - [ ] `vercel link` 또는 대시보드에서 프로젝트 생성
-  - [ ] `LITELLM_BASE_URL`, `LITELLM_MASTER_KEY` 설정
-  - [ ] `RPC_URL` 설정
-  - [ ] Upstash Redis 연결 (Vercel Dashboard → Storage → Connect Store → Upstash Redis) → `KV_REST_API_URL`, `KV_REST_API_TOKEN` 자동 주입
-  - [ ] `SESSION_SECRET` 생성 (`openssl rand -base64 32`)
+- ✅ **T1.8** Vercel 프로젝트 생성 + env 설정 (0.5h)
+  - [x] `vercel link` 또는 대시보드에서 프로젝트 생성
+  - [x] `LITELLM_BASE_URL`, `LITELLM_MASTER_KEY` 설정
+  - [x] `RPC_URL` 설정
+  - [x] Upstash Redis 연결 → `KV_REST_API_URL`, `KV_REST_API_TOKEN` 자동 주입
+  - [x] `SESSION_SECRET` 생성 및 설정
+  - [x] `vercel --prod` 배포 완료
 
 ---
 

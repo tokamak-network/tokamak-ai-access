@@ -54,7 +54,7 @@ Dune SQL 결과(2024-05 기준 32개 Layer2)와 일치 확인. 하드코딩된 L
 ---
 
 ## NOTE-007 — CLI Setup 패널 배포 URL 하드코딩
-**상태**: 🟡  
+**상태**: ✅  
 `app/dashboard/page.tsx`의 `CliSetupPanel` 및 `docs/wireframe.html`에 배포 URL이  
 `https://ton-ai-access.vercel.app`으로 하드코딩되어 있음.  
 T1.8(Vercel 프로젝트 생성) 완료 후 실제 URL로 교체 필요.  
