@@ -798,9 +798,6 @@ export default function DashboardPage() {
                   </span>
                   <span className="badge badge--ok">Eligible</span>
                 </div>
-                <p style={{ fontSize: "0.9375rem", color: "var(--muted)", marginBottom: "32px", lineHeight: 1.6 }}>
-                  Staked across Tokamak Layer2s via SeigManager.
-                </p>
 
                 {/* Key card */}
                 <div className="card">
