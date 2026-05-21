@@ -259,6 +259,7 @@ describe("POST /api/keys/rotate", () => {
     expect(prevCall[1]).toHaveProperty("revokedAt");
     expect(newCall[0]).not.toContain(":prev");
     expect(newCall[1]).not.toHaveProperty("revokedAt");
+    expect(newCall[1]).toHaveProperty("expiresAt", MOCK_KEY.expiresAt);
   });
 
   it("issues new key even with no prior key in KV", async () => {

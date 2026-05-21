@@ -42,6 +42,7 @@ export async function POST(req: NextRequest) {
     hash: hashKey(key),
     keySlice: key.slice(-4),
     createdAt: Date.now(),
+    expiresAt,
   });
 
   return NextResponse.json({ key, expiresAt, model: "qwen-3.6" });
