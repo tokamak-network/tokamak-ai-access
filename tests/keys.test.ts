@@ -54,7 +54,9 @@ const MOCK_KEY = {
 const STORED_RECORD = {
   liteLlmKeyId: MOCK_KEY.keyId,
   hash:         "a".repeat(64),   // fake sha256
+  keySlice:     "xyz",
   createdAt:    1_700_000_000_000,
+  expiresAt:    "2099-01-01T00:00:00.000Z",
 };
 
 function makeReq(method = "POST"): NextRequest {
@@ -141,6 +143,18 @@ describe("POST /api/keys/issue", () => {
     const res = await issueKey(makeReq());
     expect(res.status).toBe(429);
   });
+
+  it("stores expiresAt in KV when issuing key", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(null);
+    mockGenerateLiteLLMKey.mockResolvedValue(MOCK_KEY);
+    mockKvSet.mockResolvedValue(undefined);
+
+    await issueKey(makeReq());
+
+    expect(mockKvSet.mock.calls[0][1]).toHaveProperty("expiresAt", MOCK_KEY.expiresAt);
+  });
 });
 
 // ── GET /api/keys/me ─────────────────────────────────────────────────────────
@@ -155,7 +169,7 @@ describe("GET /api/keys/me", () => {
     expect(res.status).toBe(200);
     expect(body.hasActiveKey).toBe(true);
     expect(body.createdAt).toBe(new Date(STORED_RECORD.createdAt).toISOString());
-    expect(body.lastFour).toBe(STORED_RECORD.hash.slice(-4));
+    expect(body.lastFour).toBe(STORED_RECORD.keySlice);
     // plaintext key must never appear
     expect(JSON.stringify(body)).not.toContain("sk-litellm");
   });

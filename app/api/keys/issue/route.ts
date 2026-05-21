@@ -12,6 +12,7 @@ interface KeyRecord {
   hash: string;
   keySlice: string;
   createdAt: number;
+  expiresAt: string;
   revokedAt?: number;
 }
 
@@ -58,6 +59,7 @@ export async function POST(req: NextRequest) {
     hash: hashKey(key),
     keySlice: key.slice(-4),
     createdAt: Date.now(),
+    expiresAt,
   } satisfies KeyRecord);
 
   return NextResponse.json({
