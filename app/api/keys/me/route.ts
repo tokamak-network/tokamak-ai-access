@@ -6,9 +6,10 @@ import { checkRateLimit } from "@/lib/with-rate-limit";
 /**
  * GET /api/keys/me
  * Auth: session cookie
- * Response: { hasActiveKey: boolean, createdAt?: string, lastFour?: string }
+ * Response: { hasActiveKey: boolean, createdAt?: string, lastFour?: string, expiresAt?: string }
  *
  * NOTE: The actual key value is never stored server-side (§1 D6). lastFour is a slice of the hash.
+ * Keys with expiresAt < now are treated as inactive (TTL-expired).
  */
 export async function GET(req: NextRequest) {
   const address = await getSessionAddress(req);
@@ -24,10 +25,12 @@ export async function GET(req: NextRequest) {
     hash: string;
     keySlice?: string;
     createdAt: number;
+    expiresAt?: string;
     revokedAt?: number;
   }>(`key:${address}`);
 
-  if (!record || record.revokedAt) {
+  const isExpired = !!record?.expiresAt && record.expiresAt < new Date().toISOString();
+  if (!record || record.revokedAt || isExpired) {
     return NextResponse.json({ hasActiveKey: false });
   }
 
@@ -35,5 +38,6 @@ export async function GET(req: NextRequest) {
     hasActiveKey: true,
     createdAt: new Date(record.createdAt).toISOString(),
     lastFour: record.keySlice ?? record.hash.slice(-4),
+    expiresAt: record.expiresAt,
   });
 }

@@ -214,6 +214,22 @@ describe("GET /api/keys/me", () => {
     const res = await getMe(makeReq("GET"));
     expect(res.status).toBe(401);
   });
+
+  it("returns expiresAt for active key", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockKvGet.mockResolvedValue(STORED_RECORD);
+
+    const body = await (await getMe(makeReq("GET"))).json();
+    expect(body.expiresAt).toBe(STORED_RECORD.expiresAt);
+  });
+
+  it("returns hasActiveKey false when key is TTL-expired", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockKvGet.mockResolvedValue({ ...STORED_RECORD, expiresAt: "2020-01-01T00:00:00.000Z" });
+
+    const body = await (await getMe(makeReq("GET"))).json();
+    expect(body.hasActiveKey).toBe(false);
+  });
 });
 
 // ── POST /api/keys/rotate ────────────────────────────────────────────────────
