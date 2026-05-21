@@ -37,3 +37,7 @@ export async function kvDel(key: string): Promise<void> {
 export function hashKey(key: string): string {
   return createHash("sha256").update(key).digest("hex");
 }
+
+export async function kvKeys(pattern: string): Promise<string[]> {
+  return kv.keys(pattern);
+}
