@@ -814,25 +814,49 @@ export default function DashboardPage() {
                         </div>
                         <span className="badge badge--ok">Active</span>
                       </div>
-                      {keyData.expiresAt && (() => {
-                        const msLeft = new Date(keyData.expiresAt).getTime() - Date.now();
-                        const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
-                        if (daysLeft > 7) return null;
-                        return (
+                      {(() => {
+                        if (!keyData.expiresAt) return (
                           <div style={{
-                            background: daysLeft <= 0 ? "#fef2f2" : "#fffbeb",
-                            border: `1px solid ${daysLeft <= 0 ? "#fca5a5" : "#fde68a"}`,
+                            background: "#f8fafc",
+                            border: "1px solid var(--hairline)",
                             borderRadius: "var(--radius)",
                             padding: "14px 18px",
                             marginBottom: "16px",
                             fontSize: "0.875rem",
-                            color: daysLeft <= 0 ? "#dc2626" : "#78350f",
+                            color: "var(--muted)",
                           }}>
-                            {daysLeft <= 0
-                              ? "✕ Your key has expired. Use Rotate key to restore access."
-                              : `⚠ Your key expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}. Use Rotate key to renew.`}
+                            This key has no expiry. Rotate to enable 30-day TTL.
                           </div>
                         );
+                        const msLeft = new Date(keyData.expiresAt).getTime() - Date.now();
+                        const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+                        if (daysLeft <= 0) return (
+                          <div style={{
+                            background: "#fef2f2",
+                            border: "1px solid #fca5a5",
+                            borderRadius: "var(--radius)",
+                            padding: "14px 18px",
+                            marginBottom: "16px",
+                            fontSize: "0.875rem",
+                            color: "#dc2626",
+                          }}>
+                            ✕ Your key has expired. Rotate to restore access.
+                          </div>
+                        );
+                        if (daysLeft <= 7) return (
+                          <div style={{
+                            background: "#fffbeb",
+                            border: "1px solid #fde68a",
+                            borderRadius: "var(--radius)",
+                            padding: "14px 18px",
+                            marginBottom: "16px",
+                            fontSize: "0.875rem",
+                            color: "#78350f",
+                          }}>
+                            ⚠ Your key expires in {daysLeft} day{daysLeft === 1 ? "" : "s"}. Rotate to renew.
+                          </div>
+                        );
+                        return null;
                       })()}
                       <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "24px" }}>
                         Lost your key? Rotate to revoke the current one and get a new one.
