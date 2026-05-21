@@ -38,7 +38,7 @@ export async function generateLiteLLMKey(
     user_id:   ownerAddress,                  // LiteLLM user entity — enables per-user budget/rate tracking
     key_alias: ownerAddress,                  // display label in admin UI
     metadata: { owner: ownerAddress },
-    // duration: "30d",                       // uncomment to set expiry
+    duration: "30d",
   };
 
   const res = await fetch(`${baseUrl}/key/generate`, {
