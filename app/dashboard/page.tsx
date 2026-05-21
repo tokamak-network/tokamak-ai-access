@@ -25,6 +25,7 @@ interface KeyData {
   hasActiveKey: boolean;
   createdAt?: string;
   lastFour?: string;
+  expiresAt?: string;
 }
 
 function shortAddr(addr: string) {
@@ -674,7 +675,7 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setOneTimeKey(data.key);
-      setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4) });
+      setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4), expiresAt: data.expiresAt });
     } catch (e) { setError(e instanceof Error ? e.message : "Key issue failed"); }
     finally { setActionLoading(false); }
   }
@@ -686,7 +687,7 @@ export default function DashboardPage() {
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       setOneTimeKey(data.key);
-      setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4) });
+      setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4), expiresAt: data.expiresAt });
     } catch (e) { setError(e instanceof Error ? e.message : "Key rotation failed"); }
     finally { setActionLoading(false); }
   }
@@ -808,11 +809,31 @@ export default function DashboardPage() {
                         <div>
                           <p style={{ fontFamily: "var(--font-display)", fontSize: "1.0625rem", fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>Active key</p>
                           <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--muted)" }}>
-                            Ends in …{keyData.lastFour}{keyData.createdAt ? ` · Issued ${new Date(keyData.createdAt).toLocaleDateString()}` : ""}
+                            Ends in …{keyData.lastFour}{keyData.createdAt ? ` · Issued ${new Date(keyData.createdAt).toLocaleDateString()}` : ""}{keyData.expiresAt ? ` · Expires ${new Date(keyData.expiresAt).toLocaleDateString()}` : ""}
                           </p>
                         </div>
                         <span className="badge badge--ok">Active</span>
                       </div>
+                      {keyData.expiresAt && (() => {
+                        const msLeft = new Date(keyData.expiresAt).getTime() - Date.now();
+                        const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+                        if (daysLeft > 7) return null;
+                        return (
+                          <div style={{
+                            background: daysLeft <= 0 ? "#fef2f2" : "#fffbeb",
+                            border: `1px solid ${daysLeft <= 0 ? "#fca5a5" : "#fde68a"}`,
+                            borderRadius: "var(--radius)",
+                            padding: "14px 18px",
+                            marginBottom: "16px",
+                            fontSize: "0.875rem",
+                            color: daysLeft <= 0 ? "#dc2626" : "#78350f",
+                          }}>
+                            {daysLeft <= 0
+                              ? "✕ Your key has expired. Use Rotate key to restore access."
+                              : `⚠ Your key expires in ${daysLeft} day${daysLeft === 1 ? "" : "s"}. Use Rotate key to renew.`}
+                          </div>
+                        );
+                      })()}
                       <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "24px" }}>
                         Lost your key? Rotate to revoke the current one and get a new one.
                         The new key is shown once — save it immediately.
