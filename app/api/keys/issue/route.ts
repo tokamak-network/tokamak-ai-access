@@ -46,7 +46,8 @@ export async function POST(req: NextRequest) {
 
   // Check existing key
   const existing = await kvGet<KeyRecord>(`key:${address}`);
-  if (existing && !existing.revokedAt) {
+  const isExpired = !!existing?.expiresAt && existing.expiresAt < new Date().toISOString();
+  if (existing && !existing.revokedAt && !isExpired) {
     return NextResponse.json({ error: "Key already issued" }, { status: 409 });
   }
 

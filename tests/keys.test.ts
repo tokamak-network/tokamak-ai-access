@@ -155,6 +155,18 @@ describe("POST /api/keys/issue", () => {
 
     expect(mockKvSet.mock.calls[0][1]).toHaveProperty("expiresAt", MOCK_KEY.expiresAt);
   });
+
+  it("re-issues if existing key is TTL-expired", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue({ ...STORED_RECORD, expiresAt: "2020-01-01T00:00:00.000Z" });
+    mockGenerateLiteLLMKey.mockResolvedValue(MOCK_KEY);
+    mockKvSet.mockResolvedValue(undefined);
+
+    const res = await issueKey(makeReq());
+    expect(res.status).toBe(200);
+    expect((await res.json()).key).toBe(MOCK_KEY.key);
+  });
 });
 
 // ── GET /api/keys/me ─────────────────────────────────────────────────────────
