@@ -1,0 +1,39 @@
+{
+  "name": "@tokamak-network/ai-access-cli",
+  "version": "1.0.0",
+  "description": "Configure and revert TON AI Access settings for Claude Code, Codex, OpenClaw, and Hermes",
+  "bin": {
+    "tokamak-ai-access": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.9.1",
+    "@iarna/toml": "^2.2.5",
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

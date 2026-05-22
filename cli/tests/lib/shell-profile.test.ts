@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { writeEnvBlock, removeMarkerBlock, revertShellProfile, generateCleanupBlock, injectCleanupBlock } from "../../src/lib/shell-profile.js";
+import { writeEnvBlock, removeMarkerBlock, revertShellProfile } from "../../src/lib/shell-profile.js";
 import { hasMarkerBlock } from "../../src/lib/markers.js";
 
 function makeTmp(): string {
@@ -122,75 +122,3 @@ describe("revertShellProfile", () => {
   });
 });
 
-describe("generateCleanupBlock", () => {
-  it("returns unset commands for all 7 ANTHROPIC env vars", () => {
-    const block = generateCleanupBlock("/Users/test/.zshrc");
-    expect(block).toContain("unset ANTHROPIC_API_KEY");
-    expect(block).toContain("unset ANTHROPIC_BASE_URL");
-    expect(block).toContain("unset ANTHROPIC_MODEL");
-    expect(block).toContain("unset ANTHROPIC_SMALL_FAST_MODEL");
-    expect(block).toContain("unset ANTHROPIC_DEFAULT_HAIKU_MODEL");
-    expect(block).toContain("unset ANTHROPIC_DEFAULT_SONNET_MODEL");
-    expect(block).toContain("unset ANTHROPIC_DEFAULT_OPUS_MODEL");
-  });
-
-  it("includes self-removal sed command with profile path", () => {
-    const profile = "/Users/test/.zshrc";
-    const block = generateCleanupBlock(profile);
-    expect(block).toContain("sed -i ''");
-    expect(block).toContain(profile);
-    expect(block).toContain("# TON AI Access — oneshot cleanup");
-    expect(block).toContain("# ///TON AI Access cleanup");
-  });
-
-  it("joins lines with newlines", () => {
-    const block = generateCleanupBlock("/test/.profile");
-    const lines = block.split("\n");
-    expect(lines.length).toBeGreaterThan(7);
-  });
-});
-
-describe("injectCleanupBlock", () => {
-  let dir: string;
-  let profile: string;
-
-  beforeEach(() => {
-    dir = makeTmp();
-    profile = join(dir, ".zshrc");
-  });
-
-  it("appends cleanup block to profile and returns true", () => {
-    writeFileSync(profile, "export FOO=bar\n");
-    const result = injectCleanupBlock(profile);
-    expect(result).toBe(true);
-    const content = readFileSync(profile, "utf8");
-    expect(content).toContain("# TON AI Access — oneshot cleanup");
-    expect(content).toContain("unset ANTHROPIC_API_KEY");
-    expect(content).toContain("export FOO=bar");
-  });
-
-  it("is idempotent — returns false when block already present", () => {
-    writeFileSync(profile, "export FOO=bar\n");
-    injectCleanupBlock(profile);
-    const result = injectCleanupBlock(profile);
-    expect(result).toBe(false);
-    const content = readFileSync(profile, "utf8");
-    // Count block starts by looking for the oneshot cleanup comment followed by unset
-    const blockMatches = content.match(/# TON AI Access — oneshot cleanup\nunset/g);
-    expect(blockMatches?.length).toBe(1);
-  });
-
-  it("returns false when profile does not exist", () => {
-    const result = injectCleanupBlock(join(dir, "nonexistent"));
-    expect(result).toBe(false);
-  });
-
-  it("does not write in dryRun mode", () => {
-    writeFileSync(profile, "export FOO=bar\n");
-    const result = injectCleanupBlock(profile, { dryRun: true });
-    expect(result).toBe(true);
-    const content = readFileSync(profile, "utf8");
-    expect(content).not.toContain("# TON AI Access — oneshot cleanup");
-    expect(content).toContain("export FOO=bar");
-  });
-});

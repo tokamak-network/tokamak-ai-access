@@ -5,7 +5,6 @@ import * as hermes from "../targets/hermes.js";
 import { log } from "../lib/logger.js";
 import type { Target } from "../lib/prompts.js";
 import pc from "picocolors";
-import { printRestoreCommands } from "../targets/claude.js";
 
 export interface RevertCommandOptions {
   target?: Target | "all";
@@ -46,12 +45,6 @@ export async function runRevert(opts: RevertCommandOptions): Promise<void> {
     log.info("Dry-run 완료 — 실제 파일은 변경되지 않았습니다.");
   } else {
     console.log("");
-    if (target === "claude" || target === "all") {
-      log.ok("원복 완료! 쉘을 재시작하면 Claude Code가 원래 설정으로 돌아갑니다:");
-      log.info("");
-      printRestoreCommands();
-    } else {
-      log.ok("원복 완료! 쉘을 재시작하거나 `source ~/.zshrc` 를 실행하세요.");
-    }
+    log.ok("원복 완료! 쉘을 재시작하세요.");
   }
 }
