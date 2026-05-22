@@ -59,40 +59,6 @@ export function removeMarkerBlock(content: string): string {
   return out.join("\n");
 }
 
-export function generateCleanupBlock(profilePath: string): string {
-  // Block that unsets all TON AI Access env vars, then removes itself
-  const lines = [
-    "",
-    "# TON AI Access — oneshot cleanup",
-    "unset ANTHROPIC_API_KEY &&",
-    "unset ANTHROPIC_BASE_URL &&",
-    "unset ANTHROPIC_MODEL &&",
-    "unset ANTHROPIC_SMALL_FAST_MODEL &&",
-    "unset ANTHROPIC_DEFAULT_HAIKU_MODEL &&",
-    "unset ANTHROPIC_DEFAULT_SONNET_MODEL &&",
-    "unset ANTHROPIC_DEFAULT_OPUS_MODEL &&",
-    `sed -i '' -e '/# TON AI Access — oneshot cleanup/,/# \\///TON AI Access cleanup/d' "${profilePath}" 2>/dev/null`,
-    "# ///TON AI Access cleanup",
-  ];
-  return lines.join("\n");
-}
-
-export function injectCleanupBlock(profilePath: string, opts: { dryRun?: boolean } = {}): boolean {
-  if (!existsSync(profilePath)) return false;
-
-  const existing = readFileSync(profilePath, "utf8");
-  const block = generateCleanupBlock(profilePath);
-
-  if (existing.includes("# TON AI Access — oneshot cleanup")) {
-    return false; // already injected
-  }
-
-  if (!opts.dryRun) {
-    writeFileSync(profilePath, existing.trimEnd() + "\n" + block + "\n");
-  }
-
-  return true;
-}
 
 export function revertShellProfile(profilePath: string, opts: { dryRun?: boolean; backup?: boolean; backupFile?: (p: string) => string | null } = {}): boolean {
   if (!existsSync(profilePath)) return false;

@@ -3,7 +3,6 @@ import * as codex from "../targets/codex.js";
 import * as openclaw from "../targets/openclaw.js";
 import * as hermes from "../targets/hermes.js";
 import { log } from "../lib/logger.js";
-import { injectCleanupBlock, detectShellProfile } from "../lib/shell-profile.js";
 import type { Target } from "../lib/prompts.js";
 import pc from "picocolors";
 import { printRestoreCommands } from "../targets/claude.js";
@@ -29,8 +28,6 @@ export async function runRevert(opts: RevertCommandOptions): Promise<void> {
   console.log("");
   console.log(pc.bold(pc.blue("── TON AI Access — CLI Revert ───────────────────────────────────────")));
 
-  const home = process.env.HOME ?? "";
-  const profile = home ? detectShellProfile(home) : "";
   const revertOpts = { dryRun: opts.dryRun, backup: opts.backup !== false };
   const targets: Array<Exclude<typeof target, "all">> =
     target === "all" ? ["claude", "codex", "openclaw", "hermes"] : [target];
@@ -50,12 +47,6 @@ export async function runRevert(opts: RevertCommandOptions): Promise<void> {
   } else {
     console.log("");
     if (target === "claude" || target === "all") {
-      if (profile) {
-        injectCleanupBlock(profile, { dryRun: false });
-        log.ok(`oneshot cleanup 블록 ${profile}에 주입됨`);
-        log.info("  다음 쉘 시작 시 TON AI Access 환경변수가 자동 정리됩니다.");
-        log.info("");
-      }
       log.ok("원복 완료! 쉘을 재시작하면 Claude Code가 원래 설정으로 돌아갑니다:");
       log.info("");
       printRestoreCommands();
