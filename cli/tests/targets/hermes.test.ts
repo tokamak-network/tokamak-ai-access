@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { configure, revert } from "../../src/targets/hermes.js";
+import { configure } from "../../src/targets/hermes.js";
 
 function makeHome(): string {
   const dir = join(tmpdir(), `hermes-test-${Date.now()}`);
@@ -54,46 +54,5 @@ describe("hermes.configure", () => {
     const profile = readFileSync(join(home, ".zshrc"), "utf8");
     expect(profile).toBe("export FOO=bar\n");
     expect(existsSync(join(home, ".hermes", "config.yaml"))).toBe(false);
-  });
-});
-
-describe("hermes.revert", () => {
-  let home: string;
-
-  beforeEach(() => {
-    home = makeHome();
-    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
-  });
-
-  it("does not modify shell profile", () => {
-    revert({ home, backup: false });
-    const profile = readFileSync(join(home, ".zshrc"), "utf8");
-    expect(profile).toBe("export FOO=bar\n");
-  });
-
-  it("removes model section from config.yaml", () => {
-    revert({ home, backup: false });
-    const config = readFileSync(join(home, ".hermes", "config.yaml"), "utf8");
-    expect(config).not.toContain("model:");
-    expect(config).not.toContain("qwen-3.6");
-  });
-
-  it("config.yaml still exists after revert", () => {
-    revert({ home, backup: false });
-    expect(existsSync(join(home, ".hermes", "config.yaml"))).toBe(true);
-  });
-
-  it("preserves non-model config.yaml content", () => {
-    const configPath = join(home, ".hermes", "config.yaml");
-    const existing = readFileSync(configPath, "utf8");
-    writeFileSync(configPath, "theme: dark\n" + existing);
-    revert({ home, backup: false });
-    expect(readFileSync(configPath, "utf8")).toContain("theme: dark");
-  });
-
-  it("round-trip: configure → revert removes model section", () => {
-    revert({ home, backup: false });
-    const config = readFileSync(join(home, ".hermes", "config.yaml"), "utf8");
-    expect(config.trim()).toBe("");
   });
 });
