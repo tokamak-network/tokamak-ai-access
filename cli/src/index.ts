@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import pc from "picocolors";
 import { runConfigure } from "./commands/configure.js";
-import { runRevert } from "./commands/revert.js";
+import { runRevert, type RevertTarget } from "./commands/revert.js";
 import { runEnvCleanup } from "./commands/env-cleanup.js";
 
 const program = new Command();
@@ -46,7 +46,7 @@ program
 program
   .command("revert")
   .description("TON AI Access 설정을 원복합니다")
-  .option("--target <t>", "대상 CLI: claude | codex | all")
+  .option("--target <t>", "대상 CLI: claude | codex")
   .option("--non-interactive", "인터랙티브 prompt 없이 실행 (--target 필수)")
   .option("--dry-run", "변경 내용을 미리보기만 합니다 (파일 수정 없음)")
   .option("--no-backup", "원복 전 .bak 파일 생성 생략")
@@ -57,7 +57,7 @@ program
     backup?: boolean;
   }) => {
     await runRevert({
-      target: opts.target as "claude" | "codex" | "all" | undefined,
+      target: opts.target as RevertTarget | undefined,
       nonInteractive: opts.nonInteractive,
       dryRun: opts.dryRun,
       backup: opts.backup,

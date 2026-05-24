@@ -1,11 +1,11 @@
 import * as claude from "../targets/claude.js";
 import * as codex from "../targets/codex.js";
 import { log } from "../lib/logger.js";
-import type { Target } from "../lib/prompts.js";
+export type RevertTarget = "claude" | "codex";
 import pc from "picocolors";
 
 export interface RevertCommandOptions {
-  target?: Target | "all";
+  target?: RevertTarget;
   nonInteractive?: boolean;
   dryRun?: boolean;
   backup?: boolean;
@@ -26,14 +26,10 @@ export async function runRevert(opts: RevertCommandOptions): Promise<void> {
   console.log(pc.bold(pc.blue("── TON AI Access — CLI Revert ───────────────────────────────────────")));
 
   const revertOpts = { dryRun: opts.dryRun, backup: opts.backup !== false };
-  const targets: Array<Exclude<typeof target, "all">> =
-    target === "all" ? ["claude", "codex"] : [target];
 
-  for (const t of targets) {
-    switch (t) {
-      case "claude":    claude.revert(revertOpts); break;
-      case "codex":     codex.revert(revertOpts); break;
-    }
+  switch (target) {
+    case "claude":    claude.revert(revertOpts); break;
+    case "codex":     codex.revert(revertOpts); break;
   }
 
   if (opts.dryRun) {
