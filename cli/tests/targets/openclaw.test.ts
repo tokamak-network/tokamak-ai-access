@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -28,8 +28,18 @@ function makeHome(): string {
 
 describe("openclaw.configure", () => {
   let home: string;
+  let origShell: string | undefined;
 
-  beforeEach(() => { home = makeHome(); });
+  beforeEach(() => {
+    home = makeHome();
+    origShell = process.env.SHELL;
+    process.env.SHELL = "/bin/zsh";
+  });
+
+  afterEach(() => {
+    if (origShell === undefined) delete process.env.SHELL;
+    else process.env.SHELL = origShell;
+  });
 
   it("adds marker block to shell profile", () => {
     configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
