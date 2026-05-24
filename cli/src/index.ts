@@ -8,7 +8,7 @@ const program = new Command();
 
 program
   .name("tokamak-ai-access")
-  .description("TON AI Access — Claude Code, Codex, OpenClaw, Hermes CLI 설정·원복 도구")
+  .description("TON AI Access — Claude Code, Codex, OpenClaw, Hermes CLI 설정 도구")
   .version("1.0.0");
 
 // configure subcommand
@@ -46,7 +46,7 @@ program
 program
   .command("revert")
   .description("TON AI Access 설정을 원복합니다")
-  .option("--target <t>", "대상 CLI: claude | codex | openclaw | hermes | all")
+  .option("--target <t>", "대상 CLI: claude | codex | all")
   .option("--non-interactive", "인터랙티브 prompt 없이 실행 (--target 필수)")
   .option("--dry-run", "변경 내용을 미리보기만 합니다 (파일 수정 없음)")
   .option("--no-backup", "원복 전 .bak 파일 생성 생략")
@@ -57,7 +57,7 @@ program
     backup?: boolean;
   }) => {
     await runRevert({
-      target: opts.target as "claude" | "codex" | "openclaw" | "hermes" | "all" | undefined,
+      target: opts.target as "claude" | "codex" | "all" | undefined,
       nonInteractive: opts.nonInteractive,
       dryRun: opts.dryRun,
       backup: opts.backup,

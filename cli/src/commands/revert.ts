@@ -1,7 +1,5 @@
 import * as claude from "../targets/claude.js";
 import * as codex from "../targets/codex.js";
-import * as openclaw from "../targets/openclaw.js";
-import * as hermes from "../targets/hermes.js";
 import { log } from "../lib/logger.js";
 import type { Target } from "../lib/prompts.js";
 import pc from "picocolors";
@@ -29,14 +27,12 @@ export async function runRevert(opts: RevertCommandOptions): Promise<void> {
 
   const revertOpts = { dryRun: opts.dryRun, backup: opts.backup !== false };
   const targets: Array<Exclude<typeof target, "all">> =
-    target === "all" ? ["claude", "codex", "openclaw", "hermes"] : [target];
+    target === "all" ? ["claude", "codex"] : [target];
 
   for (const t of targets) {
     switch (t) {
       case "claude":    claude.revert(revertOpts); break;
       case "codex":     codex.revert(revertOpts); break;
-      case "openclaw":  openclaw.revert(revertOpts); break;
-      case "hermes":    hermes.revert(revertOpts); break;
     }
   }
 

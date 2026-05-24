@@ -1,9 +1,8 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { writeEnvBlock, revertShellProfile, detectShellProfile } from "../lib/shell-profile.js";
+import { writeEnvBlock, detectShellProfile } from "../lib/shell-profile.js";
 import { readJson, writeJson } from "../lib/json-merge.js";
-import { backupFile } from "../lib/backup.js";
 import { log } from "../lib/logger.js";
 
 export interface ConfigureOptions {
@@ -12,12 +11,6 @@ export interface ConfigureOptions {
   baseUrl?: string;
   model?: string;
   dryRun?: boolean;
-}
-
-export interface RevertOptions {
-  home?: string;
-  dryRun?: boolean;
-  backup?: boolean;
 }
 
 interface OpenClawConfig {
@@ -99,58 +92,4 @@ export function configure(opts: ConfigureOptions): void {
 
   writeJson(config, data as Record<string, unknown>);
   log.ok(`${config} 업데이트 완료`);
-}
-
-export function revert(opts: RevertOptions): void {
-  const home = opts.home ?? homedir();
-  const { profile, config } = paths(home);
-
-  // Shell profile
-  log.section("OpenClaw — 쉘 프로파일 원복");
-  if (opts.dryRun) {
-    log.dry(`${profile} 에서 TON AI Access 블록 제거 예정`);
-  } else {
-    const removed = revertShellProfile(profile, {
-      dryRun: false,
-      backup: opts.backup !== false,
-      backupFile,
-    });
-    if (removed) log.ok(`${profile} 마커 블록 제거 완료`);
-    else log.warn(`${profile} 에서 TON AI Access 블록을 찾지 못했습니다`);
-  }
-
-  // openclaw.json
-  log.section("OpenClaw — openclaw.json 원복");
-  if (!existsSync(config)) {
-    log.warn(`${config} 파일이 없습니다 — 건너뜀`);
-    return;
-  }
-
-  if (opts.dryRun) {
-    log.dry(`${config} 에서 models.providers.litellm 및 agents.defaults.model.primary 제거 예정`);
-    log.diff("-", "models.providers.litellm", "");
-    log.diff("-", "agents.defaults.model.primary", "(litellm/ 로 시작하는 경우만)");
-    return;
-  }
-
-  if (opts.backup !== false) backupFile(config);
-
-  const data = readJson(config) as OpenClawConfig;
-  if (data.models?.providers) {
-    delete data.models.providers["litellm"];
-    if (Object.keys(data.models.providers).length === 0) delete data.models.providers;
-  }
-  if (data.models && Object.keys(data.models).length === 0) {
-    delete data.models;
-  }
-
-  if (data.agents?.defaults?.model?.primary?.startsWith("litellm/")) {
-    delete data.agents.defaults.model.primary;
-    if (Object.keys(data.agents.defaults.model).length === 0) delete data.agents.defaults.model;
-    if (data.agents.defaults && Object.keys(data.agents.defaults).length === 0) delete data.agents.defaults;
-    if (data.agents && Object.keys(data.agents).length === 0) delete data.agents;
-  }
-
-  writeJson(config, data as Record<string, unknown>);
-  log.ok(`${config} 원복 완료`);
 }

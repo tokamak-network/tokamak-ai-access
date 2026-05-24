@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
-import { backupFile } from "../lib/backup.js";
 import { log } from "../lib/logger.js";
 
 export interface ConfigureOptions {
@@ -10,12 +9,6 @@ export interface ConfigureOptions {
   baseUrl?: string;
   model?: string;
   dryRun?: boolean;
-}
-
-export interface RevertOptions {
-  home?: string;
-  dryRun?: boolean;
-  backup?: boolean;
 }
 
 function paths(home: string) {
@@ -81,29 +74,4 @@ export function configure(opts: ConfigureOptions): void {
   const section = modelSection(model, baseUrl, opts.apiKey);
   writeFileSync(config, withoutModel.trimEnd() + "\n" + section + "\n");
   log.ok(`${config} 업데이트 완료`);
-}
-
-export function revert(opts: RevertOptions): void {
-  const home = opts.home ?? homedir();
-  const { config } = paths(home);
-
-  log.section("Hermes — config.yaml 원복");
-
-  if (!existsSync(config)) {
-    log.warn(`${config} 파일이 없습니다 — 건너뜀`);
-    return;
-  }
-
-  if (opts.dryRun) {
-    log.dry(`${config} 에서 model 섹션 제거 예정`);
-    log.diff("-", "model", "(전체 섹션)");
-    return;
-  }
-
-  if (opts.backup !== false) backupFile(config);
-
-  const content = readFileSync(config, "utf8");
-  const cleaned = removeModelSection(content).trimEnd();
-  writeFileSync(config, cleaned ? cleaned + "\n" : "");
-  log.ok(`${config} model 섹션 제거 완료`);
 }

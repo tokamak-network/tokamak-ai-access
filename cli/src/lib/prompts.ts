@@ -17,19 +17,17 @@ export async function promptTarget(): Promise<Target> {
   return value as Target;
 }
 
-export async function promptRevertTarget(): Promise<Target | "all"> {
-  const value = await p.select<Target | "all">({
+export async function promptRevertTarget(): Promise<"claude" | "codex" | "all"> {
+  const value = await p.select<"claude" | "codex" | "all">({
     message: "원복할 CLI를 선택하세요",
     options: [
       { value: "claude", label: "Claude Code" },
       { value: "codex", label: "Codex CLI" },
-      { value: "openclaw", label: "OpenClaw" },
-      { value: "hermes", label: "Hermes" },
       { value: "all", label: "전체 원복" },
     ],
   });
   if (p.isCancel(value)) { p.cancel("취소되었습니다."); process.exit(0); }
-  return value as Target | "all";
+  return value as "claude" | "codex" | "all";
 }
 
 export async function promptApiKey(envKey?: string): Promise<string> {

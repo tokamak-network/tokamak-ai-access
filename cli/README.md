@@ -1,6 +1,6 @@
 # @tokamak-network/ai-access-cli
 
-Configure and revert TON AI Access settings for Claude Code, Codex, OpenClaw, and Hermes.
+Configure TON AI Access settings for Claude Code, Codex, OpenClaw, and Hermes. Revert is supported for Claude Code and Codex only.
 
 ## Usage
 
@@ -23,12 +23,12 @@ npx @tokamak-network/ai-access-cli revert --target claude
 
 ## Supported Targets
 
-| Target | Shell profile | Config file |
-|---|---|---|
-| `claude` | 7 `ANTHROPIC_*` exports | `~/.claude/settings.json` (surgical merge) |
-| `codex` | `OPENAI_API_KEY` + `OPENAI_BASE_URL` | `~/.codex/config.toml` (full overwrite) |
-| `openclaw` | marker block | `~/.openclaw/openclaw.json` (surgical merge) |
-| `hermes` | marker block | `~/.hermes/config.yaml` (full overwrite) |
+| Target | Shell profile | Config file | Revert |
+|---|---|---|---|
+| `claude` | 7 `ANTHROPIC_*` exports | `~/.claude/settings.json` (surgical merge) | yes |
+| `codex` | `OPENAI_API_KEY` + `OPENAI_BASE_URL` | `~/.codex/config.toml` (full overwrite) | yes |
+| `openclaw` | marker block | `~/.openclaw/openclaw.json` (surgical merge) | no |
+| `hermes` | marker block | `~/.hermes/config.yaml` (full overwrite) | no |
 
 ## Options
 
@@ -43,7 +43,7 @@ configure:
   --dry-run             preview changes without modifying files
 
 revert:
-  --target <t>          claude | codex | openclaw | hermes | all
+  --target <t>          claude | codex | all
   --non-interactive     disable interactive prompts
   --dry-run             preview changes without modifying files
   --no-backup           skip creating .bak-YYYYMMDD-HHMMSS backup files
