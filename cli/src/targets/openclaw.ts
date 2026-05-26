@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { execSync } from "node:child_process";
 import { writeEnvBlock, detectShellProfile } from "../lib/shell-profile.js";
 import { readJson, writeJson } from "../lib/json-merge.js";
 import { log } from "../lib/logger.js";
@@ -71,4 +72,12 @@ export function configure(opts: ConfigureOptions): void {
   writeJson(config, data as Record<string, unknown>);
   log.ok(`${config} 업데이트 완료`);
   if (hadExisting) log.info(`복원 필요 시: cp ${config}.bak ${config}`);
+
+  log.section("OpenClaw — 게이트웨이 재시작");
+  try {
+    execSync("openclaw gateway restart", { stdio: "inherit" });
+    log.ok("OpenClaw 게이트웨이 재시작 완료");
+  } catch {
+    log.info("OpenClaw 게이트웨이 재시작 실패 — 수동으로 재시작해주세요: openclaw gateway restart");
+  }
 }
