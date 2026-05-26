@@ -1,8 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi, type MockInstance } from "vitest";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import * as childProcess from "node:child_process";
 import { configure } from "../../src/targets/hermes.js";
+
+vi.mock("node:child_process", () => ({
+  execFileSync: vi.fn(),
+}));
 
 function makeHome(): string {
   const dir = join(tmpdir(), `hermes-test-${Date.now()}`);
@@ -14,8 +19,13 @@ function makeHome(): string {
 
 describe("hermes.configure", () => {
   let home: string;
+  let execFileSyncMock: MockInstance;
 
-  beforeEach(() => { home = makeHome(); });
+  beforeEach(() => {
+    home = makeHome();
+    execFileSyncMock = vi.mocked(childProcess.execFileSync);
+    execFileSyncMock.mockReset();
+  });
 
   it("does not modify shell profile", () => {
     configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
@@ -107,5 +117,40 @@ describe("hermes.configure", () => {
     const config = readFileSync(join(home, ".hermes", "config.yaml"), "utf8");
     expect(config).toContain("name: other-provider");
     expect(config).toContain("name: tokamak");
+  });
+
+  it("attempts hermes gateway restart after writing config", () => {
+    execFileSyncMock.mockReturnValue(Buffer.from(""));
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    expect(execFileSyncMock).toHaveBeenCalledWith(
+      expect.stringContaining("hermes"),
+      ["gateway", "restart"],
+      expect.objectContaining({ timeout: 10_000 }),
+    );
+  });
+
+  it("gateway restart: falls back to ~/.local/bin/hermes when PATH lookup fails", () => {
+    const enoent = Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+    execFileSyncMock
+      .mockImplementationOnce(() => { throw enoent; })
+      .mockReturnValueOnce(Buffer.from(""));
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    expect(execFileSyncMock).toHaveBeenCalledTimes(2);
+    expect(execFileSyncMock).toHaveBeenLastCalledWith(
+      expect.stringContaining(".local/bin/hermes"),
+      ["gateway", "restart"],
+      expect.objectContaining({ timeout: 10_000 }),
+    );
+  });
+
+  it("gateway restart: logs warn when binary found but restart fails", () => {
+    execFileSyncMock.mockImplementation(() => { throw new Error("exit code 1"); });
+    // Should not throw — error is caught and warned
+    expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).not.toThrow();
+  });
+
+  it("does not attempt gateway restart in dry-run mode", () => {
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6", dryRun: true });
+    expect(execFileSyncMock).not.toHaveBeenCalled();
   });
 });

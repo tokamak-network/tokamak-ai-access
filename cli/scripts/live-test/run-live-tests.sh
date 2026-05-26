@@ -191,9 +191,9 @@ section "Phase 3d — hermes configure"
 reset_home
 
 ZSHRC_BEFORE=$(cat "$ZSHRC")
-tokamak-ai-access configure \
+HERMES_CONFIGURE_OUT=$(tokamak-ai-access configure \
   --target hermes --api-key sk-live-test --model qwen-3.6 \
-  --non-interactive >/dev/null 2>&1
+  --non-interactive 2>&1)
 
 ZSHRC_AFTER=$(cat "$ZSHRC")
 if [ "$ZSHRC_BEFORE" = "$ZSHRC_AFTER" ]; then pass "hermes: ~/.zshrc unchanged"
@@ -206,6 +206,13 @@ assert_contains    "hermes: config.yaml has api_key"              /root/.hermes/
 assert_contains    "hermes: config.yaml has api_mode"             /root/.hermes/config.yaml "api_mode: chat_completions"
 assert_contains    "hermes: config.yaml has custom_providers"     /root/.hermes/config.yaml "custom_providers:"
 assert_contains    "hermes: config.yaml has tokamak provider"     /root/.hermes/config.yaml "name: tokamak"
+
+# Verify gateway restart was attempted (hermes binary absent in base image → info message)
+if echo "$HERMES_CONFIGURE_OUT" | grep -qE "Gateway 재시작|hermes 바이너리를 찾을 수 없습니다"; then
+  pass "hermes: configure output includes gateway restart attempt"
+else
+  fail "hermes: configure output missing gateway restart attempt (output: ${HERMES_CONFIGURE_OUT:0:300})"
+fi
 
 assert_exit0 "hermes: revert exits 0 (no-op)" \
   tokamak-ai-access revert --target hermes --non-interactive --no-backup
