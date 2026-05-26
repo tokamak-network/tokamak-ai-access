@@ -542,9 +542,9 @@ function CliSetupPanel() {
 
   const scriptUrl = "https://tokamak-ai-access.vercel.app/configure-cli.sh";
 
-  const agentInstruction = `Please set up TON AI Access on this machine.\n\nRun this command — the script will interactively prompt you for the CLI\n(Claude Code / Codex / OpenClaw / Hermes), your API key, and the model:\n\n  bash <(curl -fsSL ${scriptUrl}) --dry-run\n\nIf the dry-run preview looks correct, re-run without --dry-run to apply:\n\n  bash <(curl -fsSL ${scriptUrl})\n\nAfter the script finishes, reload your shell in a NEW terminal:\n  source ~/.zshrc   # or: source ~/.bashrc`;
+  const agentInstruction = `Please set up TON AI Access on this machine.\n\nRun this command — it will interactively prompt you for the CLI\n(Claude Code / Codex / OpenClaw / Hermes), your API key, and the model:\n\n  npx @tokamak-network/ai-access-cli configure\n\nAlternatively, if Node.js is not available, use the bash script:\n\n  bash <(curl -fsSL ${scriptUrl})\n\nAfter setup, restart your shell (open a new terminal) and relaunch your CLI.`;
 
-  const directCommand = `bash <(curl -fsSL ${scriptUrl}) --dry-run\n# If the preview looks correct, re-run without --dry-run:\n#   bash <(curl -fsSL ${scriptUrl})\n# After the script finishes, run in a NEW terminal:\n#   source ~/.zshrc   (or source ~/.bashrc)`;
+  const directCommand = `npx @tokamak-network/ai-access-cli configure\n# Alternatively, without Node.js:\n#   bash <(curl -fsSL ${scriptUrl})\n# After setup: restart your shell (open a new terminal) and relaunch your CLI.`;
 
   const content = tab === "agent" ? agentInstruction : directCommand;
 

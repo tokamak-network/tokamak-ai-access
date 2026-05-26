@@ -45,6 +45,11 @@ log_error()   { echo -e "${RED}[error]${RESET} $*" >&2; }
 log_section() { echo -e "\n${BOLD}── $* ──${RESET}"; }
 log_dry()     { echo -e "${YELLOW}[dry-run]${RESET} $*"; }
 
+# ── Deprecation 경고 ──────────────────────────────────────────────────────────
+log_warn "이 bash 스크립트는 deprecated 됩니다."
+log_warn "권장: npx @tokamak-network/ai-access-cli configure"
+echo ""
+
 # ── 기본값 ────────────────────────────────────────────────────────────────────
 DEFAULT_BASE_URL="https://api2.ai.tokamak.network"
 DEFAULT_MODEL="qwen-3.6"
@@ -758,8 +763,7 @@ echo -e "  ${BOLD}모델${RESET}    : $MODEL"
 echo -e "  ${BOLD}Endpoint${RESET}: $BASE_URL"
 echo -e "  ${BOLD}대상${RESET}    : $EFFECTIVE_TARGET"
 echo ""
-log_info "새 터미널에서도 사용하려면:"
-echo -e "  ${BOLD}source $SHELL_PROFILE${RESET}"
+log_info "설정 반영: 쉘을 재시작하세요 (새 터미널 열기 → CLI 재실행)"
 echo ""
 log_info "API 연결 테스트:"
 cat <<CURLEOF

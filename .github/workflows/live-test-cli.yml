@@ -1,0 +1,29 @@
+name: Live test CLI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Package version to test (e.g. 1.0.1 or latest)"
+        default: "latest"
+        required: false
+      with_llm:
+        description: "Include Phase 5 LLM routing test (requires TON_API_KEY secret)"
+        type: boolean
+        default: false
+        required: false
+
+jobs:
+  live-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and run live tests
+        env:
+          TON_API_KEY: ${{ secrets.TON_API_KEY }}
+        run: |
+          chmod +x cli/scripts/live-test/run.sh
+          ARGS="--version ${{ inputs.version }}"
+          [ "${{ inputs.with_llm }}" = "true" ] && ARGS="$ARGS --with-llm"
+          cli/scripts/live-test/run.sh $ARGS

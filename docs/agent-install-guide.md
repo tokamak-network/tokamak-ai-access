@@ -24,21 +24,22 @@ Step 0 — [HUMAN STEP, do before running]
 
 Step 1 — Preview the changes first (no files are modified):
 
-  TON_API_KEY="[YOUR_API_KEY]" \
-  TON_MODEL="<MODEL>" \
-  bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
-    --non-interactive --target <claude|codex> --dry-run
+  npx @tokamak-network/ai-access-cli configure \
+    --target <claude|codex> --api-key "[YOUR_API_KEY]" --dry-run
 
   Choose exactly one --target:
     --target claude   (if you are running Claude Code right now)
     --target codex    (if you are running Codex CLI right now)
 
+  Fallback (if Node.js is not available):
+    TON_API_KEY="[YOUR_API_KEY]" \
+    bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
+      --non-interactive --target <claude|codex> --dry-run
+
 Step 2 — If the preview looks correct, apply it (same command, remove --dry-run):
 
-  TON_API_KEY="[YOUR_API_KEY]" \
-  TON_MODEL="<MODEL>" \
-  bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
-    --non-interactive --target <claude|codex>
+  npx @tokamak-network/ai-access-cli configure \
+    --target <claude|codex> --api-key "[YOUR_API_KEY]"
 
 Step 3 — Verify by reading the config files
   (do NOT echo env vars — they only appear after shell reload):
@@ -52,9 +53,7 @@ Step 3 — Verify by reading the config files
     # → should show model = "<MODEL>" and a [model_providers.tokamak] block
 
 Step 4 — [HUMAN STEP, do AFTER this session ends]
-  Reload your shell and restart the CLI so the new env vars take effect:
-    source ~/.zshrc   # or: source ~/.bashrc
-    # then start a fresh Claude Code / Codex session
+  Restart your shell (open a new terminal) and relaunch Claude Code / Codex.
 ```
 
 ---
@@ -97,20 +96,16 @@ FIXED:          BASE_URL  → https://api2.ai.tokamak.network
 
 ```bash
 # 1) 미리보기 — 실제 파일 변경 없음
-TON_API_KEY="<API_KEY>" \
-TON_MODEL="<MODEL>" \
-bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
-  --non-interactive --target <claude|codex> --dry-run
+npx @tokamak-network/ai-access-cli configure \
+  --non-interactive --target <claude|codex> --api-key "<API_KEY>" --dry-run
 
 # 2) 미리보기 확인 후 적용 (--dry-run 제거)
-TON_API_KEY="<API_KEY>" \
-TON_MODEL="<MODEL>" \
-bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) \
-  --non-interactive --target <claude|codex>
+npx @tokamak-network/ai-access-cli configure \
+  --non-interactive --target <claude|codex> --api-key "<API_KEY>"
 ```
 
 > `--target`에는 현재 실행 중인 CLI를 지정합니다: `claude` 또는 `codex`.  
-> 저장소가 이미 로컬에 있는 경우: `bash scripts/configure-cli.sh --non-interactive --target <claude|codex>`.
+> Node.js가 없는 경우 fallback: `bash <(curl -fsSL https://tokamak-ai-access.vercel.app/configure-cli.sh) --non-interactive --target <claude|codex>`.
 
 ### VERIFY (Step 1)
 ```bash
@@ -296,30 +291,20 @@ codex "respond with: ok"
 | `python3: command not found` | Python 미설치 | `brew install python3` |
 | `claude: command not found` | Claude Code 미설치 | https://claude.ai/download |
 | `codex: command not found` | Codex CLI 미설치 | `npm install -g @openai/codex` |
-| 환경변수가 에이전트 세션 내에서 안 보임 | Bash 툴 호출마다 새 subprocess — env 비휘발 | **[HUMAN STEP]** 세션 종료 후 `source ~/.zshrc` 또는 새 터미널 시작 |
-| 환경변수가 새 터미널에서 사라짐 | `source` 안 함 | **[HUMAN STEP]** `source ~/.zshrc` 또는 터미널 재시작 |
+| 환경변수가 에이전트 세션 내에서 안 보임 | Bash 툴 호출마다 새 subprocess — env 비휘발 | **[HUMAN STEP]** 세션 종료 후 쉘을 재시작하세요 (새 터미널 열기) |
+| 환경변수가 새 터미널에서 사라짐 | 쉘 재시작 안 함 | **[HUMAN STEP]** 쉘을 재시작하세요 (새 터미널 열기) |
 
 ---
 
 ## 설정 초기화 (언인스톨)
 
 ```bash
-# 쉘 프로파일에서 TON AI Access 블록 제거
-sed -i.bak '/# TON AI Access — auto-configured/,/# \/\/\/TON AI Access/d' ~/.zshrc
-sed -i.bak '/# TON AI Access — auto-configured/,/# \/\/\/TON AI Access/d' ~/.bashrc
+# CLI로 원복 (권장) — 쉘 프로파일 + 설정 파일 모두 정리
+npx @tokamak-network/ai-access-cli revert
 
-# Claude Code 설정에서 제거
-python3 - <<'PYEOF'
-import json, pathlib
-p = pathlib.Path.home() / ".claude/settings.json"
-if p.exists():
-    s = json.loads(p.read_text())
-    s.get("env", {}).pop("ANTHROPIC_API_KEY", None)
-    s.get("env", {}).pop("ANTHROPIC_BASE_URL", None)
-    p.write_text(json.dumps(s, indent=2) + "\n")
-    print("✓ Claude Code 설정 초기화 완료")
-PYEOF
+# 특정 대상만 원복
+npx @tokamak-network/ai-access-cli revert --target claude
+npx @tokamak-network/ai-access-cli revert --target codex
 
-# Codex 설정 파일 제거
-rm -f ~/.codex/config.toml && echo "✓ Codex 설정 초기화 완료"
+# 원복 완료 후 쉘을 재시작하세요 (새 터미널 열기).
 ```

@@ -4,12 +4,14 @@ import { runConfigure } from "./commands/configure.js";
 import { runRevert, type RevertTarget } from "./commands/revert.js";
 import { runEnvCleanup } from "./commands/env-cleanup.js";
 
+declare const __PKG_VERSION__: string;
+
 const program = new Command();
 
 program
   .name("tokamak-ai-access")
   .description("TON AI Access — Claude Code, Codex, OpenClaw, Hermes CLI 설정 도구")
-  .version("1.0.0");
+  .version(__PKG_VERSION__);
 
 // configure subcommand
 program

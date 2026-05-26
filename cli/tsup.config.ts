@@ -1,4 +1,7 @@
 import { defineConfig } from "tsup";
+import { readFileSync } from "node:fs";
+
+const { version } = JSON.parse(readFileSync("./package.json", "utf-8")) as { version: string };
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -11,4 +14,5 @@ export default defineConfig({
   banner: { js: "#!/usr/bin/env node" },
   noExternal: [/.*/],
   shims: true,
+  define: { __PKG_VERSION__: JSON.stringify(version) },
 });
