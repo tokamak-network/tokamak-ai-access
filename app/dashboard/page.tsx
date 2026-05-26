@@ -539,7 +539,7 @@ function StakePanel({
 function CliSetupPanel() {
   const [copied, setCopied] = useState(false);
 
-  const command = `npm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure\n\n# List available models first:\n#   tokamak-ai-access configure --list-models --api-key sk-...\n\n# After setup: restart your shell and relaunch your AI tool.`;
+  const command = `npm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure`;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(command);
@@ -551,10 +551,6 @@ function CliSetupPanel() {
     <div style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius)", overflow: "hidden" }}>
       {/* Body */}
       <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
-        <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
-          Install the CLI globally, then run configure. Requires Node.js ≥ 18.
-        </p>
-
         <pre style={{
           fontFamily: "var(--font-mono)",
           fontSize: "0.8125rem",
@@ -567,9 +563,7 @@ function CliSetupPanel() {
           wordBreak: "break-word",
           overflowX: "auto",
           lineHeight: 1.75,
-          marginBottom: "16px",
-          maxHeight: "320px",
-          overflowY: "auto",
+          marginBottom: "12px",
         }}>
           {command}
         </pre>
@@ -586,10 +580,25 @@ function CliSetupPanel() {
             border: "none",
             cursor: "pointer",
             padding: 0,
+            marginBottom: "20px",
+            display: "block",
           }}
         >
           {copied ? "Copied ✓" : "Copy"}
         </button>
+
+        <ul style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "0.75rem",
+          color: "var(--muted)",
+          lineHeight: 1.8,
+          paddingLeft: "1.2em",
+          margin: 0,
+        }}>
+          <li>Requires Node.js ≥ 18</li>
+          <li>After setup: restart your shell and relaunch your AI tool</li>
+          <li>List models: <code style={{ color: "var(--ink)" }}>tokamak-ai-access configure --list-models --api-key sk-...</code></li>
+        </ul>
       </div>
     </div>
   );
