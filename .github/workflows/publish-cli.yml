@@ -29,11 +29,11 @@ jobs:
         run: |
           PKG=$(node -p "require('./package.json').name")
           CURRENT=$(node -p "require('./package.json').version")
-          PUBLISHED=$(npm view "$PKG" version 2>/dev/null || echo "0.0.0")
-          if [ "$PUBLISHED" = "$CURRENT" ]; then
+          EXACT=$(npm view "$PKG@$CURRENT" version 2>/dev/null || echo "")
+          if [ "$EXACT" = "$CURRENT" ]; then
             echo "v$CURRENT is already published — skipping."
           else
-            echo "Publishing $PKG@$CURRENT (was $PUBLISHED)"
+            echo "Publishing $PKG@$CURRENT"
             npm publish
           fi
         env:
