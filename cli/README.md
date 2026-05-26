@@ -1,6 +1,8 @@
 # @tokamak-network/ai-access-cli
 
-Configure TON AI Access settings for Claude Code, Codex, OpenClaw, and Hermes. Revert is supported for Claude Code and Codex only.
+Configure TON AI Access LiteLLM keys for Claude Code, Codex, OpenClaw, and Hermes.
+
+**Requirements:** Node.js ≥ 18
 
 ## Usage
 
@@ -14,7 +16,10 @@ npx @tokamak-network/ai-access-cli configure --target claude --api-key sk-...
 # Dry-run preview (no files modified)
 npx @tokamak-network/ai-access-cli configure --target claude --api-key sk-... --dry-run
 
-# Revert all changes
+# List available models
+npx @tokamak-network/ai-access-cli configure --list-models --api-key sk-...
+
+# Revert changes (claude and codex only)
 npx @tokamak-network/ai-access-cli revert --target all
 
 # Revert a specific target
@@ -27,7 +32,7 @@ npx @tokamak-network/ai-access-cli revert --target claude
 |---|---|---|---|
 | `claude` | 7 `ANTHROPIC_*` exports | `~/.claude/settings.json` (surgical merge) | yes |
 | `codex` | `OPENAI_API_KEY` + `OPENAI_BASE_URL` | `~/.codex/config.toml` (full overwrite) | yes |
-| `openclaw` | marker block | `~/.openclaw/openclaw.json` (surgical merge) | no |
+| `openclaw` | marker block | `~/.openclaw/openclaw.json` (surgical merge) | no — gateway auto-restarted |
 | `hermes` | marker block | `~/.hermes/config.yaml` (full overwrite) | no |
 
 ## Options
@@ -38,12 +43,12 @@ configure:
   --api-key <key>       TON API key (also via TON_API_KEY env var)
   --base-url <url>      default: https://api2.ai.tokamak.network
   --model <model>       default: qwen-3.6
-  --list-models         list available models and exit
+  --list-models         list available models and exit (requires --api-key)
   --non-interactive     disable interactive prompts
   --dry-run             preview changes without modifying files
 
 revert:
-  --target <t>          claude | codex | all
+  --target <t>          claude | codex | all  (openclaw and hermes not supported)
   --non-interactive     disable interactive prompts
   --dry-run             preview changes without modifying files
   --no-backup           skip creating .bak-YYYYMMDD-HHMMSS backup files
@@ -61,6 +66,10 @@ export ANTHROPIC_API_KEY="sk-..."
 ```
 
 `revert` removes only the marker block and the keys it added, leaving your existing configuration intact.
+
+## OpenClaw Gateway Restart
+
+After `configure openclaw` writes `~/.openclaw/openclaw.json`, the CLI automatically runs `openclaw gateway restart` so the new API key takes effect immediately. If the gateway is not running or openclaw is not installed, a warning is printed and the command continues.
 
 ## Usage in Coding Agents (Claude Code, Codex)
 
