@@ -49,7 +49,7 @@ export function configure(opts: ConfigureOptions): void {
 
   if (opts.dryRun) {
     log.dry(`${config} 수정 예정:`);
-    log.diff("+", "models.providers.litellm.baseUrl", baseUrl);
+    log.diff("+", "models.providers.litellm.baseUrl", `${baseUrl}/v1`);
     log.diff("+", "models.default", `litellm/${model}`);
     return;
   }
@@ -60,7 +60,7 @@ export function configure(opts: ConfigureOptions): void {
   data.models ??= {};
   data.models.providers ??= {};
   data.models.providers["litellm"] = {
-    baseUrl,
+    baseUrl: `${baseUrl}/v1`,
     apiKey: opts.apiKey,
     api: "openai-completions",
   };
