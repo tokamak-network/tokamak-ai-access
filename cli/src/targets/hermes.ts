@@ -1,6 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
+import { parse, stringify } from "yaml";
 import { log } from "../lib/logger.js";
 
 export interface ConfigureOptions {
@@ -16,40 +17,6 @@ function paths(home: string) {
     configDir: join(home, ".hermes"),
     config: join(home, ".hermes", "config.yaml"),
   };
-}
-
-function modelSection(model: string, baseUrl: string, apiKey: string): string {
-  return [
-    "model:",
-    `  default: ${model}`,
-    `  provider: custom`,
-    `  base_url: ${baseUrl}/v1`,
-    `  api_key: ${apiKey}`,
-    `  api_mode: chat_completions`,
-  ].join("\n");
-}
-
-function removeModelSection(content: string): string {
-  const lines = content.split("\n");
-  const out: string[] = [];
-  let inside = false;
-
-  for (const line of lines) {
-    if (!inside && line === "model:") {
-      inside = true;
-      continue;
-    }
-    if (inside) {
-      if (line.length > 0 && !line.startsWith(" ") && !line.startsWith("\t")) {
-        inside = false;
-        out.push(line);
-      }
-    } else {
-      out.push(line);
-    }
-  }
-
-  return out.join("\n");
 }
 
 export function configure(opts: ConfigureOptions): void {
@@ -69,9 +36,31 @@ export function configure(opts: ConfigureOptions): void {
 
   if (!existsSync(configDir)) mkdirSync(configDir, { recursive: true });
 
-  const existing = existsSync(config) ? readFileSync(config, "utf8") : "";
-  const withoutModel = removeModelSection(existing);
-  const section = modelSection(model, baseUrl, opts.apiKey);
-  writeFileSync(config, withoutModel.trimEnd() + "\n" + section + "\n");
+  const hadExisting = existsSync(config);
+  const existing = hadExisting ? readFileSync(config, "utf8") : "";
+  if (hadExisting) copyFileSync(config, config + ".bak");
+
+  let data: Record<string, unknown>;
+  try {
+    data = (parse(existing) as Record<string, unknown>) ?? {};
+  } catch {
+    throw new Error(`${config}: YAML이 손상되었습니다. 수동으로 수정하거나 .bak 파일을 복원하세요.`);
+  }
+
+  const modelValue = {
+    default: model,
+    provider: "custom",
+    base_url: `${baseUrl}/v1`,
+    api_key: opts.apiKey,
+    api_mode: "chat_completions",
+  };
+
+  // Preserve key position if model: already exists; otherwise prepend so Hermes reads it first
+  const out = "model" in data
+    ? { ...data, model: modelValue }
+    : { model: modelValue, ...data };
+
+  writeFileSync(config, stringify(out));
   log.ok(`${config} 업데이트 완료`);
+  if (hadExisting) log.info(`복원 필요 시: cp ${config}.bak ${config}`);
 }

@@ -31,6 +31,12 @@ describe("hermes.configure", () => {
     expect(config).toContain("provider: custom");
   });
 
+  it("model: is the first key when creating fresh config", () => {
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const config = readFileSync(join(home, ".hermes", "config.yaml"), "utf8");
+    expect(config.trimStart()).toMatch(/^model:/);
+  });
+
   it("preserves pre-existing config.yaml content", () => {
     writeFileSync(join(home, ".hermes", "config.yaml"), "theme: dark\n");
     configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
@@ -54,5 +60,23 @@ describe("hermes.configure", () => {
     const profile = readFileSync(join(home, ".zshrc"), "utf8");
     expect(profile).toBe("export FOO=bar\n");
     expect(existsSync(join(home, ".hermes", "config.yaml"))).toBe(false);
+  });
+
+  it("creates .bak before overwriting existing config.yaml", () => {
+    const configPath = join(home, ".hermes", "config.yaml");
+    writeFileSync(configPath, "theme: dark\n");
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const backup = readFileSync(configPath + ".bak", "utf8");
+    expect(backup).toBe("theme: dark\n");
+  });
+
+  it("does not create .bak when config.yaml does not exist", () => {
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    expect(existsSync(join(home, ".hermes", "config.yaml.bak"))).toBe(false);
+  });
+
+  it("throws on malformed config.yaml", () => {
+    writeFileSync(join(home, ".hermes", "config.yaml"), "{ bad: yaml: content: [[\n");
+    expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).toThrow(/YAML이 손상/);
   });
 });
