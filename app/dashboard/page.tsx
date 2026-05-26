@@ -888,7 +888,7 @@ export default function DashboardPage() {
               <div ref={setupRef} style={{ marginTop: "40px" }}>
                 <span className="eyebrow">Configure AI tools</span>
                 <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "20px", maxWidth: "60ch" }}>
-                  Paste the instruction below into Claude Code, Codex, or any AI agent. The script will guide you through the rest.
+                  Paste the instruction below into Claude Code, Codex, Hermes, OpenClaw, or any AI agent. The script will guide you through the rest.
                 </p>
                 <CliSetupPanel />
               </div>
