@@ -539,7 +539,7 @@ function StakePanel({
 function CliSetupPanel() {
   const [copied, setCopied] = useState(false);
 
-  const command = `npm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure\n\n# List available models first:\n#   tokamak-ai-access configure --list-models --api-key sk-...\n\n# After setup:\n#   Claude Code / Codex: restart your shell and relaunch your CLI.\n#   OpenClaw: the gateway restarts automatically — no manual restart needed.`;
+  const command = `npm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure\n\n# List available models first:\n#   tokamak-ai-access configure --list-models --api-key sk-...\n\n# After setup: restart your shell and relaunch your AI tool.`;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(command);
