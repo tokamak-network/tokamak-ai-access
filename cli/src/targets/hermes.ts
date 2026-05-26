@@ -31,6 +31,7 @@ export function configure(opts: ConfigureOptions): void {
     log.dry(`${config} 수정 예정:`);
     log.diff("+", "model.default", model);
     log.diff("+", "model.base_url", `${baseUrl}/v1`);
+    log.diff("+", "custom_providers[tokamak].base_url", `${baseUrl}/v1`);
     return;
   }
 
@@ -55,10 +56,27 @@ export function configure(opts: ConfigureOptions): void {
     api_mode: "chat_completions",
   };
 
+  const tokamakProvider = {
+    name: "tokamak",
+    base_url: `${baseUrl}/v1`,
+    api_key: opts.apiKey,
+    api_mode: "chat_completions",
+  };
+
+  const existingProviders = Array.isArray(data.custom_providers)
+    ? (data.custom_providers as Array<Record<string, unknown>>)
+    : [];
+  const custom_providers = [
+    ...existingProviders.filter((p) => p.name !== "tokamak"),
+    tokamakProvider,
+  ];
+
   // Preserve key position if model: already exists; otherwise prepend so Hermes reads it first
-  const out = "model" in data
+  const base = "model" in data
     ? { ...data, model: modelValue }
     : { model: modelValue, ...data };
+
+  const out = { ...base, custom_providers };
 
   writeFileSync(config, stringify(out));
   log.ok(`${config} 업데이트 완료`);

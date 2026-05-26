@@ -79,4 +79,33 @@ describe("hermes.configure", () => {
     writeFileSync(join(home, ".hermes", "config.yaml"), "{ bad: yaml: content: [[\n");
     expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).toThrow(/YAML이 손상/);
   });
+
+  it("writes tokamak entry to custom_providers", () => {
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const config = readFileSync(join(home, ".hermes", "config.yaml"), "utf8");
+    expect(config).toContain("custom_providers:");
+    expect(config).toContain("name: tokamak");
+    expect(config).toContain("api_mode: chat_completions");
+  });
+
+  it("custom_providers: second configure replaces tokamak entry, not duplicate", () => {
+    configure({ home, apiKey: "sk-first", model: "qwen-3.6" });
+    configure({ home, apiKey: "sk-second", model: "qwen-3.6" });
+    const config = readFileSync(join(home, ".hermes", "config.yaml"), "utf8");
+    const count = (config.match(/name: tokamak/g) ?? []).length;
+    expect(count).toBe(1);
+    expect(config).toContain("sk-second");
+    expect(config).not.toContain("sk-first");
+  });
+
+  it("custom_providers: preserves non-tokamak entries", () => {
+    writeFileSync(
+      join(home, ".hermes", "config.yaml"),
+      "custom_providers:\n  - name: other-provider\n    base_url: https://example.com\n",
+    );
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const config = readFileSync(join(home, ".hermes", "config.yaml"), "utf8");
+    expect(config).toContain("name: other-provider");
+    expect(config).toContain("name: tokamak");
+  });
 });

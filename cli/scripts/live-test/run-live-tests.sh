@@ -204,6 +204,8 @@ assert_contains    "hermes: config.yaml has base_url"             /root/.hermes/
 assert_contains    "hermes: config.yaml has model"                /root/.hermes/config.yaml "qwen-3.6"
 assert_contains    "hermes: config.yaml has api_key"              /root/.hermes/config.yaml "api_key:"
 assert_contains    "hermes: config.yaml has api_mode"             /root/.hermes/config.yaml "api_mode: chat_completions"
+assert_contains    "hermes: config.yaml has custom_providers"     /root/.hermes/config.yaml "custom_providers:"
+assert_contains    "hermes: config.yaml has tokamak provider"     /root/.hermes/config.yaml "name: tokamak"
 
 assert_exit0 "hermes: revert exits 0 (no-op)" \
   tokamak-ai-access revert --target hermes --non-interactive --no-backup
