@@ -9,7 +9,7 @@ npm run dev          # dev server → localhost:3000
 npm run build        # type-check + build
 npm run lint         # ESLint
 npm test             # vitest (11 unit tests)
-npm run test:integration  # requires .env.local with live KV + LiteLLM
+npm run test:integration  # requires LITELLM_BASE_URL in .env.local; auto-skipped if missing
 ```
 
 ## Architecture
@@ -18,7 +18,8 @@ npm run test:integration  # requires .env.local with live KV + LiteLLM
 - `app/api/` — Route Handlers: auth (SIWE), staking/balance, keys (issue/rotate/me)
 - `lib/` — siwe.ts (session), staking.ts (viem multicall), litellm.ts, kv.ts
 - `abi/` — SeigManager, DepositManager, Layer2Registry JSON ABIs
-- `scripts/configure-cli.sh` — Claude Code + Codex env auto-setup script
+- `cli/` — `@tokamak-network/ai-access-cli` npm package (see `cli/CLAUDE.md`)
+- `scripts/configure-cli.sh` — **deprecated**; use `npx @tokamak-network/ai-access-cli` instead
 
 ## Gotchas
 
