@@ -537,60 +537,24 @@ function StakePanel({
 
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
 function CliSetupPanel() {
-  const [tab, setTab] = useState<"agent" | "direct">("agent");
   const [copied, setCopied] = useState(false);
 
-  const scriptUrl = "https://tokamak-ai-access.vercel.app/configure-cli.sh";
-
-  const agentInstruction = `Please set up TON AI Access on this machine.\n\nRun this command — it will interactively prompt you for the CLI\n(Claude Code / Codex / OpenClaw / Hermes), your API key, and the model:\n\n  npx @tokamak-network/ai-access-cli configure\n\nAlternatively, if Node.js is not available, use the bash script:\n\n  bash <(curl -fsSL ${scriptUrl})\n\nAfter setup, restart your shell (open a new terminal) and relaunch your CLI.`;
-
-  const directCommand = `npx @tokamak-network/ai-access-cli configure\n# Alternatively, without Node.js:\n#   bash <(curl -fsSL ${scriptUrl})\n# After setup: restart your shell (open a new terminal) and relaunch your CLI.`;
-
-  const content = tab === "agent" ? agentInstruction : directCommand;
+  const command = `npm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure\n\n# List available models first:\n#   tokamak-ai-access configure --list-models --api-key sk-...\n\n# After setup:\n#   Claude Code / Codex: restart your shell and relaunch your CLI.\n#   OpenClaw: the gateway restarts automatically — no manual restart needed.`;
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(content);
+    await navigator.clipboard.writeText(command);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const tabStyle = (active: boolean): React.CSSProperties => ({
-    flex: 1,
-    padding: "10px 0",
-    fontFamily: "var(--font-mono)",
-    fontSize: "0.625rem",
-    letterSpacing: "0.12em",
-    textTransform: "uppercase" as const,
-    background: active ? "var(--ink)" : "transparent",
-    color: active ? "var(--surface-raised)" : "var(--muted)",
-    border: "none",
-    borderBottom: `1px solid ${active ? "var(--ink)" : "var(--hairline)"}`,
-    cursor: "pointer",
-    transition: "all 120ms",
-  });
-
   return (
     <div style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius)", overflow: "hidden" }}>
-      {/* Tab bar */}
-      <div style={{ display: "flex", borderBottom: "1px solid var(--hairline)" }}>
-        <button style={tabStyle(tab === "agent")} onClick={() => setTab("agent")}>Agent Setup</button>
-        <button style={tabStyle(tab === "direct")} onClick={() => setTab("direct")}>Direct (Terminal)</button>
-      </div>
-
       {/* Body */}
       <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
-        {/* Description */}
-        {tab === "agent" ? (
-          <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
-            Paste into Claude Code, Codex, or any AI agent chat. The agent will run the script and configure your environment automatically.
-          </p>
-        ) : (
-          <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
-            Paste directly into your terminal to configure without an agent.
-          </p>
-        )}
+        <p style={{ fontSize: "0.875rem", color: "var(--muted)", marginBottom: "16px", lineHeight: 1.6 }}>
+          Install the CLI globally, then run configure. Requires Node.js ≥ 18.
+        </p>
 
-        {/* Code block */}
         <pre style={{
           fontFamily: "var(--font-mono)",
           fontSize: "0.8125rem",
@@ -607,7 +571,7 @@ function CliSetupPanel() {
           maxHeight: "320px",
           overflowY: "auto",
         }}>
-          {content}
+          {command}
         </pre>
 
         <button
