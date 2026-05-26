@@ -13,7 +13,14 @@ RUN apt-get update \
 ENV SHELL=/bin/zsh
 RUN touch /root/.zshrc
 
-RUN npm install -g @tokamak-network/ai-access-cli@${VERSION}
+COPY local-pkg/ /tmp/local-pkg/
+RUN set -e; \
+    LOCAL=$(ls /tmp/local-pkg/*.tgz 2>/dev/null | head -1); \
+    if [ -n "$LOCAL" ]; then \
+      npm install -g "$LOCAL"; \
+    else \
+      npm install -g "@tokamak-network/ai-access-cli@${VERSION}"; \
+    fi
 
 RUN if [ "$WITH_LLM" = "true" ]; then npm install -g @anthropic-ai/claude-code; fi
 RUN if [ "$WITH_CODEX" = "true" ]; then npm install -g @openai/codex; fi
