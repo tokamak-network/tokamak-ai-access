@@ -176,9 +176,9 @@ OC_APIKEY=$(jq -r '.models.providers.litellm.apiKey // empty' /root/.openclaw/op
 if [ "$OC_APIKEY" = "sk-live-test" ]; then pass "openclaw: openclaw.json litellm.apiKey correct"
 else fail "openclaw: openclaw.json litellm.apiKey wrong (got: ${OC_APIKEY:-<empty>})"; fi
 
-OC_MODEL=$(jq -r '.agents.defaults.model.primary // empty' /root/.openclaw/openclaw.json 2>/dev/null)
-if [ "$OC_MODEL" = "litellm/qwen-3.6" ]; then pass "openclaw: openclaw.json agents.defaults.model.primary correct"
-else fail "openclaw: openclaw.json agents.defaults.model.primary wrong (got: ${OC_MODEL:-<empty>})"; fi
+OC_MODEL=$(jq -r '.models.default // empty' /root/.openclaw/openclaw.json 2>/dev/null)
+if [ "$OC_MODEL" = "litellm/qwen-3.6" ]; then pass "openclaw: openclaw.json models.default correct"
+else fail "openclaw: openclaw.json models.default wrong (got: ${OC_MODEL:-<empty>})"; fi
 
 # revert exits 0 for openclaw but is a no-op (switch falls through)
 assert_exit0 "openclaw: revert exits 0 (no-op)" \

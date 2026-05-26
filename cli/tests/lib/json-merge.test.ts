@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { mergeKeys, removeKeys, readJson, writeJson } from "../../src/lib/json-merge.js";
@@ -9,6 +9,25 @@ function makeTmp(): string {
   mkdirSync(dir, { recursive: true });
   return dir;
 }
+
+describe("readJson", () => {
+  let dir: string;
+  let file: string;
+
+  beforeEach(() => {
+    dir = makeTmp();
+    file = join(dir, "settings.json");
+  });
+
+  it("returns empty object when file does not exist", () => {
+    expect(readJson(join(dir, "nonexistent.json"))).toEqual({});
+  });
+
+  it("throws on malformed JSON", () => {
+    writeFileSync(file, "{ bad json");
+    expect(() => readJson(file)).toThrow(/JSON이 손상/);
+  });
+});
 
 describe("mergeKeys", () => {
   let dir: string;
