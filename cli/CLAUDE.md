@@ -36,7 +36,14 @@ npm version minor    # new feature: 1.0.3 → 1.1.0
 npm version major    # breaking:    1.0.3 → 2.0.0
 ```
 
-`npm version` updates `package.json`, commits the change, and creates a git tag.
+`npm version` updates `package.json` and `package-lock.json`. Commit them manually:
+
+```bash
+git add package.json package-lock.json
+git commit -m "chore(cli): bump version to X.Y.Z"
+git push
+```
+
 Use `patch` by default unless the change adds a new feature (minor) or breaks compatibility (major).
 
 Live E2E tests (Docker required):
