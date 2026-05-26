@@ -12,7 +12,7 @@
 
 # ai-access-cli — Package Context
 
-`@tokamak-network/ai-access-cli` v1.0.3 — CLI to configure AI tools with TON AI Access LiteLLM keys.
+`@tokamak-network/ai-access-cli` v1.0.5 — CLI to configure AI tools with TON AI Access LiteLLM keys.
 
 ## Commands
 
@@ -36,10 +36,10 @@ npm version minor    # new feature: 1.0.3 → 1.1.0
 npm version major    # breaking:    1.0.3 → 2.0.0
 ```
 
-`npm version` updates `package.json` and `package-lock.json`. Commit them manually:
+`npm version` updates `package.json` and `package-lock.json`. Also update the version string in `CLAUDE.md` (line with `@tokamak-network/ai-access-cli vX.Y.Z`). Then commit:
 
 ```bash
-git add package.json package-lock.json
+git add package.json package-lock.json CLAUDE.md
 git commit -m "chore(cli): bump version to X.Y.Z"
 git push
 ```
