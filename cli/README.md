@@ -20,10 +20,8 @@ npx @tokamak-network/ai-access-cli configure --target claude --api-key sk-... --
 npx @tokamak-network/ai-access-cli configure --list-models --api-key sk-...
 
 # Revert changes (claude and codex only)
-npx @tokamak-network/ai-access-cli revert --target all
-
-# Revert a specific target
 npx @tokamak-network/ai-access-cli revert --target claude
+npx @tokamak-network/ai-access-cli revert --target codex
 ```
 
 ## Supported Targets
@@ -32,8 +30,8 @@ npx @tokamak-network/ai-access-cli revert --target claude
 |---|---|---|---|
 | `claude` | 7 `ANTHROPIC_*` exports | `~/.claude/settings.json` (surgical merge) | yes |
 | `codex` | `OPENAI_API_KEY` + `OPENAI_BASE_URL` | `~/.codex/config.toml` (full overwrite) | yes |
-| `openclaw` | marker block | `~/.openclaw/openclaw.json` (surgical merge) | no — gateway auto-restarted |
-| `hermes` | marker block | `~/.hermes/config.yaml` (full overwrite) | no |
+| `openclaw` | marker block (no env vars) | `~/.openclaw/openclaw.json` (surgical merge) | no |
+| `hermes` | — | `~/.hermes/config.yaml` (full overwrite) | no |
 
 ## Options
 
@@ -48,7 +46,7 @@ configure:
   --dry-run             preview changes without modifying files
 
 revert:
-  --target <t>          claude | codex | all  (openclaw and hermes not supported)
+  --target <t>          claude | codex
   --non-interactive     disable interactive prompts
   --dry-run             preview changes without modifying files
   --no-backup           skip creating .bak-YYYYMMDD-HHMMSS backup files
@@ -67,9 +65,9 @@ export ANTHROPIC_API_KEY="sk-..."
 
 `revert` removes only the marker block and the keys it added, leaving your existing configuration intact.
 
-## OpenClaw Gateway Restart
+## Gateway Restart
 
-After `configure openclaw` writes `~/.openclaw/openclaw.json`, the CLI automatically runs `openclaw gateway restart` so the new API key takes effect immediately. If the gateway is not running or openclaw is not installed, a warning is printed and the command continues.
+After writing configuration, `configure openclaw` and `configure hermes` automatically run their respective gateway restart commands (`openclaw gateway restart` / `hermes gateway restart`) so the new API key takes effect immediately. If the binary is not found or the restart fails, a warning is printed and the command continues.
 
 ## Usage in Coding Agents (Claude Code, Codex)
 
