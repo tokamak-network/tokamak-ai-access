@@ -80,9 +80,7 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
       log.info("  2) Claude Code를 완전히 종료 후 다시 실행");
     } else if (target === "openclaw") {
       log.ok("설정 완료! openclaw.json이 자동으로 반영됩니다.");
-    } else if (target === "hermes") {
-      log.ok("설정 완료! Hermes를 재시작하면 새 설정이 적용됩니다.");
-    } else {
+    } else if (target !== "hermes") {
       log.ok("설정 완료! 쉘을 재시작하거나 `source ~/.zshrc` 를 실행하세요.");
     }
   }

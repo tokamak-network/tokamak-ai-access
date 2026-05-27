@@ -8,11 +8,18 @@
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
 | #16108 | 12:06 AM | 🔵 | ai-access-cli revert functionality for restoring environment variables | ~420 |
+
+### May 27, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #16242 | 12:30 PM | 🔴 | Fixed Hermes gateway restart timeout and improved error diagnostics | ~386 |
+| #16241 | " | ✅ | Version bumped to v1.0.11 for release | ~300 |
 </claude-mem-context>
 
 # ai-access-cli — Package Context
 
-`@tokamak-network/ai-access-cli` v1.0.11 — CLI to configure AI tools with TON AI Access LiteLLM keys.
+`@tokamak-network/ai-access-cli` v1.0.12 — CLI to configure AI tools with TON AI Access LiteLLM keys.
 
 ## Commands
 

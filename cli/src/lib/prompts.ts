@@ -32,7 +32,7 @@ export async function promptRevertTarget(): Promise<"claude" | "codex"> {
 export async function promptApiKey(envKey?: string): Promise<string> {
   if (envKey) return envKey;
   const value = await p.password({
-    message: "TON AI Access API 키를 입력하세요 (https://ai.tokamak.network 에서 발급)",
+    message: "TON AI Access API 키를 입력하세요",
   });
   if (p.isCancel(value)) { p.cancel("취소되었습니다."); process.exit(0); }
   return value as string;
