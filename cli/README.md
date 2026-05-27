@@ -4,24 +4,41 @@ Configure TON AI Access LiteLLM keys for Claude Code, Codex, OpenClaw, and Herme
 
 **Requirements:** Node.js ≥ 18
 
-## Usage
+## Install
 
 ```bash
-# Interactive setup (prompts for target and API key)
-npx @tokamak-network/ai-access-cli configure
+npm install -g @tokamak-network/ai-access-cli
+```
 
-# Configure a specific target
-npx @tokamak-network/ai-access-cli configure --target claude --api-key sk-...
+Or use without installing: replace `tokamak-ai-access` with `npx @tokamak-network/ai-access-cli` in any command below.
+
+## Configure
+
+```bash
+# Interactive — prompts for target and API key
+tokamak-ai-access configure
+
+# Non-interactive
+tokamak-ai-access configure --target claude --api-key sk-...
+TON_API_KEY=sk-... tokamak-ai-access configure --target hermes --non-interactive
 
 # Dry-run preview (no files modified)
-npx @tokamak-network/ai-access-cli configure --target claude --api-key sk-... --dry-run
+tokamak-ai-access configure --target claude --api-key sk-... --dry-run
 
 # List available models
-npx @tokamak-network/ai-access-cli configure --list-models --api-key sk-...
+tokamak-ai-access configure --list-models --api-key sk-...
+```
 
-# Revert changes (claude and codex only)
-npx @tokamak-network/ai-access-cli revert --target claude
-npx @tokamak-network/ai-access-cli revert --target codex
+## Revert
+
+Removes TON AI Access settings and restores the original configuration (claude and codex only).
+
+```bash
+tokamak-ai-access revert --target claude
+tokamak-ai-access revert --target codex
+
+# Dry-run preview
+tokamak-ai-access revert --target claude --dry-run
 ```
 
 ## Supported Targets
@@ -42,12 +59,12 @@ configure:
   --base-url <url>      default: https://api2.ai.tokamak.network
   --model <model>       default: qwen-3.6
   --list-models         list available models and exit (requires --api-key)
-  --non-interactive     disable interactive prompts
+  --non-interactive     disable interactive prompts (--target and --api-key required)
   --dry-run             preview changes without modifying files
 
 revert:
   --target <t>          claude | codex
-  --non-interactive     disable interactive prompts
+  --non-interactive     disable interactive prompts (--target required)
   --dry-run             preview changes without modifying files
   --no-backup           skip creating .bak-YYYYMMDD-HHMMSS backup files
 ```
@@ -68,26 +85,6 @@ export ANTHROPIC_API_KEY="sk-..."
 ## Gateway Restart
 
 After writing configuration, `configure openclaw` and `configure hermes` automatically run their respective gateway restart commands (`openclaw gateway restart` / `hermes gateway restart`) so the new API key takes effect immediately. If the binary is not found or the restart fails, a warning is printed and the command continues.
-
-## Usage in Coding Agents (Claude Code, Codex)
-
-This CLI requires a real TTY. Running it inside an agent's Bash tool crashes with:
-
-```
-SystemError [ERR_TTY_INIT_FAILED]: TTY initialization failed: uv_tty_init returned EINVAL
-```
-
-**Option 1 — `--non-interactive` (recommended for agents)**
-
-```bash
-TON_API_KEY=<key> npx @tokamak-network/ai-access-cli configure --target claude --non-interactive
-```
-
-**Option 2 — Claude Code `!` prefix (runs in a real terminal)**
-
-```
-!npx @tokamak-network/ai-access-cli configure --target claude
-```
 
 ## Backup
 
