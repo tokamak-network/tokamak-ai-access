@@ -17,7 +17,13 @@ export interface ConfigureOptions {
 interface OpenClawConfig {
   models?: {
     providers?: Record<string, unknown>;
-    default?: string;
+  };
+  agents?: {
+    defaults?: {
+      model?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
   };
   [key: string]: unknown;
 }
@@ -51,7 +57,8 @@ export function configure(opts: ConfigureOptions): void {
   if (opts.dryRun) {
     log.dry(`${config} 수정 예정:`);
     log.diff("+", "models.providers.litellm.baseUrl", `${baseUrl}/v1`);
-    log.diff("+", "models.default", `litellm/${model}`);
+    log.diff("+", "models.providers.litellm.models", `[{ id: "${model}", name: "${model}" }]`);
+    log.diff("+", "agents.defaults.model", `litellm/${model}`);
     return;
   }
 
@@ -64,8 +71,11 @@ export function configure(opts: ConfigureOptions): void {
     baseUrl: `${baseUrl}/v1`,
     apiKey: opts.apiKey,
     api: "openai-completions",
+    models: [{ id: model, name: model }],
   };
-  data.models.default = `litellm/${model}`;
+  data.agents ??= {};
+  data.agents.defaults ??= {};
+  data.agents.defaults.model = `litellm/${model}`;
 
   const hadExisting = existsSync(config);
   if (hadExisting) copyFileSync(config, config + ".bak");

@@ -8,8 +8,10 @@ import { readJson } from "../../src/lib/json-merge.js";
 
 interface OpenClawConfig {
   models?: {
-    providers?: Record<string, unknown>;
-    default?: string;
+    providers?: Record<string, { models?: { id: string; name: string }[]; [key: string]: unknown }>;
+  };
+  agents?: {
+    defaults?: { model?: string; [key: string]: unknown };
   };
   theme?: string;
 }
@@ -50,10 +52,16 @@ describe("openclaw.configure", () => {
     expect(data.models?.providers?.["litellm"]).toBeDefined();
   });
 
-  it("sets models.default to litellm/<model>", () => {
+  it("sets agents.defaults.model to litellm/<model>", () => {
     configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
     const data = readJson(join(home, ".openclaw", "openclaw.json")) as OpenClawConfig;
-    expect(data.models?.default).toBe("litellm/qwen-3.6");
+    expect(data.agents?.defaults?.model).toBe("litellm/qwen-3.6");
+  });
+
+  it("adds models array to litellm provider", () => {
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const data = readJson(join(home, ".openclaw", "openclaw.json")) as OpenClawConfig;
+    expect(data.models?.providers?.["litellm"]?.models).toEqual([{ id: "qwen-3.6", name: "qwen-3.6" }]);
   });
 
   it("preserves pre-existing keys in openclaw.json", () => {
