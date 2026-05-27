@@ -94,4 +94,44 @@ describe("openclaw.configure", () => {
     writeFileSync(join(home, ".openclaw", "openclaw.json"), "{ bad json");
     expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).toThrow(/JSON이 손상/);
   });
+
+  it("clears model fields from sessions.json after configure", () => {
+    const sessionsDir = join(home, ".openclaw", "agents", "main", "sessions");
+    mkdirSync(sessionsDir, { recursive: true });
+    writeFileSync(
+      join(sessionsDir, "sessions.json"),
+      JSON.stringify({ key1: { model: "gpt-4", modelProvider: "openai", other: "keep" } })
+    );
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const sessions = JSON.parse(readFileSync(join(sessionsDir, "sessions.json"), "utf8"));
+    expect(sessions.key1.model).toBeUndefined();
+    expect(sessions.key1.modelProvider).toBeUndefined();
+    expect(sessions.key1.other).toBe("keep");
+  });
+
+  it("clears modelOverride and providerOverride from sessions.json", () => {
+    const sessionsDir = join(home, ".openclaw", "agents", "main", "sessions");
+    mkdirSync(sessionsDir, { recursive: true });
+    writeFileSync(
+      join(sessionsDir, "sessions.json"),
+      JSON.stringify({ key1: { modelOverride: "gpt-4", providerOverride: "openai" } })
+    );
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const sessions = JSON.parse(readFileSync(join(sessionsDir, "sessions.json"), "utf8"));
+    expect(sessions.key1.modelOverride).toBeUndefined();
+    expect(sessions.key1.providerOverride).toBeUndefined();
+  });
+
+  it("does not modify sessions.json in dry-run mode", () => {
+    const sessionsDir = join(home, ".openclaw", "agents", "main", "sessions");
+    mkdirSync(sessionsDir, { recursive: true });
+    const content = JSON.stringify({ key1: { model: "gpt-4" } });
+    writeFileSync(join(sessionsDir, "sessions.json"), content);
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6", dryRun: true });
+    expect(readFileSync(join(sessionsDir, "sessions.json"), "utf8")).toBe(content);
+  });
+
+  it("skips session clearing when agents dir does not exist", () => {
+    expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).not.toThrow();
+  });
 });

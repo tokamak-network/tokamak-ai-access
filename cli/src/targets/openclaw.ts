@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, copyFileSync } from "node:fs";
+import { existsSync, mkdirSync, copyFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { execSync } from "node:child_process";
@@ -26,6 +26,46 @@ interface OpenClawConfig {
     [key: string]: unknown;
   };
   [key: string]: unknown;
+}
+
+function clearSessionModels(home: string, dryRun: boolean): void {
+  const agentsDir = join(home, ".openclaw", "agents");
+  if (!existsSync(agentsDir)) return;
+
+  const agentDirs = readdirSync(agentsDir, { withFileTypes: true })
+    .filter(d => d.isDirectory())
+    .map(d => join(agentsDir, d.name));
+
+  for (const agentDir of agentDirs) {
+    const sessionsFile = join(agentDir, "sessions", "sessions.json");
+    if (!existsSync(sessionsFile)) continue;
+
+    if (dryRun) {
+      log.dry(`${sessionsFile} 모델 설정 초기화 예정`);
+      continue;
+    }
+
+    try {
+      const sessions = readJson(sessionsFile) as Record<string, Record<string, unknown>>;
+      let changed = false;
+      for (const entry of Object.values(sessions)) {
+        if (entry.model !== undefined || entry.modelProvider !== undefined ||
+            entry.modelOverride !== undefined || entry.providerOverride !== undefined) {
+          delete entry.model;
+          delete entry.modelProvider;
+          delete entry.modelOverride;
+          delete entry.providerOverride;
+          changed = true;
+        }
+      }
+      if (changed) {
+        writeJson(sessionsFile, sessions as Record<string, unknown>);
+        log.ok(`${sessionsFile} 모델 설정 초기화 완료`);
+      }
+    } catch {
+      log.info(`${sessionsFile} 처리 중 오류 — 건너뜀`);
+    }
+  }
 }
 
 function paths(home: string) {
@@ -59,6 +99,8 @@ export function configure(opts: ConfigureOptions): void {
     log.diff("+", "models.providers.litellm.baseUrl", `${baseUrl}/v1`);
     log.diff("+", "models.providers.litellm.models", `[{ id: "${model}", name: "${model}" }]`);
     log.diff("+", "agents.defaults.model", `litellm/${model}`);
+    log.section("OpenClaw — 세션 모델 초기화");
+    clearSessionModels(home, true);
     return;
   }
 
@@ -82,6 +124,9 @@ export function configure(opts: ConfigureOptions): void {
   writeJson(config, data as Record<string, unknown>);
   log.ok(`${config} 업데이트 완료`);
   if (hadExisting) log.info(`복원 필요 시: cp ${config}.bak ${config}`);
+
+  log.section("OpenClaw — 세션 모델 초기화");
+  clearSessionModels(home, false);
 
   log.section("OpenClaw — 게이트웨이 재시작");
   try {
