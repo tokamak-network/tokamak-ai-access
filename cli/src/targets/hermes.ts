@@ -24,13 +24,16 @@ function tryRestartGateway(home: string): void {
   const candidates = ["hermes", join(home, ".local", "bin", "hermes")];
   for (const bin of candidates) {
     try {
-      execFileSync(bin, ["gateway", "restart"], { stdio: "pipe", timeout: 10_000 });
+      execFileSync(bin, ["gateway", "restart"], { stdio: "pipe", timeout: 30_000 });
       log.ok("Gateway 재시작 완료 — 새 API 키가 즉시 적용됩니다");
       return;
     } catch (err: unknown) {
-      const code = (err as NodeJS.ErrnoException).code;
-      if (code === "ENOENT") continue;
-      log.warn("Gateway 재시작 실패 — 수동으로 실행하세요: hermes gateway restart");
+      const e = err as NodeJS.ErrnoException & { killed?: boolean; stderr?: Buffer };
+      if (e.code === "ENOENT") continue;
+      const detail = e.killed
+        ? "timeout (30s 초과)"
+        : (e.stderr?.toString().trim() ?? e.message ?? String(e));
+      log.warn(`Gateway 재시작 실패 (${detail}) — 수동으로 실행하세요: hermes gateway restart`);
       return;
     }
   }

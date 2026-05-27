@@ -125,7 +125,7 @@ describe("hermes.configure", () => {
     expect(execFileSyncMock).toHaveBeenCalledWith(
       expect.stringContaining("hermes"),
       ["gateway", "restart"],
-      expect.objectContaining({ timeout: 10_000 }),
+      expect.objectContaining({ timeout: 30_000 }),
     );
   });
 
@@ -139,7 +139,7 @@ describe("hermes.configure", () => {
     expect(execFileSyncMock).toHaveBeenLastCalledWith(
       expect.stringContaining(".local/bin/hermes"),
       ["gateway", "restart"],
-      expect.objectContaining({ timeout: 10_000 }),
+      expect.objectContaining({ timeout: 30_000 }),
     );
   });
 
