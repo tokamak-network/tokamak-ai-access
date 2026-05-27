@@ -25,19 +25,19 @@ function tryRestartGateway(home: string): void {
   for (const bin of candidates) {
     try {
       execFileSync(bin, ["gateway", "restart"], { stdio: "pipe", timeout: 30_000 });
-      log.ok("Gateway 재시작 완료 — 새 API 키가 즉시 적용됩니다");
+      log.ok("Gateway restarted — new API key is active");
       return;
     } catch (err: unknown) {
       const e = err as NodeJS.ErrnoException & { killed?: boolean; stderr?: Buffer };
       if (e.code === "ENOENT") continue;
       const detail = e.killed
-        ? "timeout (30s 초과)"
+        ? "timeout (30s)"
         : (e.stderr?.toString().trim() ?? e.message ?? String(e));
-      log.warn(`Gateway 재시작 실패 (${detail}) — 수동으로 실행하세요: hermes gateway restart`);
+      log.warn(`Gateway restart failed (${detail}) — run manually: hermes gateway restart`);
       return;
     }
   }
-  log.info("hermes 바이너리를 찾을 수 없습니다 — 설정 변경은 저장되었으나 다음 실행 시 적용됩니다");
+  log.info("hermes binary not found — settings saved, will apply on next launch");
 }
 
 export function configure(opts: ConfigureOptions): void {
@@ -46,14 +46,14 @@ export function configure(opts: ConfigureOptions): void {
   const model = opts.model ?? "qwen-3.6";
   const { configDir, config } = paths(home);
 
-  log.section("Hermes — config.yaml 설정");
+  log.section("Hermes — config.yaml");
 
   if (opts.dryRun) {
-    log.dry(`${config} 수정 예정:`);
+    log.dry(`${config}: will be updated:`);
     log.diff("+", "model.default", model);
     log.diff("+", "model.base_url", `${baseUrl}/v1`);
     log.diff("+", "custom_providers[tokamak].base_url", `${baseUrl}/v1`);
-    log.dry("hermes gateway restart 실행 예정");
+    log.dry("hermes gateway restart will be run");
     return;
   }
 
@@ -67,7 +67,7 @@ export function configure(opts: ConfigureOptions): void {
   try {
     data = (parse(existing) as Record<string, unknown>) ?? {};
   } catch {
-    throw new Error(`${config}: YAML이 손상되었습니다. 수동으로 수정하거나 .bak 파일을 복원하세요.`);
+    throw new Error(`${config}: YAML is corrupted. Fix it manually or restore from .bak.`);
   }
 
   const modelValue = {
@@ -101,8 +101,8 @@ export function configure(opts: ConfigureOptions): void {
   const out = { ...base, custom_providers };
 
   writeFileSync(config, stringify(out));
-  log.ok(`${config} 업데이트 완료`);
-  if (hadExisting) log.info(`복원 필요 시: cp ${config}.bak ${config}`);
+  log.ok(`${config}: updated`);
+  if (hadExisting) log.info(`To restore: cp ${config}.bak ${config}`);
 
   tryRestartGateway(home);
 }

@@ -10,20 +10,20 @@ const program = new Command();
 
 program
   .name("tokamak-ai-access")
-  .description("TON AI Access — Claude Code, Codex, OpenClaw, Hermes CLI 설정 도구")
+  .description("TON AI Access — configure Claude Code, Codex, OpenClaw, Hermes")
   .version(__PKG_VERSION__);
 
 // configure subcommand
 program
   .command("configure")
-  .description("CLI에 TON AI Access API 키와 모델을 설정합니다")
-  .option("--target <t>", "대상 CLI: claude | codex | openclaw | hermes")
-  .option("--api-key <key>", "TON AI Access API 키 (기본: TON_API_KEY 환경변수)")
-  .option("--base-url <url>", "API base URL (기본: https://api2.ai.tokamak.network)")
-  .option("--model <model>", "사용할 모델 (기본: qwen-3.6)")
-  .option("--list-models", "사용 가능한 모델 목록 조회 후 종료")
-  .option("--non-interactive", "인터랙티브 prompt 없이 실행 (--target, --api-key 필수)")
-  .option("--dry-run", "변경 내용을 미리보기만 합니다 (파일 수정 없음)")
+  .description("Configure a CLI with your TON AI Access API key and model")
+  .option("--target <t>", "target CLI: claude | codex | openclaw | hermes")
+  .option("--api-key <key>", "API key (default: TON_API_KEY env var)")
+  .option("--base-url <url>", "API base URL (default: https://api2.ai.tokamak.network)")
+  .option("--model <model>", "model to use (default: qwen-3.6)")
+  .option("--list-models", "list available models and exit")
+  .option("--non-interactive", "run without interactive prompts (--target, --api-key required)")
+  .option("--dry-run", "preview changes without modifying files")
   .action(async (opts: {
     target?: string;
     apiKey?: string;
@@ -47,11 +47,11 @@ program
 // revert subcommand
 program
   .command("revert")
-  .description("TON AI Access 설정을 원복합니다")
-  .option("--target <t>", "대상 CLI: claude | codex")
-  .option("--non-interactive", "인터랙티브 prompt 없이 실행 (--target 필수)")
-  .option("--dry-run", "변경 내용을 미리보기만 합니다 (파일 수정 없음)")
-  .option("--no-backup", "원복 전 .bak 파일 생성 생략")
+  .description("Revert TON AI Access settings")
+  .option("--target <t>", "target CLI: claude | codex")
+  .option("--non-interactive", "run without interactive prompts (--target required)")
+  .option("--dry-run", "preview changes without modifying files")
+  .option("--no-backup", "skip .bak backup before reverting")
   .action(async (opts: {
     target?: string;
     nonInteractive?: boolean;
@@ -69,7 +69,7 @@ program
 // cleanup-env subcommand
 program
   .command("cleanup-env")
-  .description("현재 세션의 TON AI Access 환경변수를 정리합니다")
+  .description("Clean up TON AI Access env vars from the current session")
   .action(async () => {
     await runEnvCleanup({ restore: false });
   });
@@ -77,7 +77,7 @@ program
 // restore-env subcommand
 program
   .command("restore-env")
-  .description("백업에서 환경변수를 복원합니다")
+  .description("Restore env vars from backup")
   .action(async () => {
     await runEnvCleanup({ restore: true });
   });
@@ -86,7 +86,7 @@ program
 if (process.argv.length <= 2) {
   (async () => {
     console.log("");
-    console.log(pc.bold(pc.blue("── TON AI Access — CLI 관리자 ────────────────────────────────────────")));
+    console.log(pc.bold(pc.blue("── TON AI Access — CLI Manager ──────────────────────────────────────")));
     const { promptTopLevel } = await import("./lib/prompts.js");
     const action = await promptTopLevel();
     if (action === "configure") {

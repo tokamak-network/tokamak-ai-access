@@ -36,23 +36,23 @@ export function configure(opts: ConfigureOptions): void {
   const date = new Date().toISOString().slice(0, 10);
 
   // Shell profile
-  log.section("Codex CLI — 쉘 프로파일 설정");
+  log.section("Codex CLI — shell profile");
   const envLines = [
     `export OPENAI_API_KEY="${opts.apiKey}"`,
     `export OPENAI_BASE_URL="${baseUrl}/v1"`,
   ];
 
   if (opts.dryRun) {
-    log.dry(`${profile} 수정 예정:`);
+    log.dry(`${profile}: will be updated:`);
     log.diff("+", "OPENAI_API_KEY", maskKey(opts.apiKey));
     log.diff("+", "OPENAI_BASE_URL", `${baseUrl}/v1`);
   } else {
     writeEnvBlock(profile, { target: "codex", model, extraLines: envLines });
-    log.ok(`${profile} 환경변수 블록 추가 완료`);
+    log.ok(`${profile}: env block written`);
   }
 
   // config.toml
-  log.section("Codex CLI — config.toml 설정");
+  log.section("Codex CLI — config.toml");
   const tomlContent = [
     `${BLOCK_START} — ${date}`,
     `model = "${model}"`,
@@ -65,14 +65,14 @@ export function configure(opts: ConfigureOptions): void {
   ].join("\n") + "\n";
 
   if (opts.dryRun) {
-    log.dry(`${config} 전체 덮어쓰기 예정:`);
+    log.dry(`${config}: will be overwritten:`);
     log.diff("+", "model", model);
     log.diff("+", "model_provider", "tokamak");
     log.diff("+", "base_url", `${baseUrl}/v1`);
   } else {
     if (!existsSync(configDir)) mkdirSync(configDir, { recursive: true });
     writeFileSync(config, tomlContent);
-    log.ok(`${config} 작성 완료`);
+    log.ok(`${config}: written`);
   }
 }
 
@@ -81,37 +81,37 @@ export function revert(opts: RevertOptions): void {
   const { profile, config } = paths(home);
 
   // Shell profile
-  log.section("Codex CLI — 쉘 프로파일 원복");
+  log.section("Codex CLI — shell profile revert");
   if (opts.dryRun) {
-    log.dry(`${profile} 에서 TON AI Access 블록 제거 예정`);
+    log.dry(`${profile}: TON AI Access block will be removed`);
   } else {
     const removed = revertShellProfile(profile, {
       dryRun: false,
       backup: opts.backup !== false,
       backupFile,
     });
-    if (removed) log.ok(`${profile} 마커 블록 제거 완료`);
-    else log.warn(`${profile} 에서 TON AI Access 블록을 찾지 못했습니다`);
+    if (removed) log.ok(`${profile}: marker block removed`);
+    else log.warn(`${profile}: no TON AI Access block found`);
   }
 
   // config.toml
-  log.section("Codex CLI — config.toml 원복");
+  log.section("Codex CLI — config.toml revert");
   if (!existsSync(config)) {
-    log.warn(`${config} 파일이 없습니다 — 건너뜀`);
+    log.warn(`${config}: file not found — skipping`);
     return;
   }
 
   const content = readFileSync(config, "utf8");
   if (!hasFileMarker(content)) {
-    log.warn(`${config} 는 TON AI Access가 작성한 파일이 아닙니다 — 보존합니다`);
+    log.warn(`${config}: not written by TON AI Access — preserving`);
     return;
   }
 
   if (opts.dryRun) {
-    log.dry(`${config} 삭제 예정 (TON AI Access 마커 확인됨)`);
+    log.dry(`${config}: will be deleted (TON AI Access marker confirmed)`);
   } else {
     if (opts.backup !== false) backupFile(config);
     rmSync(config);
-    log.ok(`${config} 삭제 완료`);
+    log.ok(`${config}: deleted`);
   }
 }

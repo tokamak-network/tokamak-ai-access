@@ -87,7 +87,7 @@ describe("hermes.configure", () => {
 
   it("throws on malformed config.yaml", () => {
     writeFileSync(join(home, ".hermes", "config.yaml"), "{ bad: yaml: content: [[\n");
-    expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).toThrow(/YAML이 손상/);
+    expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).toThrow(/YAML is corrupted/);
   });
 
   it("writes tokamak entry to custom_providers", () => {

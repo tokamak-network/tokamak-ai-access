@@ -15,7 +15,7 @@ export async function runRevert(opts: RevertCommandOptions): Promise<void> {
   let target = opts.target;
   if (!target) {
     if (opts.nonInteractive) {
-      log.err("--non-interactive 모드에서는 --target 을 지정해야 합니다.");
+      log.err("--target is required in --non-interactive mode.");
       process.exit(1);
     }
     const { promptRevertTarget } = await import("../lib/prompts.js");
@@ -34,9 +34,9 @@ export async function runRevert(opts: RevertCommandOptions): Promise<void> {
 
   if (opts.dryRun) {
     console.log("");
-    log.info("Dry-run 완료 — 실제 파일은 변경되지 않았습니다.");
+    log.info("Dry-run complete — no files were modified.");
   } else {
     console.log("");
-    log.ok("원복 완료! 쉘을 재시작하세요.");
+    log.ok("Revert complete! Restart your shell.");
   }
 }

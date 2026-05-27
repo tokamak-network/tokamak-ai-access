@@ -92,7 +92,7 @@ describe("openclaw.configure", () => {
 
   it("throws on malformed openclaw.json", () => {
     writeFileSync(join(home, ".openclaw", "openclaw.json"), "{ bad json");
-    expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).toThrow(/JSON이 손상/);
+    expect(() => configure({ home, apiKey: "sk-test", model: "qwen-3.6" })).toThrow(/JSON is corrupted/);
   });
 
   it("clears model fields from sessions.json after configure", () => {

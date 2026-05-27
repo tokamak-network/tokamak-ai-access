@@ -40,16 +40,16 @@ export function configure(opts: ConfigureOptions): void {
   const { profile, settingsDir, settings } = paths(home);
 
   // Backup original env vars BEFORE overwriting
-  log.section("Claude Code — 환경변수 백업");
+  log.section("Claude Code — env var backup");
   if (opts.dryRun) {
-    log.dry(`${profile} 환경변수 백업 예정`);
+    log.dry(`${profile}: env vars will be backed up`);
   } else {
     saveEnvBackup();
-    log.ok("환경변수 백업 완료 (~/.tokamak-ai-access/env-backup.json)");
+    log.ok("Env vars backed up (~/.tokamak-ai-access/env-backup.json)");
   }
 
   // Shell profile
-  log.section("Claude Code — 쉘 프로파일 설정");
+  log.section("Claude Code — shell profile");
   const envLines = [
     `export ANTHROPIC_API_KEY="${opts.apiKey}"`,
     `export ANTHROPIC_BASE_URL="${baseUrl}"`,
@@ -61,17 +61,17 @@ export function configure(opts: ConfigureOptions): void {
   ];
 
   if (opts.dryRun) {
-    log.dry(`${profile} 수정 예정:`);
+    log.dry(`${profile}: will be updated:`);
     log.diff("+", "ANTHROPIC_API_KEY", maskKey(opts.apiKey));
     log.diff("+", "ANTHROPIC_BASE_URL", baseUrl);
     log.diff("+", "ANTHROPIC_MODEL (+ 4 aliases)", model);
   } else {
     writeEnvBlock(profile, { target: "claude", model, extraLines: envLines });
-    log.ok(`${profile} 환경변수 블록 추가 완료`);
+    log.ok(`${profile}: env block written`);
   }
 
   // settings.json
-  log.section("Claude Code — settings.json 설정");
+  log.section("Claude Code — settings.json");
   const keys: Record<string, string> = {
     ANTHROPIC_API_KEY: opts.apiKey,
     ANTHROPIC_BASE_URL: baseUrl,
@@ -83,7 +83,7 @@ export function configure(opts: ConfigureOptions): void {
   };
 
   if (opts.dryRun) {
-    log.dry(`${settings} 수정 예정:`);
+    log.dry(`${settings}: will be updated:`);
     const existing = existsSync(settings) ? (readJson(settings) as { env?: Record<string, string> }).env ?? {} : {};
     for (const [k, v] of Object.entries(keys)) {
       log.diff(k in existing ? "~" : "+", k, k.includes("KEY") ? maskKey(v) : v);
@@ -91,7 +91,7 @@ export function configure(opts: ConfigureOptions): void {
   } else {
     if (!existsSync(settingsDir)) mkdirSync(settingsDir, { recursive: true });
     const { added, updated } = mergeKeys(settings, ["env"], keys);
-    log.ok(`settings.json 업데이트 완료 (추가: ${added.length}, 변경: ${updated.length})`);
+    log.ok(`settings.json updated (added: ${added.length}, changed: ${updated.length})`);
   }
 }
 
@@ -100,29 +100,29 @@ export function revert(opts: RevertOptions): void {
   const { profile, settings } = paths(home);
 
   // Shell profile
-  log.section("Claude Code — 쉘 프로파일 원복");
+  log.section("Claude Code — shell profile revert");
   if (opts.dryRun) {
-    log.dry(`${profile} 에서 TON AI Access 블록 제거 예정`);
+    log.dry(`${profile}: TON AI Access block will be removed`);
   } else {
     const removed = revertShellProfile(profile, {
       dryRun: false,
       backup: opts.backup !== false,
       backupFile,
     });
-    if (removed) log.ok(`${profile} 마커 블록 제거 완료`);
-    else log.warn(`${profile} 에서 TON AI Access 블록을 찾지 못했습니다`);
+    if (removed) log.ok(`${profile}: marker block removed`);
+    else log.warn(`${profile}: no TON AI Access block found`);
   }
 
   // settings.json
-  log.section("Claude Code — settings.json 원복");
+  log.section("Claude Code — settings.json revert");
   if (opts.dryRun) {
-    log.dry(`${settings} 에서 ${KEYS.length}개 ANTHROPIC_* 키 제거 예정`);
+    log.dry(`${settings}: will remove ${KEYS.length} ANTHROPIC_* keys`);
     for (const k of KEYS) log.diff("-", k, "");
   } else {
     if (opts.backup !== false) backupFile(settings);
     const removed = removeKeys(settings, ["env"], [...KEYS]);
-    if (removed.length > 0) log.ok(`settings.json 에서 ${removed.length}개 키 제거 완료`);
-    else log.warn(`settings.json 에서 제거할 키를 찾지 못했습니다`);
+    if (removed.length > 0) log.ok(`settings.json: removed ${removed.length} keys`);
+    else log.warn(`settings.json: no keys to remove found`);
   }
 }
 
@@ -134,8 +134,8 @@ export function printRestoreCommands(): void {
   if (warning) {
     log.warn(warning);
   }
-  log.info("현재 세션의 환경변수를 정리하려면 다음을 실행하세요:");
+  log.info("To clean up env vars in the current session, run:");
   if (commands) console.log(commands);
   console.log("");
-  log.info("또는 쉘을 완전히 재시작하세요.");
+  log.info("Or fully restart your shell.");
 }

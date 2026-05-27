@@ -23,15 +23,15 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
   if (opts.listModels) {
     const apiKey = opts.apiKey ?? process.env["TON_API_KEY"] ?? process.env["ANTHROPIC_API_KEY"] ?? "";
     if (!apiKey) {
-      log.err("모델 목록 조회에는 API 키가 필요합니다. --api-key 또는 TON_API_KEY 환경변수를 설정하세요.");
+      log.err("API key required for model listing. Set --api-key or TON_API_KEY env var.");
       process.exit(1);
     }
     try {
       const models = await fetchModels(baseUrl, apiKey);
-      console.log(pc.bold("\n사용 가능한 모델:"));
+      console.log(pc.bold("\nAvailable models:"));
       for (const m of models) console.log(`  ${m.id}`);
     } catch (e) {
-      log.err(`모델 목록 조회 실패: ${String(e)}`);
+      log.err(`Failed to list models: ${String(e)}`);
       process.exit(1);
     }
     return;
@@ -40,7 +40,7 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
   let target = opts.target;
   if (!target) {
     if (opts.nonInteractive) {
-      log.err("--non-interactive 모드에서는 --target 을 지정해야 합니다.");
+      log.err("--target is required in --non-interactive mode.");
       process.exit(1);
     }
     const { promptTarget } = await import("../lib/prompts.js");
@@ -50,7 +50,7 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
   let apiKey = opts.apiKey ?? process.env["TON_API_KEY"] ?? "";
   if (!apiKey) {
     if (opts.nonInteractive) {
-      log.err("--non-interactive 모드에서는 --api-key 또는 TON_API_KEY 환경변수를 설정해야 합니다.");
+      log.err("--api-key or TON_API_KEY env var is required in --non-interactive mode.");
       process.exit(1);
     }
     const { promptApiKey } = await import("../lib/prompts.js");
@@ -71,17 +71,17 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
 
   if (opts.dryRun) {
     console.log("");
-    log.info("Dry-run 완료 — 실제 파일은 변경되지 않았습니다.");
+    log.info("Dry-run complete — no files were modified.");
   } else {
     console.log("");
     if (target === "claude") {
-      log.ok("설정 완료! 쉘을 재시작하고 Claude Code를 재시작하세요:");
-      log.info("  1) source ~/.zshrc (또는 ~/.bashrc)");
-      log.info("  2) Claude Code를 완전히 종료 후 다시 실행");
+      log.ok("Setup complete! Restart your shell and Claude Code:");
+      log.info("  1) source ~/.zshrc (or ~/.bashrc)");
+      log.info("  2) Fully quit and relaunch Claude Code");
     } else if (target === "openclaw") {
-      log.ok("설정 완료! openclaw.json이 자동으로 반영됩니다.");
+      log.ok("Setup complete! openclaw.json is applied automatically.");
     } else if (target !== "hermes") {
-      log.ok("설정 완료! 쉘을 재시작하거나 `source ~/.zshrc` 를 실행하세요.");
+      log.ok("Setup complete! Restart your shell or run `source ~/.zshrc`.");
     }
   }
 }

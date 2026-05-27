@@ -19,7 +19,7 @@
 
 # ai-access-cli — Package Context
 
-`@tokamak-network/ai-access-cli` v1.0.12 — CLI to configure AI tools with TON AI Access LiteLLM keys.
+`@tokamak-network/ai-access-cli` v1.1.0 — CLI to configure AI tools with TON AI Access LiteLLM keys.
 
 ## Commands
 

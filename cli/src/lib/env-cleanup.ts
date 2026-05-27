@@ -72,12 +72,12 @@ export function generateEnvCommands(): { commands: string; warning?: string } {
     if (isTonBackup(backup)) {
       return {
         commands: generateCleanupOnlyCommands(keys),
-        warning: "# ⚠️  백업 파일이 TON AI Access 값을 포함하고 있습니다 (원본이 아님).",
+        warning: "# ⚠️  Backup contains TON AI Access values (not originals).",
       };
     }
 
-    lines.push("# TON AI Access — 환경변수 원복 (또는 정리)");
-    lines.push("# 이 스크립트를 sourcing 하면 현재 세션이 원복됩니다:");
+    lines.push("# TON AI Access — restore env vars (or clean up)");
+    lines.push("# Sourcing this script restores the current session:");
     lines.push("#   source <(tokamak-ai-access restore-env)");
     lines.push("");
 
@@ -97,8 +97,8 @@ export function generateEnvCommands(): { commands: string; warning?: string } {
 }
 
 function generateCleanupOnlyCommands(keys: string[]): string {
-  const lines = ["# TON AI Access — 환경변수 정리"];
-  lines.push("# 현재 세션에서 모든 TON AI Access 환경변수를 정리합니다:");
+  const lines = ["# TON AI Access — clean up env vars"];
+  lines.push("# Unsets all TON AI Access env vars from the current session:");
   lines.push("#   source <(tokamak-ai-access cleanup-env)");
   lines.push("");
 

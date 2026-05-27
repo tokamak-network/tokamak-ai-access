@@ -5,7 +5,7 @@ export function readJson(filePath: string): Record<string, unknown> {
   try {
     return JSON.parse(readFileSync(filePath, "utf8")) as Record<string, unknown>;
   } catch {
-    throw new Error(`${filePath}: JSON이 손상되었습니다. 수동으로 수정하거나 .bak 파일을 복원하세요.`);
+    throw new Error(`${filePath}: JSON is corrupted. Fix it manually or restore from .bak.`);
   }
 }
 

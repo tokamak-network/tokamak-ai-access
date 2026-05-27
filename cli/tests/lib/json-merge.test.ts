@@ -25,7 +25,7 @@ describe("readJson", () => {
 
   it("throws on malformed JSON", () => {
     writeFileSync(file, "{ bad json");
-    expect(() => readJson(file)).toThrow(/JSON이 손상/);
+    expect(() => readJson(file)).toThrow(/JSON is corrupted/);
   });
 });
 

@@ -15,24 +15,24 @@ export async function runEnvCleanup(opts: EnvCleanupCommandOptions): Promise<voi
     const backup = loadEnvBackup();
 
     if (!backup) {
-      log.err("복원할 백업이 없습니다. 먼저 configure를 실행하세요.");
+      log.err("No backup found. Run configure first.");
       process.exit(1);
     }
 
     if (isBackupCorrupted()) {
-      log.warn("⚠️  백업 파일이 TON AI Access 값을 포함하고 있습니다 (원본이 아님).");
-      log.info("복원할 값은 TON 프록시 설정입니다. 원래 Anthropic 키를 수동으로 복원하세요.");
+      log.warn("Backup contains TON AI Access values (not originals).");
+      log.info("The backup holds TON proxy settings. Manually restore your original Anthropic keys.");
       console.log("");
-      log.info("현재 세션에서 TON AI Access 환경변수를 정리하려면 다음을 실행하세요:");
+      log.info("To clean up TON AI Access env vars in the current session, run:");
       const { commands } = generateEnvCommands();
       if (commands) console.log(commands);
       console.log("");
-      log.info("또는 쉘을 완전히 재시작하세요.");
+      log.info("Or fully restart your shell.");
       return;
     }
 
-    log.section("환경변수 복원");
-    log.info("복원할 값:");
+    log.section("Restore env vars");
+    log.info("Values to restore:");
     for (const [key, value] of Object.entries(backup.original)) {
       if (value) {
         const masked = key.includes("KEY") ? maskValue(value) : value;
@@ -42,22 +42,22 @@ export async function runEnvCleanup(opts: EnvCleanupCommandOptions): Promise<voi
       }
     }
     console.log("");
-    log.info("현재 세션에서 복원하려면 다음을 실행하세요:");
+    log.info("To restore in the current session, run:");
     const { commands } = generateEnvCommands();
     if (commands) console.log(commands);
     console.log("");
-    log.info("또는 쉘을 완전히 재시작하세요.");
+    log.info("Or fully restart your shell.");
   } else {
     const { isBackupCorrupted } = await import("../lib/env-cleanup.js");
     const corrupted = isBackupCorrupted();
 
-    log.section("환경변수 정리");
+    log.section("Clean up env vars");
 
     if (corrupted) {
-      log.warn("⚠️  백업 파일이 TON AI Access 값을 포함하고 있습니다 (원본이 아님).");
-      log.info("복구 가능한 원래 값이 없습니다 — 정리만 가능합니다.");
+      log.warn("Backup contains TON AI Access values (not originals).");
+      log.info("No restorable original values — cleanup only.");
     } else {
-      log.info("정리/복원 명령어 생성:");
+      log.info("Generating cleanup/restore commands:");
     }
 
     console.log("");
@@ -65,7 +65,7 @@ export async function runEnvCleanup(opts: EnvCleanupCommandOptions): Promise<voi
     if (warning) console.log(warning);
     if (commands) console.log(commands);
     console.log("");
-    log.info("현재 세션에서 적용하려면 다음을 실행하세요:");
+    log.info("To apply in the current session, run:");
     log.info("  source <(tokamak-ai-access cleanup-env)");
     console.log("");
   }

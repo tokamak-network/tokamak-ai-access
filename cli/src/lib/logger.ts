@@ -1,11 +1,11 @@
 import pc from "picocolors";
 
 export const log = {
-  info: (msg: string) => console.log(`  ${pc.cyan("[info]")}  ${msg}`),
-  ok: (msg: string) => console.log(`  ${pc.green("[ok]")}    ${msg}`),
-  warn: (msg: string) => console.log(`  ${pc.yellow("[warn]")}  ${msg}`),
-  err: (msg: string) => console.error(`  ${pc.red("[error]")} ${msg}`),
-  dry: (msg: string) => console.log(`  ${pc.magenta("[dry-run]")} ${msg}`),
+  info: (msg: string) => console.log(`  ${pc.cyan("•")}  ${msg}`),
+  ok: (msg: string) => console.log(`  ${pc.green("✓")}  ${msg}`),
+  warn: (msg: string) => console.log(`  ${pc.yellow("⚠")}  ${msg}`),
+  err: (msg: string) => console.error(`  ${pc.red("✗")}  ${msg}`),
+  dry: (msg: string) => console.log(`  ${pc.magenta("~")}  ${msg}`),
   section: (title: string) => {
     console.log("");
     console.log(pc.bold(pc.blue(`── ${title} ─────────────────────────────────`)));

@@ -41,7 +41,7 @@ function clearSessionModels(home: string, dryRun: boolean): void {
     if (!existsSync(sessionsFile)) continue;
 
     if (dryRun) {
-      log.dry(`${sessionsFile} 모델 설정 초기화 예정`);
+      log.dry(`${sessionsFile}: model settings will be reset`);
       continue;
     }
 
@@ -60,10 +60,10 @@ function clearSessionModels(home: string, dryRun: boolean): void {
       }
       if (changed) {
         writeJson(sessionsFile, sessions as Record<string, unknown>);
-        log.ok(`${sessionsFile} 모델 설정 초기화 완료`);
+        log.ok(`${sessionsFile}: model settings reset`);
       }
     } catch {
-      log.info(`${sessionsFile} 처리 중 오류 — 건너뜀`);
+      log.info(`${sessionsFile}: error during processing — skipping`);
     }
   }
 }
@@ -83,23 +83,23 @@ export function configure(opts: ConfigureOptions): void {
   const { profile, configDir, config } = paths(home);
 
   // Shell profile — empty marker block (no env vars for openclaw)
-  log.section("OpenClaw — 쉘 프로파일 설정");
+  log.section("OpenClaw — shell profile");
   if (opts.dryRun) {
-    log.dry(`${profile} 에 TON AI Access 마커 블록 추가 예정 (환경변수 없음)`);
+    log.dry(`${profile}: TON AI Access marker block will be added (no env vars)`);
   } else {
     writeEnvBlock(profile, { target: "openclaw", model, extraLines: [] });
-    log.ok(`${profile} 마커 블록 추가 완료`);
+    log.ok(`${profile}: marker block added`);
   }
 
   // openclaw.json
-  log.section("OpenClaw — openclaw.json 설정");
+  log.section("OpenClaw — openclaw.json");
 
   if (opts.dryRun) {
-    log.dry(`${config} 수정 예정:`);
+    log.dry(`${config}: will be updated:`);
     log.diff("+", "models.providers.litellm.baseUrl", `${baseUrl}/v1`);
     log.diff("+", "models.providers.litellm.models", `[{ id: "${model}", name: "${model}" }]`);
     log.diff("+", "agents.defaults.model", `litellm/${model}`);
-    log.section("OpenClaw — 세션 모델 초기화");
+    log.section("OpenClaw — session model reset");
     clearSessionModels(home, true);
     return;
   }
@@ -122,17 +122,17 @@ export function configure(opts: ConfigureOptions): void {
   const hadExisting = existsSync(config);
   if (hadExisting) copyFileSync(config, config + ".bak");
   writeJson(config, data as Record<string, unknown>);
-  log.ok(`${config} 업데이트 완료`);
-  if (hadExisting) log.info(`복원 필요 시: cp ${config}.bak ${config}`);
+  log.ok(`${config}: updated`);
+  if (hadExisting) log.info(`To restore: cp ${config}.bak ${config}`);
 
-  log.section("OpenClaw — 세션 모델 초기화");
+  log.section("OpenClaw — session model reset");
   clearSessionModels(home, false);
 
-  log.section("OpenClaw — 게이트웨이 재시작");
+  log.section("OpenClaw — gateway restart");
   try {
     execSync("openclaw gateway restart", { stdio: "inherit" });
-    log.ok("OpenClaw 게이트웨이 재시작 완료");
+    log.ok("OpenClaw gateway restarted");
   } catch {
-    log.info("OpenClaw 게이트웨이 재시작 실패 — 수동으로 재시작해주세요: openclaw gateway restart");
+    log.info("OpenClaw gateway restart failed — run manually: openclaw gateway restart");
   }
 }
