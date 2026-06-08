@@ -660,7 +660,7 @@ export default function DashboardPage() {
       {/* Top bar */}
       <header className="topbar">
         <div className="topbar-inner">
-          <span className="topbar-logo">TON AI Access</span>
+          <a href="/" className="topbar-logo" style={{ textDecoration: "none", color: "inherit" }}>TON AI Access</a>
           <div className="topbar-meta">
             {address && <span>{shortAddr(address)}</span>}
             <button
