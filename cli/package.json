@@ -1,6 +1,6 @@
 {
   "name": "@tokamak-network/ai-access-cli",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Configure and revert TON AI Access settings for Claude Code, Codex, OpenClaw, and Hermes",
   "bin": {
     "tokamak-ai-access": "dist/index.js"
