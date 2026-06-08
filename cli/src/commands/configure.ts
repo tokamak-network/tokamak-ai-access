@@ -57,10 +57,16 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
     apiKey = await promptApiKey();
   }
 
+  let model = opts.model;
+  if (!model && !opts.nonInteractive) {
+    const { promptModel } = await import("../lib/prompts.js");
+    model = await promptModel();
+  }
+
   console.log("");
   console.log(pc.bold(pc.blue("── TON AI Access — CLI Configurator ──────────────────────────────────")));
 
-  const configOpts = { apiKey, baseUrl, model: opts.model, dryRun: opts.dryRun };
+  const configOpts = { apiKey, baseUrl, model, dryRun: opts.dryRun };
 
   switch (target) {
     case "claude":    claude.configure(configOpts); break;

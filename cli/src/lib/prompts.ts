@@ -29,6 +29,18 @@ export async function promptRevertTarget(): Promise<"claude" | "codex"> {
   return value as "claude" | "codex";
 }
 
+export async function promptModel(): Promise<string> {
+  const value = await p.select<string>({
+    message: "Select a model",
+    options: [
+      { value: "qwen-3.6", label: "Qwen 3.6 (Recommended)" },
+      { value: "minimax-m2.7", label: "MiniMax M2.7" },
+    ],
+  });
+  if (p.isCancel(value)) { p.cancel("Cancelled."); process.exit(0); }
+  return value as string;
+}
+
 export async function promptApiKey(envKey?: string): Promise<string> {
   if (envKey) return envKey;
   const value = await p.password({
