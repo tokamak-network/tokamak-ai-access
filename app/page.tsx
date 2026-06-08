@@ -134,6 +134,47 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Model Cards (dark) ── */}
+        <div className="models-section-wrap">
+          <section className="models-section">
+            <aside>
+              <span className="eyebrow-dark">Models</span>
+              <span className="n-lbl-dark">Available</span>
+              <span className="n-val-dark">2 models</span>
+              <span className="n-lbl-dark">API compat</span>
+              <span className="n-val-dark">OpenAI REST</span>
+              <span className="n-lbl-dark">Context</span>
+              <span className="n-val-dark">Up to 1M tokens</span>
+              <span className="n-lbl-dark">Best for</span>
+              <span className="n-val-dark" style={{ marginBottom: 0 }}>Coding · Agents</span>
+            </aside>
+            <div className="model-cards">
+              <div className="model-card">
+                <div className="model-name">qwen-3.6</div>
+                <div className="model-maker">Alibaba · Qwen3 MoE</div>
+                <div className="model-desc">35B params, 3B active. Fast reasoning with up to 1M token context. Strong at coding and agentic workflows.</div>
+                <div className="model-tags">
+                  <span className="tag tag--blue">Agentic coding</span>
+                  <span className="tag tag--blue">Reasoning</span>
+                  <span className="tag tag--purple">Think Preservation</span>
+                  <span className="tag tag--amber">MoE · Low latency</span>
+                </div>
+              </div>
+              <div className="model-card m2">
+                <div className="model-name">minimax-m2.7</div>
+                <div className="model-maker">MiniMax · M2 Series</div>
+                <div className="model-desc">229B agent-native model. Leads open-weight rankings on tool use and multilingual code tasks.</div>
+                <div className="model-tags">
+                  <span className="tag tag--purple">Agent Teams</span>
+                  <span className="tag tag--blue">Tool use</span>
+                  <span className="tag tag--teal">Self-evolving</span>
+                  <span className="tag tag--teal">Open-weight #1</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
         {/* ── How it works ── */}
         <section className="section">
           <aside>
@@ -196,7 +237,7 @@ export default function LandingPage() {
             <div className="card" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {[
                 ["Base URL", "https://api2.ai.tokamak.network"],
-                ["Model", "qwen-3.6"],
+                ["Model", "qwen-3.6, minimax-m2.7"],
                 ["Protocol", "OpenAI-compatible REST"],
               ].map(([label, val]) => (
                 <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
@@ -225,6 +266,32 @@ export default function LandingPage() {
   -H "Authorization: Bearer $YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model":"qwen-3.6","messages":[{"role":"user","content":"hello"}],"max_tokens":10}'`}</pre>
+            </div>
+          </div>
+        </section>
+        {/* ── FAQ ── */}
+        <section className="section section--compact">
+          <aside>
+            <span className="eyebrow">FAQ</span>
+            <span className="n-lbl">Questions</span>
+            <span className="n-val">4</span>
+          </aside>
+          <div className="faq-list">
+            <div className="faq-item">
+              <div className="faq-q">How long is access free? <span className="faq-chevron">▾</span></div>
+              <div className="faq-a">As long as you maintain your stake. Unstaking expires your API key immediately.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">Which AI tools can I use this with? <span className="faq-chevron">▾</span></div>
+              <div className="faq-a">Any tool that accepts an OpenAI-compatible endpoint — Claude Code, Codex, Openclaw, Hermes, and more. Set the base URL and your key; nothing else changes.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">Are there rate limits? <span className="faq-chevron">▾</span></div>
+              <div className="faq-a">Reasonable limits apply during beta. You can see your current usage in the dashboard.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">What if I lose my key? <span className="faq-chevron">▾</span></div>
+              <div className="faq-a">Hit <strong>Rotate key</strong> in the dashboard — your old key is revoked instantly and a new one is issued. Keys are shown once and cannot be retrieved after that.</div>
             </div>
           </div>
         </section>
