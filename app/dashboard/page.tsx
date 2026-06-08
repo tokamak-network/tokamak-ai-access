@@ -539,7 +539,7 @@ function StakePanel({
 function CliSetupPanel() {
   const [copied, setCopied] = useState(false);
 
-  const command = `npm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure`;
+  const command = `# requires Node.js ≥ 18\nnpm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure`;
 
   async function handleCopy() {
     await navigator.clipboard.writeText(command);
@@ -587,18 +587,6 @@ function CliSetupPanel() {
           {copied ? "Copied ✓" : "Copy"}
         </button>
 
-        <ul style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.75rem",
-          color: "var(--muted)",
-          lineHeight: 1.8,
-          paddingLeft: "1.2em",
-          margin: 0,
-        }}>
-          <li>Requires Node.js ≥ 18</li>
-          <li>After setup: restart your shell and relaunch your AI tool</li>
-          <li>List models: <code style={{ color: "var(--ink)" }}>tokamak-ai-access configure --list-models --api-key sk-...</code></li>
-        </ul>
       </div>
     </div>
   );
