@@ -4,7 +4,6 @@
  * §0: LiteLLM server at https://api2.ai.tokamak.network
  * §1 D5: master key lives in LITELLM_MASTER_KEY env var only
  * §1 D6: key returned once; only hash stored server-side
- * §1 D7: alias "qwen-poc" → model "qwen-3.6"
  */
 
 interface GenerateKeyResponse {
@@ -34,7 +33,6 @@ export async function generateLiteLLMKey(
   const { baseUrl, masterKey } = getConfig();
 
   const body = {
-    models: ["qwen-3.6"],                     // §1 D7
     user_id:   ownerAddress,                  // LiteLLM user entity — enables per-user budget/rate tracking
     key_alias: ownerAddress,                  // display label in admin UI
     metadata: { owner: ownerAddress },

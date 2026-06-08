@@ -11,7 +11,7 @@ const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
  * POST /api/keys/rotate
  * Auth: session cookie
  * Revokes existing LiteLLM key, generates a new one.
- * Response (one-time): { key, expiresAt, model }
+ * Response (one-time): { key, expiresAt }
  */
 export async function POST(req: NextRequest) {
   const address = await getSessionAddress(req);
@@ -45,5 +45,5 @@ export async function POST(req: NextRequest) {
     expiresAt,
   });
 
-  return NextResponse.json({ key, expiresAt, model: "qwen-3.6" });
+  return NextResponse.json({ key, expiresAt });
 }

@@ -19,7 +19,7 @@ interface KeyRecord {
 /**
  * POST /api/keys/issue
  * Auth: session cookie
- * Response (one-time): { key: string, expiresAt: string, model: string }
+ * Response (one-time): { key: string, expiresAt: string }
  *
  * §6 flow:
  *  1. Verify session
@@ -66,6 +66,5 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     key,
     expiresAt,
-    model: "qwen-3.6",
   });
 }

@@ -85,7 +85,6 @@ describe("POST /api/keys/issue", () => {
     expect(res.status).toBe(200);
     expect(body.key).toBe(MOCK_KEY.key);
     expect(body.expiresAt).toBe(MOCK_KEY.expiresAt);
-    expect(body.model).toBe("qwen-3.6");
     expect(mockKvSet).toHaveBeenCalledOnce();
     // hash only — never the plaintext key
     expect(mockKvSet.mock.calls[0][1]).not.toHaveProperty("key");
@@ -247,7 +246,6 @@ describe("POST /api/keys/rotate", () => {
 
     expect(res.status).toBe(200);
     expect(body.key).toBe("sk-litellm-new456");
-    expect(body.model).toBe("qwen-3.6");
 
     // old key must be revoked
     expect(mockRevokeLiteLLMKey).toHaveBeenCalledWith(STORED_RECORD.liteLlmKeyId);
