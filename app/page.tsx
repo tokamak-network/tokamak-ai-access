@@ -229,46 +229,48 @@ export default function LandingPage() {
         </section>
 
         {/* ── Endpoint info ── */}
-        <section className="section section--compact">
-          <aside>
-            <span className="eyebrow">Endpoint</span>
-          </aside>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            <div className="card" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {[
-                ["Base URL", "https://api2.ai.tokamak.network"],
-                ["Model", "qwen-3.6, minimax-m2.7"],
-                ["Protocol", "OpenAI-compatible REST"],
-              ].map(([label, val]) => (
-                <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase", minWidth: "80px" }}>
-                    {label}
-                  </span>
-                  <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--ink)" }}>
-                    {val}
-                  </code>
-                </div>
-              ))}
-            </div>
-            <div className="card" style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-                Quick test
-              </span>
-              <pre style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "0.75rem",
-                color: "var(--ink)",
-                lineHeight: 1.6,
-                margin: 0,
-                overflowX: "auto",
-                whiteSpace: "pre",
-              }}>{`curl https://api2.ai.tokamak.network/v1/chat/completions \\
+        <div className="models-section-wrap">
+          <section className="models-section" style={{ paddingTop: "64px", paddingBottom: "64px" }}>
+            <aside>
+              <span className="eyebrow-dark">Endpoint</span>
+            </aside>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div className="card--dark">
+                {[
+                  ["Base URL", "https://api2.ai.tokamak.network"],
+                  ["Model", "qwen-3.6, minimax-m2.7"],
+                  ["Protocol", "OpenAI-compatible REST"],
+                ].map(([label, val]) => (
+                  <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.14em", textTransform: "uppercase", minWidth: "80px" }}>
+                      {label}
+                    </span>
+                    <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "rgba(255,255,255,0.75)" }}>
+                      {val}
+                    </code>
+                  </div>
+                ))}
+              </div>
+              <div className="card--dark" style={{ gap: "6px" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+                  Quick test
+                </span>
+                <pre style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.75rem",
+                  color: "rgba(255,255,255,0.6)",
+                  lineHeight: 1.6,
+                  margin: 0,
+                  overflowX: "auto",
+                  whiteSpace: "pre",
+                }}>{`curl https://api2.ai.tokamak.network/v1/chat/completions \\
   -H "Authorization: Bearer $YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model":"qwen-3.6","messages":[{"role":"user","content":"hello"}],"max_tokens":10}'`}</pre>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
         {/* ── FAQ ── */}
         <section className="section section--compact">
           <aside>

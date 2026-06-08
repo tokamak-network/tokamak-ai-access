@@ -388,6 +388,16 @@ h2.section-heading {
   }
 }
 
+.card--dark {
+  background: #0e1929;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 /* ── FAQ section ─────────────────────────────────────────────────────────── */
 .faq-list {
   display: flex;
