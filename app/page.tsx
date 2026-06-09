@@ -161,14 +161,14 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="model-card m2">
-                <div className="model-name">minimax-m2.7</div>
-                <div className="model-maker">MiniMax · M2 Series</div>
-                <div className="model-desc">229B agent-native model. Leads open-weight rankings on tool use and multilingual code tasks.</div>
+                <div className="model-name">deepseek-v4-flash</div>
+                <div className="model-maker">DeepSeek · V4 Series</div>
+                <div className="model-desc">Fast and capable model optimized for speed and efficiency across coding, reasoning, and multilingual tasks.</div>
                 <div className="model-tags">
-                  <span className="tag tag--purple">Agent Teams</span>
-                  <span className="tag tag--blue">Tool use</span>
-                  <span className="tag tag--teal">Self-evolving</span>
-                  <span className="tag tag--teal">Open-weight #1</span>
+                  <span className="tag tag--purple">Fast Inference</span>
+                  <span className="tag tag--blue">Coding</span>
+                  <span className="tag tag--teal">Reasoning</span>
+                  <span className="tag tag--amber">Low latency</span>
                 </div>
               </div>
             </div>
@@ -238,7 +238,7 @@ export default function LandingPage() {
               <div className="card--dark">
                 {[
                   ["Base URL", "https://api2.ai.tokamak.network"],
-                  ["Model", "qwen-3.6, minimax-m2.7"],
+                  ["Model", "qwen-3.6, deepseek-v4-flash"],
                   ["Protocol", "OpenAI-compatible REST"],
                 ].map(([label, val]) => (
                   <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
