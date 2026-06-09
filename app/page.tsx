@@ -275,8 +275,6 @@ export default function LandingPage() {
         <section className="section section--compact">
           <aside>
             <span className="eyebrow">FAQ</span>
-            <span className="n-lbl">Questions</span>
-            <span className="n-val">4</span>
           </aside>
           <div className="faq-list">
             <div className="faq-item">
