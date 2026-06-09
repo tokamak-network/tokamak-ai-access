@@ -57,7 +57,7 @@ configure:
   --target <t>          claude | codex | openclaw | hermes
   --api-key <key>       TON API key (also via TON_API_KEY env var)
   --base-url <url>      default: https://api2.ai.tokamak.network
-  --model <model>       qwen-3.6 | minimax-m2.7 (interactive: prompted; non-interactive default: qwen-3.6)
+  --model <model>       qwen-3.6 | deepseek-v4-flash (interactive: prompted; non-interactive default: qwen-3.6)
   --list-models         list available models and exit (requires --api-key)
   --non-interactive     disable interactive prompts (--target and --api-key required)
   --dry-run             preview changes without modifying files
