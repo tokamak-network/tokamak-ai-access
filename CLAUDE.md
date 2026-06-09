@@ -8,15 +8,15 @@ Next.js 15 App Router + TypeScript. Stake ≥10 TON on Ethereum L1 → LiteLLM v
 npm run dev          # dev server → localhost:3000
 npm run build        # type-check + build
 npm run lint         # ESLint
-npm test             # vitest (11 unit tests)
+npm test             # vitest (121 unit tests across 13 files)
 npm run test:integration  # requires LITELLM_BASE_URL in .env.local; auto-skipped if missing
 ```
 
 ## Architecture
 
 - `app/` — Next.js App Router (page.tsx = landing, dashboard/page.tsx = dashboard)
-- `app/api/` — Route Handlers: auth (SIWE), staking/balance, keys (issue/rotate/me)
-- `lib/` — siwe.ts (session), staking.ts (viem multicall), litellm.ts, kv.ts
+- `app/api/` — Route Handlers: auth (SIWE), staking/balance, keys (issue/rotate/me), cron/check-stakes (stake expiry), proxy/models (model list passthrough)
+- `lib/` — siwe.ts (session), staking.ts (viem multicall), litellm.ts, kv.ts, ratelimit.ts + with-rate-limit.ts (sliding-window IP+wallet), wagmi.ts, hooks/ (React: useSiwe, useStake, useUnstake)
 - `abi/` — SeigManager, DepositManager, Layer2Registry JSON ABIs
 - `cli/` — `@tokamak-network/ai-access-cli` npm package (see `cli/CLAUDE.md`)
 - `scripts/configure-cli.sh` — **deprecated**; use `npx @tokamak-network/ai-access-cli` instead
