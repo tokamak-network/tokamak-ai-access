@@ -239,6 +239,9 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Agent setup (CLI) ── */}
+        <AgentSetupSection />
+
         {/* ── Endpoint info ── */}
         <div className="models-section-wrap">
           <section className="models-section" style={{ paddingTop: "64px", paddingBottom: "64px" }}>
@@ -308,6 +311,98 @@ export default function LandingPage() {
         </section>
       </main>
     </>
+  );
+}
+
+const AGENT_TARGETS = [
+  { id: "claude",   name: "Claude Code", revert: true },
+  { id: "codex",    name: "Codex",       revert: true },
+  { id: "openclaw", name: "OpenClaw",    revert: false },
+  { id: "hermes",   name: "Hermes",      revert: false },
+] as const;
+
+const CLI = "npx @tokamak-network/ai-access-cli";
+
+function AgentSetupSection() {
+  const [target, setTarget] = useState<(typeof AGENT_TARGETS)[number]>(AGENT_TARGETS[0]);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  function copy(id: string, text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(id);
+      setTimeout(() => setCopied(null), 1500);
+    });
+  }
+
+  const interactiveCmd = `${CLI} configure`;
+  const targetCmd = [
+    `# Configure ${target.name} with your TON key`,
+    `${CLI} configure --target ${target.id} --api-key sk-...`,
+    ...(target.revert
+      ? ["", "# Undo anytime — restores your original settings", `${CLI} revert --target ${target.id}`]
+      : []),
+  ].join("\n");
+
+  return (
+    <section className="section">
+      <aside>
+        <span className="eyebrow">Agent setup</span>
+        <span className="n-lbl">Supported tools</span>
+        <span className="n-val">Claude Code, Codex, OpenClaw, Hermes</span>
+        <span className="n-lbl">Install</span>
+        <span className="n-val">None — npx</span>
+        <span className="n-lbl">Time</span>
+        <span className="n-val">~30 seconds</span>
+        <span className="n-lbl">Reversible</span>
+        <span className="n-val" style={{ marginBottom: 0 }}>Yes — one command</span>
+      </aside>
+
+      <div>
+        <p className="body-lead" style={{ marginBottom: "36px" }}>
+          Got your key? One command wires it into your coding agent —
+          base URL, model, and environment all configured automatically.
+        </p>
+
+        <div className="cli-card" style={{ marginBottom: "14px" }}>
+          <div className="cli-card-hd">
+            <span>Interactive — prompts for tool, key &amp; model</span>
+            <button className="cli-copy" onClick={() => copy("interactive", interactiveCmd)}>
+              {copied === "interactive" ? "COPIED" : "COPY"}
+            </button>
+          </div>
+          <pre className="cli-pre">{interactiveCmd}</pre>
+        </div>
+
+        <div className="cli-tabs" role="tablist">
+          {AGENT_TARGETS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={t.id === target.id}
+              className={`cli-tab${t.id === target.id ? " cli-tab--on" : ""}`}
+              onClick={() => setTarget(t)}
+            >
+              {t.id}
+            </button>
+          ))}
+        </div>
+        <div className="cli-card" style={{ borderRadius: "0 0 var(--radius) var(--radius)", marginBottom: "16px" }}>
+          <div className="cli-card-hd">
+            <span>{target.name}</span>
+            <button className="cli-copy" onClick={() => copy("target", targetCmd)}>
+              {copied === "target" ? "COPIED" : "COPY"}
+            </button>
+          </div>
+          <pre className="cli-pre">{targetCmd}</pre>
+        </div>
+
+        <p style={{ fontSize: "0.8125rem", color: "var(--muted)", lineHeight: 1.6 }}>
+          Settings are written inside a marker block and backed up automatically —{" "}
+          <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem" }}>revert</code>{" "}
+          (claude &amp; codex) removes only what was added.
+        </p>
+      </div>
+    </section>
   );
 }
 

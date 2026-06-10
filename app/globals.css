@@ -398,6 +398,76 @@ h2.section-heading {
   gap: 8px;
 }
 
+/* ── Agent setup (CLI) section ──────────────────────────────────────────── */
+.cli-card {
+  background: var(--surface-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.cli-card-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cli-copy {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: none;
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.cli-copy:hover { background: var(--accent); color: #fff; }
+.cli-pre {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: var(--ink);
+  padding: 14px 16px;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+.cli-tabs {
+  display: flex;
+  border: 1px solid var(--hairline);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  background: var(--surface-raised);
+}
+.cli-tab {
+  flex: 1;
+  padding: 10px 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-right: 1px solid var(--hairline);
+  cursor: pointer;
+}
+.cli-tab:last-child { border-right: none; }
+.cli-tab:hover { color: var(--ink); }
+.cli-tab--on {
+  background: var(--ink);
+  color: #fff;
+  font-weight: 600;
+}
+.cli-tab--on:hover { color: #fff; }
+
 /* ── FAQ section ─────────────────────────────────────────────────────────── */
 .faq-list {
   display: flex;
