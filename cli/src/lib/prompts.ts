@@ -35,6 +35,7 @@ export async function promptModel(): Promise<string> {
     options: [
       { value: "qwen-3.6", label: "Qwen 3.6 (Recommended)" },
       { value: "deepseek-v4-flash", label: "DeepSeek V4 Flash" },
+      { value: "gemma-4", label: "Gemma 4" },
     ],
   });
   if (p.isCancel(value)) { p.cancel("Cancelled."); process.exit(0); }
