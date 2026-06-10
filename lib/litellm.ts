@@ -33,10 +33,13 @@ export async function generateLiteLLMKey(
   const { baseUrl, masterKey } = getConfig();
 
   const body = {
-    user_id:   ownerAddress,                  // LiteLLM user entity — enables per-user budget/rate tracking
-    key_alias: ownerAddress,                  // display label in admin UI
+    user_id:   ownerAddress,
+    key_alias: ownerAddress,
     metadata: { owner: ownerAddress },
     duration: "30d",
+    rpm_limit: 600,
+    tpm_limit: 4_000_000,
+    max_parallel_requests: 30,
   };
 
   const res = await fetch(`${baseUrl}/key/generate`, {
