@@ -298,7 +298,7 @@ export default function LandingPage() {
             </div>
             <div className="faq-item">
               <div className="faq-q">Are there rate limits? <span className="faq-chevron">▾</span></div>
-              <div className="faq-a">Reasonable limits apply during beta. You can see your current usage in the dashboard.</div>
+              <div className="faq-a">Reasonable limits apply during beta.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">What if I lose my key? <span className="faq-chevron">▾</span></div>
