@@ -48,7 +48,7 @@ export default function LandingPage() {
       {/* Top bar */}
       <header className="topbar">
         <div className="topbar-inner">
-          <span className="topbar-logo">TON AI Access</span>
+          <a href="/" className="topbar-logo" style={{ textDecoration: "none", color: "inherit" }}>TON AI Access</a>
           {isConnected && (
             <div className="topbar-meta">
               <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)" }}>
@@ -243,54 +243,54 @@ export default function LandingPage() {
         <AgentSetupSection />
 
         {/* ── Endpoint info ── */}
-        <div className="models-section-wrap">
-          <section className="models-section" style={{ paddingTop: "64px", paddingBottom: "64px" }}>
-            <aside>
-              <span className="eyebrow-dark">Endpoint</span>
-            </aside>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div className="card--dark">
-                {[
-                  ["Base URL", "https://api2.ai.tokamak.network"],
-                  ["Model", "qwen-3.6, deepseek-v4-flash, gemma-4"],
-                  ["Protocol", "OpenAI-compatible REST"],
-                ].map(([label, val]) => (
-                  <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.14em", textTransform: "uppercase", minWidth: "80px" }}>
-                      {label}
-                    </span>
-                    <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "rgba(255,255,255,0.75)" }}>
-                      {val}
-                    </code>
-                  </div>
-                ))}
-              </div>
-              <div className="card--dark" style={{ gap: "6px" }}>
-                <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "rgba(255,255,255,0.3)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
-                  Quick test
-                </span>
-                <pre style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.75rem",
-                  color: "rgba(255,255,255,0.6)",
-                  lineHeight: 1.6,
-                  margin: 0,
-                  overflowX: "auto",
-                  whiteSpace: "pre",
-                }}>{`curl https://api2.ai.tokamak.network/v1/chat/completions \\
+        <section className="section section--compact">
+          <aside>
+            <span className="eyebrow">Endpoint</span>
+          </aside>
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div className="card" style={{ marginTop: 0, padding: "20px 24px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              {[
+                ["Base URL", "https://api2.ai.tokamak.network"],
+                ["Model", "qwen-3.6, deepseek-v4-flash, gemma-4"],
+                ["Protocol", "OpenAI-compatible REST"],
+              ].map(([label, val]) => (
+                <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase", minWidth: "80px" }}>
+                    {label}
+                  </span>
+                  <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.8125rem", color: "var(--ink)" }}>
+                    {val}
+                  </code>
+                </div>
+              ))}
+            </div>
+            <div className="card" style={{ marginTop: 0, padding: "20px 24px", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase" }}>
+                Quick test
+              </span>
+              <pre style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "0.75rem",
+                color: "var(--ink)",
+                lineHeight: 1.6,
+                margin: 0,
+                overflowX: "auto",
+                whiteSpace: "pre",
+              }}>{`curl https://api2.ai.tokamak.network/v1/chat/completions \\
   -H "Authorization: Bearer $YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model":"qwen-3.6","messages":[{"role":"user","content":"hello"}],"max_tokens":10}'`}</pre>
-              </div>
             </div>
-          </section>
-        </div>
-        {/* ── FAQ ── */}
-        <section className="section section--compact">
-          <aside>
-            <span className="eyebrow">FAQ</span>
-          </aside>
-          <div className="faq-list">
+          </div>
+        </section>
+
+        {/* ── FAQ (dark) ── */}
+        <div className="models-section-wrap">
+          <section className="models-section" style={{ paddingTop: "64px", paddingBottom: "64px" }}>
+            <aside>
+              <span className="eyebrow-dark">FAQ</span>
+            </aside>
+            <div className="faq-list">
             <div className="faq-item">
               <div className="faq-q">How long is access free? <span className="faq-chevron">▾</span></div>
               <div className="faq-a">As long as you maintain your stake. Unstaking expires your API key immediately.</div>
@@ -307,8 +307,9 @@ export default function LandingPage() {
               <div className="faq-q">What if I lose my key? <span className="faq-chevron">▾</span></div>
               <div className="faq-a">Hit <strong>Rotate key</strong> in the dashboard — your old key is revoked instantly and a new one is issued. Keys are shown once and cannot be retrieved after that.</div>
             </div>
-          </div>
-        </section>
+            </div>
+          </section>
+        </div>
       </main>
     </>
   );
@@ -344,65 +345,67 @@ function AgentSetupSection() {
   ].join("\n");
 
   return (
-    <section className="section">
-      <aside>
-        <span className="eyebrow">Agent setup</span>
-        <span className="n-lbl">Supported tools</span>
-        <span className="n-val">Claude Code, Codex, OpenClaw, Hermes</span>
-        <span className="n-lbl">Install</span>
-        <span className="n-val">None — npx</span>
-        <span className="n-lbl">Time</span>
-        <span className="n-val">~30 seconds</span>
-        <span className="n-lbl">Reversible</span>
-        <span className="n-val" style={{ marginBottom: 0 }}>Yes — one command</span>
-      </aside>
+    <div className="models-section-wrap">
+      <section className="models-section">
+        <aside>
+          <span className="eyebrow-dark">Agent setup</span>
+          <span className="n-lbl-dark">Supported tools</span>
+          <span className="n-val-dark">Claude Code, Codex, OpenClaw, Hermes</span>
+          <span className="n-lbl-dark">Install</span>
+          <span className="n-val-dark">None — npx</span>
+          <span className="n-lbl-dark">Time</span>
+          <span className="n-val-dark">~30 seconds</span>
+          <span className="n-lbl-dark">Reversible</span>
+          <span className="n-val-dark" style={{ marginBottom: 0 }}>Yes — one command</span>
+        </aside>
 
-      <div>
-        <p className="body-lead" style={{ marginBottom: "36px" }}>
-          Got your key? One command wires it into your coding agent —
-          base URL, model, and environment all configured automatically.
-        </p>
+        <div>
+          <p className="body-lead" style={{ marginBottom: "36px", color: "rgba(255,255,255,0.65)" }}>
+            Got your key? One command wires it into your coding agent —
+            base URL, model, and environment all configured automatically.
+          </p>
 
-        <div className="cli-card" style={{ marginBottom: "14px" }}>
-          <div className="cli-card-hd">
-            <span>Interactive — prompts for tool, key &amp; model</span>
-            <button className="cli-copy" onClick={() => copy("interactive", interactiveCmd)}>
-              {copied === "interactive" ? "COPIED" : "COPY"}
-            </button>
+          <div className="cli-card" style={{ marginBottom: "14px" }}>
+            <div className="cli-card-hd">
+              <span>Interactive — prompts for tool, key &amp; model</span>
+              <button className="cli-copy" onClick={() => copy("interactive", interactiveCmd)}>
+                {copied === "interactive" ? "COPIED" : "COPY"}
+              </button>
+            </div>
+            <pre className="cli-pre">{interactiveCmd}</pre>
           </div>
-          <pre className="cli-pre">{interactiveCmd}</pre>
-        </div>
 
-        <div className="cli-tabs" role="tablist">
-          {AGENT_TARGETS.map((t) => (
-            <button
-              key={t.id}
-              role="tab"
-              aria-selected={t.id === target.id}
-              className={`cli-tab${t.id === target.id ? " cli-tab--on" : ""}`}
-              onClick={() => setTarget(t)}
-            >
-              {t.id}
-            </button>
-          ))}
-        </div>
-        <div className="cli-card" style={{ borderRadius: "0 0 var(--radius) var(--radius)", marginBottom: "16px" }}>
-          <div className="cli-card-hd">
-            <span>{target.name}</span>
-            <button className="cli-copy" onClick={() => copy("target", targetCmd)}>
-              {copied === "target" ? "COPIED" : "COPY"}
-            </button>
+          <div className="cli-tabs" role="tablist">
+            {AGENT_TARGETS.map((t) => (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={t.id === target.id}
+                className={`cli-tab${t.id === target.id ? " cli-tab--on" : ""}`}
+                onClick={() => setTarget(t)}
+              >
+                {t.id}
+              </button>
+            ))}
           </div>
-          <pre className="cli-pre">{targetCmd}</pre>
-        </div>
+          <div className="cli-card" style={{ borderRadius: "0 0 var(--radius) var(--radius)", marginBottom: "16px" }}>
+            <div className="cli-card-hd">
+              <span>{target.name}</span>
+              <button className="cli-copy" onClick={() => copy("target", targetCmd)}>
+                {copied === "target" ? "COPIED" : "COPY"}
+              </button>
+            </div>
+            <pre className="cli-pre">{targetCmd}</pre>
+          </div>
 
-        <p style={{ fontSize: "0.8125rem", color: "var(--muted)", lineHeight: 1.6 }}>
-          Settings are written inside a marker block and backed up automatically —{" "}
-          <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem" }}>revert</code>{" "}
-          (claude &amp; codex) removes only what was added.
-        </p>
-      </div>
-    </section>
+          <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
+            Settings are written inside a marker block and backed up automatically —{" "}
+            <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem" }}>revert</code>{" "}
+            (claude &amp; codex) removes only what was added.
+          </p>
+        </div>
+      </section>
+    </div>
   );
 }
 

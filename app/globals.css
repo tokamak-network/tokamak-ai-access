@@ -388,20 +388,10 @@ h2.section-heading {
   }
 }
 
-.card--dark {
+/* ── Agent setup (CLI) section — dark ───────────────────────────────────── */
+.cli-card {
   background: #0e1929;
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* ── Agent setup (CLI) section ──────────────────────────────────────────── */
-.cli-card {
-  background: var(--surface-raised);
-  border: 1px solid var(--hairline);
   border-radius: var(--radius);
   overflow: hidden;
 }
@@ -410,30 +400,30 @@ h2.section-heading {
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  border-bottom: 1px solid var(--hairline);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   font-family: var(--font-mono);
   font-size: 0.625rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: rgba(255,255,255,0.3);
 }
 .cli-copy {
   font-family: var(--font-mono);
   font-size: 0.625rem;
   letter-spacing: 0.08em;
-  color: var(--accent);
+  color: #7aa2ff;
   background: none;
-  border: 1px solid var(--accent);
+  border: 1px solid rgba(122,162,255,0.5);
   border-radius: 3px;
   padding: 2px 8px;
   cursor: pointer;
 }
-.cli-copy:hover { background: var(--accent); color: #fff; }
+.cli-copy:hover { background: #7aa2ff; color: #0c1a2c; }
 .cli-pre {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   line-height: 1.7;
-  color: var(--ink);
+  color: rgba(255,255,255,0.75);
   padding: 14px 16px;
   margin: 0;
   overflow-x: auto;
@@ -441,11 +431,11 @@ h2.section-heading {
 }
 .cli-tabs {
   display: flex;
-  border: 1px solid var(--hairline);
+  border: 1px solid rgba(255,255,255,0.08);
   border-bottom: none;
   border-radius: var(--radius) var(--radius) 0 0;
   overflow: hidden;
-  background: var(--surface-raised);
+  background: #0e1929;
 }
 .cli-tab {
   flex: 1;
@@ -453,20 +443,20 @@ h2.section-heading {
   font-family: var(--font-mono);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
-  color: var(--muted);
+  color: rgba(255,255,255,0.4);
   background: none;
   border: none;
-  border-right: 1px solid var(--hairline);
+  border-right: 1px solid rgba(255,255,255,0.08);
   cursor: pointer;
 }
 .cli-tab:last-child { border-right: none; }
-.cli-tab:hover { color: var(--ink); }
+.cli-tab:hover { color: #fff; }
 .cli-tab--on {
-  background: var(--ink);
-  color: #fff;
+  background: #fff;
+  color: #0c1a2c;
   font-weight: 600;
 }
-.cli-tab--on:hover { color: #fff; }
+.cli-tab--on:hover { color: #0c1a2c; }
 
 /* ── FAQ section ─────────────────────────────────────────────────────────── */
 .faq-list {
@@ -474,16 +464,16 @@ h2.section-heading {
   flex-direction: column;
 }
 .faq-item {
-  border-bottom: 1px solid #e8eaef;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   padding: 20px 0;
 }
 .faq-item:first-child {
-  border-top: 1px solid #e8eaef;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 .faq-q {
   font-weight: 600;
   font-size: 1rem;
-  color: var(--ink);
+  color: rgba(255,255,255,0.92);
   margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
@@ -494,17 +484,17 @@ h2.section-heading {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid var(--hairline);
+  border: 1px solid rgba(255,255,255,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.65rem;
-  color: var(--muted);
+  color: rgba(255,255,255,0.4);
   flex-shrink: 0;
 }
 .faq-a {
   font-size: 0.9375rem;
-  color: var(--muted);
+  color: rgba(255,255,255,0.55);
   line-height: 1.7;
   max-width: 58ch;
 }
