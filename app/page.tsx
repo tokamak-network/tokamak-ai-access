@@ -140,7 +140,7 @@ export default function LandingPage() {
             <aside>
               <span className="eyebrow-dark">Models</span>
               <span className="n-lbl-dark">Available</span>
-              <span className="n-val-dark">2 models</span>
+              <span className="n-val-dark">3 models</span>
               <span className="n-lbl-dark">API compat</span>
               <span className="n-val-dark">OpenAI REST</span>
               <span className="n-lbl-dark">Context</span>
@@ -169,6 +169,17 @@ export default function LandingPage() {
                   <span className="tag tag--blue">Coding</span>
                   <span className="tag tag--teal">Reasoning</span>
                   <span className="tag tag--amber">Low latency</span>
+                </div>
+              </div>
+              <div className="model-card m2">
+                <div className="model-name">gemma-4</div>
+                <div className="model-maker">Google · Gemma 4</div>
+                <div className="model-desc">31B dense transformer. Multimodal (text, image, video) with 256K token context. Advanced reasoning with configurable thinking mode.</div>
+                <div className="model-tags">
+                  <span className="tag tag--teal">Multimodal</span>
+                  <span className="tag tag--blue">Coding</span>
+                  <span className="tag tag--purple">Thinking mode</span>
+                  <span className="tag tag--amber">256K context</span>
                 </div>
               </div>
             </div>
@@ -238,7 +249,7 @@ export default function LandingPage() {
               <div className="card--dark">
                 {[
                   ["Base URL", "https://api2.ai.tokamak.network"],
-                  ["Model", "qwen-3.6, deepseek-v4-flash"],
+                  ["Model", "qwen-3.6, deepseek-v4-flash, gemma-4"],
                   ["Protocol", "OpenAI-compatible REST"],
                 ].map(([label, val]) => (
                   <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
