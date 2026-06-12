@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
 import { useSiwe } from "@/lib/hooks/useSiwe";
+import HeroMark from "./HeroMark";
 
 // Inlined at build time: 10 in dev (.env.local), 200 in production (.env.production)
 const MIN_TON = process.env.NEXT_PUBLIC_MIN_TON ?? "10";
@@ -88,7 +89,8 @@ export default function LandingPage() {
             <span className="n-val">Ethereum Mainnet</span>
           </aside>
 
-          <div>
+          <div className="hero-content">
+            <HeroMark />
             <div className="h1-rule" />
             <h1 className="display">
               Your stake<br />earns you AI.
@@ -293,7 +295,7 @@ export default function LandingPage() {
             <div className="faq-list">
             <div className="faq-item">
               <div className="faq-q">How long is access free? <span className="faq-chevron">▾</span></div>
-              <div className="faq-a">As long as you maintain your stake. Unstaking expires your API key immediately.</div>
+              <div className="faq-a">As long as you maintain your stake. Each issued key is valid for 30 days — rotate it in the dashboard to renew. Staking is only checked at key issuance.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Which AI tools can I use this with? <span className="faq-chevron">▾</span></div>
