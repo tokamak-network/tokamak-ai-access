@@ -318,7 +318,7 @@ export default function LandingPage() {
       <footer style={{
         borderTop: "1px solid var(--divider)",
         padding: "24px var(--pad-x)",
-        textAlign: "center",
+        textAlign: "left",
         fontFamily: "var(--font-mono)",
         fontSize: "0.6875rem",
         color: "var(--muted)",
