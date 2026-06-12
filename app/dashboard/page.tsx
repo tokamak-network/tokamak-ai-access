@@ -536,38 +536,36 @@ function StakePanel({
 }
 
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
-function CliSetupPanel() {
+const CLI = "npx @tokamak-network/ai-access-cli";
+
+function CliCard({ label, command }: { label: string; command: string }) {
   const [copied, setCopied] = useState(false);
 
-  const command = `# requires Node.js ≥ 18\nnpm install -g @tokamak-network/ai-access-cli\ntokamak-ai-access configure`;
-
-  async function handleCopy() {
-    await navigator.clipboard.writeText(command);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  function handleCopy() {
+    navigator.clipboard.writeText(command).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
   }
 
   return (
-    <div style={{ border: "1px solid var(--hairline)", borderRadius: "var(--radius)", overflow: "hidden" }}>
-      {/* Body */}
-      <div style={{ padding: "20px 24px", background: "var(--surface-raised)" }}>
-        <pre style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "0.8125rem",
-          color: "var(--ink)",
-          background: "var(--surface)",
-          border: "1px solid var(--hairline)",
-          borderRadius: "calc(var(--radius) - 2px)",
-          padding: "16px 18px",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          overflowX: "auto",
-          lineHeight: 1.75,
-          marginBottom: "12px",
-        }}>
-          {command}
-        </pre>
-
+    <div style={{
+      border: "1px solid var(--hairline)",
+      borderRadius: "var(--radius)",
+      overflow: "hidden",
+      marginBottom: "10px",
+    }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "8px 14px",
+        background: "var(--surface-raised)",
+        borderBottom: "1px solid var(--hairline)",
+      }}>
+        <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)" }}>
+          {label}
+        </span>
         <button
           onClick={handleCopy}
           style={{
@@ -580,14 +578,33 @@ function CliSetupPanel() {
             border: "none",
             cursor: "pointer",
             padding: 0,
-            marginBottom: "20px",
-            display: "block",
           }}
         >
           {copied ? "Copied ✓" : "Copy"}
         </button>
-
       </div>
+      <pre style={{
+        fontFamily: "var(--font-mono)",
+        fontSize: "0.8125rem",
+        color: "var(--ink)",
+        background: "var(--surface)",
+        padding: "14px 16px",
+        margin: 0,
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-all",
+        lineHeight: 1.6,
+      }}>
+        {command}
+      </pre>
+    </div>
+  );
+}
+
+function CliSetupPanel() {
+  return (
+    <div>
+      <CliCard label="Configure — prompts for tool, key & model" command={`${CLI} configure`} />
+      <CliCard label="Revert — restores your original settings" command={`${CLI} revert`} />
     </div>
   );
 }
