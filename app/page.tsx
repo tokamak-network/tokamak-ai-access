@@ -77,6 +77,8 @@ export default function LandingPage() {
       <main>
         {/* ── Hero section ── */}
         <section className="section">
+          <HeroMark />
+
           <aside>
             <span className="eyebrow">Tokamak Network</span>
             <span className="n-lbl">Status</span>
@@ -90,7 +92,6 @@ export default function LandingPage() {
           </aside>
 
           <div className="hero-content">
-            <HeroMark />
             <div className="h1-rule" />
             <h1 className="display">
               Your stake<br />earns you AI.

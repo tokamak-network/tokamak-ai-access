@@ -20,7 +20,8 @@ import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 
 const ACCENT = "#3b9bff";          // brand blue used in the stripe
-const STRIPE_BANDS = 10;           // diagonal stripe repeat count across UV tile
+const STRIPE_BANDS = 20;           // diagonal stripe repeat count across UV diagonal
+const STRIPE_SKEW = 6;             // ring/tube circumference ratio ≈ 6; gives 45° visual angle
 const ROTATION_SPEED = 0.12;       // radians / second (slow)
 const BASE_TILT_X = -1.25;         // lean the ring toward face-on view
 const BASE_TILT_Z = -0.15;         // slight roll
@@ -33,15 +34,19 @@ function makeStripeTexture(): THREE.Texture {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, size, size);
 
-  // 45° diagonal bands (x+y): stripes that spiral around the torus ring.
-  // Blue is ~1/3 of the period so stripes appear thin against wide white gaps.
-  const period = (size * 2) / STRIPE_BANDS;
+  // Formula: (y - SKEW*x) gives ~45° physical angle on this torus.
+  // U (x) wraps the ring (large circumference ~5.9), V (y) wraps the tube (small).
+  // (x+y) only produces ~10° from horizontal; using SKEW=6 corrects for the
+  // ring/tube aspect ratio: ring_circ × 1 ≈ tube_circ × 6, so equal physical
+  // contributions in both directions → 45° diagonal.
+  // Range of (y - SKEW*x) across [0,size)²: [-SKEW*size, size), span = 7*size.
+  const period = (size * (1 + STRIPE_SKEW)) / STRIPE_BANDS;
   const img = ctx.getImageData(0, 0, size, size);
   const data = img.data;
   const [br, bg, bb] = [0x3b, 0x9b, 0xff];
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const phase = (((x + y) % period) + period) % period;
+      const phase = ((y - STRIPE_SKEW * x) % period + period) % period;
       const blue = phase < period / 3;
       const i = (y * size + x) * 4;
       data[i] = blue ? br : 255;
