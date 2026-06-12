@@ -653,6 +653,17 @@ export default function DashboardPage() {
     finally { setActionLoading(false); }
   }
 
+  async function renewKey() {
+    setActionLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/keys/renew", { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setKeyData(prev => prev ? { ...prev, expiresAt: data.expiresAt } : prev);
+    } catch (e) { setError(e instanceof Error ? e.message : "Key renewal failed"); }
+    finally { setActionLoading(false); }
+  }
+
   function handleDisconnect() { disconnect(); router.push("/"); }
 
   return (
@@ -814,18 +825,46 @@ export default function DashboardPage() {
                             fontSize: "0.875rem",
                             color: "#78350f",
                           }}>
-                            ⚠ Your key expires in {daysLeft} day{daysLeft === 1 ? "" : "s"}. Rotate to renew.
+                            ⚠ Your key expires in {daysLeft} day{daysLeft === 1 ? "" : "s"}. Extend or get a new key below.
                           </div>
                         );
                         return null;
                       })()}
-                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6, marginBottom: "24px" }}>
-                        Lost your key? Rotate to revoke the current one and get a new one.
-                        The new key is shown once — save it immediately.
-                      </p>
-                      <button className="btn-secondary" onClick={rotateKey} disabled={actionLoading}>
-                        {actionLoading ? "Rotating…" : "Rotate key"}
-                      </button>
+                      {(() => {
+                        const renewableAfterMs = keyData.createdAt
+                          ? new Date(keyData.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000
+                          : Infinity;
+                        const isRenewable = Date.now() >= renewableAfterMs;
+                        const daysUntilRenewable = isRenewable
+                          ? 0
+                          : Math.ceil((renewableAfterMs - Date.now()) / (1000 * 60 * 60 * 24));
+                        return (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                            <div>
+                              <button
+                                className="btn-secondary"
+                                onClick={renewKey}
+                                disabled={actionLoading || !isRenewable}
+                              >
+                                {actionLoading ? "Working…" : "Extend key (+30d)"}
+                              </button>
+                              <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
+                                {isRenewable
+                                  ? "Same key · no reconfiguration needed"
+                                  : `Available in ${daysUntilRenewable} day${daysUntilRenewable === 1 ? "" : "s"}`}
+                              </p>
+                            </div>
+                            <div>
+                              <button className="btn-secondary" onClick={rotateKey} disabled={actionLoading}>
+                                {actionLoading ? "Working…" : "New key"}
+                              </button>
+                              <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
+                                New key · revokes current · save immediately
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </>
                   ) : (
                     <>

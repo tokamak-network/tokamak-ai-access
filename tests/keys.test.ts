@@ -13,6 +13,7 @@ const {
   mockGetTotalStakedTON,
   mockGenerateLiteLLMKey,
   mockRevokeLiteLLMKey,
+  mockRenewLiteLLMKey,
   mockKvGet,
   mockKvSet,
   mockCheckRateLimit,
@@ -21,6 +22,7 @@ const {
   mockGetTotalStakedTON:  vi.fn(),
   mockGenerateLiteLLMKey: vi.fn(),
   mockRevokeLiteLLMKey:   vi.fn(),
+  mockRenewLiteLLMKey:    vi.fn(),
   mockKvGet:              vi.fn(),
   mockKvSet:              vi.fn(),
   mockCheckRateLimit:     vi.fn(),
@@ -31,6 +33,7 @@ vi.mock("@/lib/staking",       () => ({ getTotalStakedTON: mockGetTotalStakedTON
 vi.mock("@/lib/litellm",       () => ({
   generateLiteLLMKey: mockGenerateLiteLLMKey,
   revokeLiteLLMKey:   mockRevokeLiteLLMKey,
+  renewLiteLLMKey:    mockRenewLiteLLMKey,
 }));
 vi.mock("@vercel/kv",          () => ({ kv: { get: mockKvGet, set: mockKvSet, del: vi.fn() } }));
 vi.mock("@/lib/with-rate-limit", () => ({ checkRateLimit: mockCheckRateLimit }));
@@ -39,6 +42,7 @@ vi.mock("@/lib/with-rate-limit", () => ({ checkRateLimit: mockCheckRateLimit }))
 import { POST as issueKey }  from "@/app/api/keys/issue/route";
 import { GET  as getMe }     from "@/app/api/keys/me/route";
 import { POST as rotateKey } from "@/app/api/keys/rotate/route";
+import { POST as renewKey }  from "@/app/api/keys/renew/route";
 
 // ── Test helpers ─────────────────────────────────────────────────────────────
 const ADDR       = "0xdeadbeef00000000000000000000000000000001";
@@ -301,5 +305,122 @@ describe("POST /api/keys/rotate", () => {
     // revokeLiteLLMKey failure is caught (.catch(console.error)) — must not 500
     expect(res.status).toBe(200);
     expect((await res.json()).key).toBe(MOCK_KEY.key);
+  });
+});
+
+// ── POST /api/keys/renew ─────────────────────────────────────────────────────
+describe("POST /api/keys/renew", () => {
+  const RENEWED_EXPIRES = "2099-07-01T00:00:00.000Z";
+  // createdAt older than 30 days → renewable
+  const OLD_RECORD = { ...STORED_RECORD, createdAt: Date.now() - 31 * 24 * 60 * 60 * 1000 };
+  // createdAt within 30 days → not yet renewable
+  const FRESH_RECORD = { ...STORED_RECORD, createdAt: Date.now() - 1 * 24 * 60 * 60 * 1000 };
+
+  it("renews key and updates expiresAt when 30+ days have passed", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(OLD_RECORD);
+    mockRenewLiteLLMKey.mockResolvedValue({ expiresAt: RENEWED_EXPIRES });
+    mockKvSet.mockResolvedValue(undefined);
+
+    const res  = await renewKey(makeReq());
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.expiresAt).toBe(RENEWED_EXPIRES);
+    // renewLiteLLMKey called with the stored key ID
+    expect(mockRenewLiteLLMKey).toHaveBeenCalledWith(OLD_RECORD.liteLlmKeyId);
+    // KV updated with new expiresAt
+    expect(mockKvSet).toHaveBeenCalledOnce();
+    expect(mockKvSet.mock.calls[0][1]).toHaveProperty("expiresAt", RENEWED_EXPIRES);
+  });
+
+  it("does not change the key value — same liteLlmKeyId preserved in KV", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(OLD_RECORD);
+    mockRenewLiteLLMKey.mockResolvedValue({ expiresAt: RENEWED_EXPIRES });
+    mockKvSet.mockResolvedValue(undefined);
+
+    await renewKey(makeReq());
+
+    expect(mockKvSet.mock.calls[0][1]).toHaveProperty("liteLlmKeyId", OLD_RECORD.liteLlmKeyId);
+    // no new key returned to client
+    expect(await (await renewKey(makeReq())).json()).not.toHaveProperty("key");
+  });
+
+  it("returns 403 with daysLeft when < 30 days since issuance", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(FRESH_RECORD);
+
+    const res  = await renewKey(makeReq());
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error).toMatch(/not yet renewable/i);
+    expect(body.daysLeft).toBeGreaterThan(0);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("returns 401 when no session", async () => {
+    mockGetSessionAddress.mockResolvedValue(null);
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(401);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when stake is below minimum", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(MIN_TON - 1n);
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/insufficient/i);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when no key exists", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(null);
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(404);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("returns 404 when key has been revoked", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue({ ...OLD_RECORD, revokedAt: Date.now() - 1000 });
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(404);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("returns 429 when rate limit exceeded", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    const { NextResponse } = await import("next/server");
+    mockCheckRateLimit.mockResolvedValue(
+      NextResponse.json({ error: "Too many requests" }, { status: 429 }),
+    );
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(429);
+  });
+
+  it("preserves createdAt in KV after renewal", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(OLD_RECORD);
+    mockRenewLiteLLMKey.mockResolvedValue({ expiresAt: RENEWED_EXPIRES });
+    mockKvSet.mockResolvedValue(undefined);
+
+    await renewKey(makeReq());
+
+    expect(mockKvSet.mock.calls[0][1]).toHaveProperty("createdAt", OLD_RECORD.createdAt);
   });
 });

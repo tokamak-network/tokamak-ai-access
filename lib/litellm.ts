@@ -65,6 +65,32 @@ export async function generateLiteLLMKey(
 }
 
 /**
+ * Calls POST /key/update on the LiteLLM server to extend expiry by 30 days.
+ */
+export async function renewLiteLLMKey(keyId: string): Promise<{ expiresAt: string }> {
+  const { baseUrl, masterKey } = getConfig();
+
+  const res = await fetch(`${baseUrl}/key/update`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${masterKey}`,
+    },
+    body: JSON.stringify({ key: keyId, duration: "30d" }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`LiteLLM /key/update failed (${res.status}): ${text}`);
+  }
+
+  const data = await res.json();
+  return {
+    expiresAt: data.expires ?? new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+  };
+}
+
+/**
  * Calls POST /key/delete on the LiteLLM server to revoke a key by ID.
  */
 export async function revokeLiteLLMKey(keyId: string): Promise<void> {
