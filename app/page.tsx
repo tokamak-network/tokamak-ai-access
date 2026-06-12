@@ -314,6 +314,18 @@ export default function LandingPage() {
           </section>
         </div>
       </main>
+
+      <footer style={{
+        borderTop: "1px solid var(--divider)",
+        padding: "24px var(--pad-x)",
+        textAlign: "center",
+        fontFamily: "var(--font-mono)",
+        fontSize: "0.6875rem",
+        color: "var(--muted)",
+        letterSpacing: "0.06em",
+      }}>
+        © 2026 Tokamak Network | All Rights Reserved.
+      </footer>
     </>
   );
 }
