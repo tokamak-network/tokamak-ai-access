@@ -57,6 +57,9 @@ html, body {
 }
 
 /* Two-column editorial section */
+main > .section:first-child {
+  overflow: hidden;
+}
 .section {
   position: relative;
   z-index: 1;
@@ -148,21 +151,21 @@ h2.section-heading {
   position: absolute;
   z-index: 0;
   top: 50%;
-  right: -6%;
-  width: 560px;
-  height: 560px;
-  max-width: 70vw;
-  transform: translateY(-52%);
+  right: -2%;
+  width: 380px;
+  height: 380px;
+  max-width: 55vw;
+  transform: translateY(-50%);
   pointer-events: none;
   opacity: 0.85;
 }
 
 @media (max-width: 768px) {
   .hero-mark {
-    width: 360px;
-    height: 360px;
-    right: -12%;
-    top: 42%;
+    width: 260px;
+    height: 260px;
+    right: -8%;
+    top: 40%;
     opacity: 0.5;
   }
 }
