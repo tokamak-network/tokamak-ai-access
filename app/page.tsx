@@ -330,17 +330,9 @@ export default function LandingPage() {
   );
 }
 
-const AGENT_TARGETS = [
-  { id: "claude",   name: "Claude Code", revert: true },
-  { id: "codex",    name: "Codex",       revert: true },
-  { id: "openclaw", name: "OpenClaw",    revert: false },
-  { id: "hermes",   name: "Hermes",      revert: false },
-] as const;
-
 const CLI = "npx @tokamak-network/ai-access-cli";
 
 function AgentSetupSection() {
-  const [target, setTarget] = useState<(typeof AGENT_TARGETS)[number]>(AGENT_TARGETS[0]);
   const [copied, setCopied] = useState<string | null>(null);
 
   function copy(id: string, text: string) {
@@ -350,15 +342,6 @@ function AgentSetupSection() {
     });
   }
 
-  const interactiveCmd = `${CLI} configure`;
-  const targetCmd = [
-    `# Configure ${target.name} with your TON key`,
-    `${CLI} configure --target ${target.id} --api-key sk-...`,
-    ...(target.revert
-      ? ["", "# Undo anytime — restores your original settings", `${CLI} revert --target ${target.id}`]
-      : []),
-  ].join("\n");
-
   return (
     <div className="models-section-wrap">
       <section className="models-section">
@@ -366,8 +349,8 @@ function AgentSetupSection() {
           <span className="eyebrow-dark">Agent setup</span>
           <span className="n-lbl-dark">Supported tools</span>
           <span className="n-val-dark">Claude Code, Codex, OpenClaw, Hermes</span>
-          <span className="n-lbl-dark">Install</span>
-          <span className="n-val-dark">None — npx</span>
+          <span className="n-lbl-dark">Requires</span>
+          <span className="n-val-dark">Node.js + npm</span>
           <span className="n-lbl-dark">Time</span>
           <span className="n-val-dark">~30 seconds</span>
           <span className="n-lbl-dark">Reversible</span>
@@ -382,42 +365,23 @@ function AgentSetupSection() {
 
           <div className="cli-card" style={{ marginBottom: "14px" }}>
             <div className="cli-card-hd">
-              <span>Interactive — prompts for tool, key &amp; model</span>
-              <button className="cli-copy" onClick={() => copy("interactive", interactiveCmd)}>
-                {copied === "interactive" ? "COPIED" : "COPY"}
+              <span>Configure — prompts for tool, key &amp; model</span>
+              <button className="cli-copy" onClick={() => copy("configure", `${CLI} configure`)}>
+                {copied === "configure" ? "COPIED" : "COPY"}
               </button>
             </div>
-            <pre className="cli-pre">{interactiveCmd}</pre>
+            <pre className="cli-pre">{`${CLI} configure`}</pre>
           </div>
 
-          <div className="cli-tabs" role="tablist">
-            {AGENT_TARGETS.map((t) => (
-              <button
-                key={t.id}
-                role="tab"
-                aria-selected={t.id === target.id}
-                className={`cli-tab${t.id === target.id ? " cli-tab--on" : ""}`}
-                onClick={() => setTarget(t)}
-              >
-                {t.id}
-              </button>
-            ))}
-          </div>
-          <div className="cli-card" style={{ borderRadius: "0 0 var(--radius) var(--radius)", marginBottom: "16px" }}>
+          <div className="cli-card" style={{ marginBottom: "16px" }}>
             <div className="cli-card-hd">
-              <span>{target.name}</span>
-              <button className="cli-copy" onClick={() => copy("target", targetCmd)}>
-                {copied === "target" ? "COPIED" : "COPY"}
+              <span>Revert — restores your original settings</span>
+              <button className="cli-copy" onClick={() => copy("revert", `${CLI} revert`)}>
+                {copied === "revert" ? "COPIED" : "COPY"}
               </button>
             </div>
-            <pre className="cli-pre">{targetCmd}</pre>
+            <pre className="cli-pre">{`${CLI} revert`}</pre>
           </div>
-
-          <p style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.6 }}>
-            Settings are written inside a marker block and backed up automatically —{" "}
-            <code style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem" }}>revert</code>{" "}
-            (claude &amp; codex) removes only what was added.
-          </p>
         </div>
       </section>
     </div>
