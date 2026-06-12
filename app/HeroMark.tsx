@@ -20,7 +20,7 @@ import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 
 const ACCENT = "#3b9bff";          // brand blue used in the stripe
-const STRIPE_BANDS = 8;            // wide bands across the UV tile (~6-8 visible stripes)
+const STRIPE_BANDS = 10;           // diagonal stripe repeat count across UV tile
 const ROTATION_SPEED = 0.12;       // radians / second (slow)
 const BASE_TILT_X = -1.25;         // lean the ring toward face-on view
 const BASE_TILT_Z = -0.15;         // slight roll
@@ -33,16 +33,16 @@ function makeStripeTexture(): THREE.Texture {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, size, size);
 
-  // Vertical bands (U-axis): stripes that wrap around the torus tube.
-  // V-axis (y) is along the ring; U-axis (x) is around the tube cross-section.
-  const period = size / STRIPE_BANDS;
+  // 45° diagonal bands (x+y): stripes that spiral around the torus ring.
+  // Blue is ~1/3 of the period so stripes appear thin against wide white gaps.
+  const period = (size * 2) / STRIPE_BANDS;
   const img = ctx.getImageData(0, 0, size, size);
   const data = img.data;
   const [br, bg, bb] = [0x3b, 0x9b, 0xff];
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const phase = x % period;
-      const blue = phase < period / 2;
+      const phase = (((x + y) % period) + period) % period;
+      const blue = phase < period / 3;
       const i = (y * size + x) * 4;
       data[i] = blue ? br : 255;
       data[i + 1] = blue ? bg : 255;

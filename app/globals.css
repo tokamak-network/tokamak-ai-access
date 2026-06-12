@@ -153,16 +153,16 @@ h2.section-heading {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 280px;
-  height: 280px;
+  width: 560px;
+  height: 560px;
   pointer-events: none;
   opacity: 0.75;
 }
 
 @media (max-width: 768px) {
   .hero-mark {
-    width: 200px;
-    height: 200px;
+    width: 400px;
+    height: 400px;
     opacity: 0.5;
   }
 }
