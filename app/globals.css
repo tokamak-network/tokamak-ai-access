@@ -78,11 +78,16 @@ main > .section:first-child {
 
 /* Mobile: collapse to single column */
 @media (max-width: 768px) {
+  :root { --pad-x: 20px; }
   .split-line { display: none; }
   .section {
     grid-template-columns: 1fr;
     row-gap: 24px;
     padding: 64px 24px;
+  }
+  .cli-pre {
+    white-space: pre-wrap;
+    word-break: break-all;
   }
 }
 
@@ -164,6 +169,12 @@ h2.section-heading {
     width: 400px;
     height: 400px;
     opacity: 0.5;
+  }
+}
+@media (max-width: 480px) {
+  .hero-mark {
+    width: 280px;
+    height: 280px;
   }
 }
 

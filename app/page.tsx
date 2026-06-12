@@ -257,7 +257,7 @@ export default function LandingPage() {
                 ["Model", "qwen-3.6, deepseek-v4-flash, gemma-4"],
                 ["Protocol", "OpenAI-compatible REST"],
               ].map(([label, val]) => (
-                <div key={label} style={{ display: "flex", gap: "16px", alignItems: "baseline" }}>
+                <div key={label} style={{ display: "flex", gap: "8px 16px", alignItems: "baseline", flexWrap: "wrap" }}>
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.625rem", color: "var(--muted)", letterSpacing: "0.14em", textTransform: "uppercase", minWidth: "80px" }}>
                     {label}
                   </span>
@@ -438,7 +438,7 @@ function WalletModal({
     >
       <div
         style={{
-          width: 360,
+          width: "min(360px, calc(100vw - 40px))",
           background: "var(--surface-raised)",
           border: "1px solid var(--hairline)",
           borderRadius: "var(--radius)",
