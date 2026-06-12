@@ -20,10 +20,10 @@ import * as THREE from "three";
 import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
 
 const ACCENT = "#3b9bff";          // brand blue used in the stripe
-const STRIPE_BANDS = 22;           // diagonal bands across the 0..1 UV tile
+const STRIPE_BANDS = 8;            // wide bands across the UV tile (~6-8 visible stripes)
 const ROTATION_SPEED = 0.12;       // radians / second (slow)
-const BASE_TILT_X = -1.02;         // lean the ring back toward the viewer
-const BASE_TILT_Z = -0.32;         // slight roll
+const BASE_TILT_X = -1.25;         // lean the ring toward face-on view
+const BASE_TILT_Z = -0.15;         // slight roll
 
 function makeStripeTexture(): THREE.Texture {
   const size = 1024;
@@ -33,14 +33,15 @@ function makeStripeTexture(): THREE.Texture {
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, size, size);
 
-  // Diagonal blue bands: blue where ((x + y) / period) is in the first half.
-  const period = (size * 2) / STRIPE_BANDS; // seamless: 2*size spans the diagonal
+  // Vertical bands (U-axis): stripes that wrap around the torus tube.
+  // V-axis (y) is along the ring; U-axis (x) is around the tube cross-section.
+  const period = size / STRIPE_BANDS;
   const img = ctx.getImageData(0, 0, size, size);
   const data = img.data;
   const [br, bg, bb] = [0x3b, 0x9b, 0xff];
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const phase = (((x + y) % period) + period) % period;
+      const phase = x % period;
       const blue = phase < period / 2;
       const i = (y * size + x) * 4;
       data[i] = blue ? br : 255;
@@ -136,7 +137,7 @@ export default function HeroMark() {
         const center = box.getCenter(new THREE.Vector3());
         const sphere = box.getBoundingSphere(new THREE.Sphere());
         obj.position.sub(center);
-        const target = 3.1; // world radius the model is scaled to
+        const target = 2.0; // world radius — sized so the ring fits fully in viewport
         obj.scale.setScalar(target / sphere.radius);
 
         spinner = obj;
