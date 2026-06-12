@@ -151,21 +151,18 @@ h2.section-heading {
   position: absolute;
   z-index: 0;
   top: 50%;
-  right: -2%;
-  width: 380px;
-  height: 380px;
-  max-width: 55vw;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 280px;
   pointer-events: none;
-  opacity: 0.85;
+  opacity: 0.75;
 }
 
 @media (max-width: 768px) {
   .hero-mark {
-    width: 260px;
-    height: 260px;
-    right: -8%;
-    top: 40%;
+    width: 200px;
+    height: 200px;
     opacity: 0.5;
   }
 }
