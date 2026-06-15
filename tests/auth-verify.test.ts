@@ -52,6 +52,11 @@ function makeReq(host: string, body: { message: string; signature: string }) {
 beforeEach(() => {
   vi.clearAllMocks();
   mockRateLimit.mockResolvedValue(null); // no rate limit
+  process.env.APP_DOMAIN = "example.com";
+});
+
+afterEach(() => {
+  delete process.env.APP_DOMAIN;
 });
 
 describe("POST /api/auth/verify — domain binding (F-06)", () => {

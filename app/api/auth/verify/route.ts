@@ -44,12 +44,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid SIWE message" }, { status: 400 });
   }
 
-  // Verify signature
+  // Resolve domain from trusted config; Host header as fallback only
+  const domain = process.env.APP_DOMAIN ?? req.headers.get("host") ?? "";
+
+  // Fetch stored nonce before crypto verify (so we can pass server-issued nonce)
+  const address = siweMsg.address.toLowerCase();
+  const stored = await kvGet<{ nonce: string; expiresAt: number }>(`nonce:${address}`);
+  if (!stored || Date.now() > stored.expiresAt) {
+    return NextResponse.json({ error: "Expired or invalid nonce" }, { status: 401 });
+  }
+
+  // Verify signature with server-trusted domain and server-issued nonce
   const result = await siweMsg
     .verify({
       signature,
-      domain: req.headers.get("host") ?? "",
-      nonce: siweMsg.nonce,
+      domain,
+      nonce: stored.nonce,
       time: new Date().toISOString(),
     })
     .catch(() => null);
@@ -57,12 +67,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  // Check nonce
-  const address = siweMsg.address.toLowerCase();
-  const stored = await kvGet<{ nonce: string; expiresAt: number }>(`nonce:${address}`);
-  if (!stored || stored.nonce !== siweMsg.nonce || Date.now() > stored.expiresAt) {
-    return NextResponse.json({ error: "Expired or invalid nonce" }, { status: 401 });
-  }
   await kvDel(`nonce:${address}`);
 
   // Create session
