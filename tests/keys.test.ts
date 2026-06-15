@@ -35,7 +35,7 @@ vi.mock("@/lib/litellm",       () => ({
   revokeLiteLLMKey:   mockRevokeLiteLLMKey,
   renewLiteLLMKey:    mockRenewLiteLLMKey,
 }));
-vi.mock("@vercel/kv",          () => ({ kv: { get: mockKvGet, set: mockKvSet, del: vi.fn() } }));
+vi.mock("@vercel/kv",          () => ({ kv: { get: mockKvGet, set: mockKvSet, del: vi.fn(), incr: vi.fn() } }));
 vi.mock("@/lib/with-rate-limit", () => ({ checkRateLimit: mockCheckRateLimit }));
 
 // Modules imported AFTER mocks are registered
@@ -89,10 +89,10 @@ describe("POST /api/keys/issue", () => {
     expect(res.status).toBe(200);
     expect(body.key).toBe(MOCK_KEY.key);
     expect(body.expiresAt).toBe(MOCK_KEY.expiresAt);
-    expect(mockKvSet).toHaveBeenCalledOnce();
+    expect(mockKvSet).toHaveBeenCalledTimes(2);
     // hash only — never the plaintext key
-    expect(mockKvSet.mock.calls[0][1]).not.toHaveProperty("key");
-    expect(mockKvSet.mock.calls[0][1]).toHaveProperty("hash");
+    expect(mockKvSet.mock.calls[1][1]).not.toHaveProperty("key");
+    expect(mockKvSet.mock.calls[1][1]).toHaveProperty("hash");
   });
 
   it("returns 401 when no session", async () => {
@@ -156,7 +156,7 @@ describe("POST /api/keys/issue", () => {
 
     await issueKey(makeReq());
 
-    expect(mockKvSet.mock.calls[0][1]).toHaveProperty("expiresAt", MOCK_KEY.expiresAt);
+    expect(mockKvSet.mock.calls[1][1]).toHaveProperty("expiresAt", MOCK_KEY.expiresAt);
   });
 
   it("re-issues if existing key is TTL-expired", async () => {
@@ -169,6 +169,36 @@ describe("POST /api/keys/issue", () => {
     const res = await issueKey(makeReq());
     expect(res.status).toBe(200);
     expect((await res.json()).key).toBe(MOCK_KEY.key);
+  });
+
+  it("returns 503 when global key cap is reached", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "stats:active-keys") return Promise.resolve(1000);
+      return Promise.resolve(null);
+    });
+
+    const res = await issueKey(makeReq());
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error).toBe("Service at capacity");
+  });
+
+  it("returns 409 when TOCTOU lock is already held", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "stats:active-keys") return Promise.resolve(0);
+      return Promise.resolve(null);
+    });
+    // SET NX returns null = lock already held by another request
+    mockKvSet.mockResolvedValue(null);
+
+    const res = await issueKey(makeReq());
+    expect(res.status).toBe(409);
+    const body = await res.json();
+    expect(body.error).toBe("Issue in progress");
   });
 });
 
