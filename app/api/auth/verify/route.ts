@@ -45,7 +45,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify signature
-  const result = await siweMsg.verify({ signature }).catch(() => null);
+  const result = await siweMsg
+    .verify({
+      signature,
+      domain: req.headers.get("host") ?? "",
+      nonce: siweMsg.nonce,
+      time: new Date().toISOString(),
+    })
+    .catch(() => null);
   if (!result?.success) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
