@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { kv } from "@vercel/kv";
-import { kvGet, kvSet, kvDecr } from "@/lib/kv";
+import { kvGet, kvSet } from "@/lib/kv";
 import { getTotalStakedTON, MIN_TON } from "@/lib/staking";
 import { revokeLiteLLMKey } from "@/lib/litellm";
 import type { KeyRecord } from "@/lib/key-guards";
@@ -61,7 +61,6 @@ async function handleCron(req: NextRequest) {
 
       // Skip if already revoked
       if (record.revokedAt) {
-        activeCount++;
         continue;
       }
 
@@ -90,8 +89,6 @@ async function handleCron(req: NextRequest) {
         };
         await kvSet(keyPattern, updatedRecord);
 
-        // Decrement active key counter
-        await kvDecr("stats:active-keys");
         revokeCount++;
       } else {
         // Key is still active

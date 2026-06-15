@@ -128,11 +128,11 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
         "key:0xabc",
         expect.objectContaining({ revokedAt: expect.any(Number) }),
       );
-      expect(mockKvDecr).toHaveBeenCalledWith("stats:active-keys");
 
       const body = await res.json();
       expect(body.revoked).toBe(1);
       expect(body.total).toBe(1);
+      expect(body.activeCount).toBe(0);
     });
 
     it("does NOT revoke key for staked address", async () => {
@@ -158,6 +158,7 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
       const body = await res.json();
       expect(body.revoked).toBe(0);
       expect(body.total).toBe(1);
+      expect(body.activeCount).toBe(1);
     });
 
     it("skips keys with :lock suffix", async () => {
