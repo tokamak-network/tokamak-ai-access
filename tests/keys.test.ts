@@ -107,13 +107,14 @@ describe("POST /api/keys/issue", () => {
     expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
   });
 
-  it("returns 403 when stake is below minimum", async () => {
+  it("returns 403 when stake is below minimum and no purchase", async () => {
     mockGetSessionAddress.mockResolvedValue(ADDR);
     mockGetTotalStakedTON.mockResolvedValue(MIN_TON - 1n);
+    mockKvGet.mockResolvedValue(null);  // no purchase record, no existing key
 
     const res = await issueKey(makeReq());
     expect(res.status).toBe(403);
-    expect((await res.json()).error).toMatch(/insufficient/i);
+    expect((await res.json()).error).toMatch(/not eligible/i);
     expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
   });
 
