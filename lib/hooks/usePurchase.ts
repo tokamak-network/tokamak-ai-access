@@ -15,6 +15,7 @@
 import { useState } from "react";
 import { useWriteContract } from "wagmi";
 import tonAbi from "@/abi/TON.json";
+import { usdToTonWei } from "@/lib/ton-price";
 
 // ---- Network selection (matches lib/staking.ts) ----
 const CHAIN =
@@ -67,7 +68,6 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
   const [error, setError] = useState<string | null>(null);
 
   const TREASURY = process.env.NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}`;
-  const PRICE_TON = BigInt(process.env.NEXT_PUBLIC_PURCHASE_PRICE_TON ?? "5");
 
   async function executePurchase(
     endpoint: string,
@@ -97,11 +97,20 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
     setStatus("signing");
     setError(null);
     try {
+      const priceRes = await fetch("/api/price/ton");
+      if (!priceRes.ok) {
+        setError("Price unavailable — try again");
+        setStatus("error");
+        return;
+      }
+      const { usdPerTon, usdPrice } = await priceRes.json();
+      const amountWei = usdToTonWei(usdPrice, usdPerTon);
+
       const hash = await writeContractAsync({
         address: TON_ADDRESS,
         abi: ERC20_TRANSFER_ABI,
         functionName: "transfer",
-        args: [TREASURY, PRICE_TON * 10n ** 18n],
+        args: [TREASURY, amountWei],
       });
       setStatus("confirming");
       await executePurchase("/api/keys/purchase", "POST", hash);
@@ -119,11 +128,20 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
     setStatus("signing");
     setError(null);
     try {
+      const priceRes = await fetch("/api/price/ton");
+      if (!priceRes.ok) {
+        setError("Price unavailable — try again");
+        setStatus("error");
+        return;
+      }
+      const { usdPerTon, usdPrice } = await priceRes.json();
+      const amountWei = usdToTonWei(usdPrice, usdPerTon);
+
       const hash = await writeContractAsync({
         address: TON_ADDRESS,
         abi: ERC20_TRANSFER_ABI,
         functionName: "transfer",
-        args: [TREASURY, PRICE_TON * 10n ** 18n],
+        args: [TREASURY, amountWei],
       });
       setStatus("confirming");
       await executePurchase("/api/keys/purchase/renew", "PUT", hash);
