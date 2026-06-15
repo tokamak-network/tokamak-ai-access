@@ -10,6 +10,7 @@ const {
   mockRenewLiteLLMKey,
   mockGetTransactionReceipt,
   mockParseEventLogs,
+  mockFetchTonUsdRate,
 } = vi.hoisted(() => ({
   mockGetSessionAddress: vi.fn(),
   mockKvGet: vi.fn(),
@@ -19,6 +20,7 @@ const {
   mockRenewLiteLLMKey: vi.fn(),
   mockGetTransactionReceipt: vi.fn(),
   mockParseEventLogs: vi.fn(),
+  mockFetchTonUsdRate: vi.fn(),
 }));
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
@@ -42,6 +44,13 @@ vi.mock("@vercel/kv", () => {
   };
 });
 vi.mock("@/lib/litellm", () => ({ renewLiteLLMKey: mockRenewLiteLLMKey }));
+vi.mock("@/lib/ton-price", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ton-price")>();
+  return {
+    ...actual,
+    fetchTonUsdRate: mockFetchTonUsdRate,
+  };
+});
 vi.mock("viem", async (importOriginal) => {
   const actual = await importOriginal<typeof import("viem")>();
   return {
@@ -77,7 +86,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   process.env.TREASURY_ADDRESS = TREASURY;
   process.env.TON_ERC20_ADDRESS = TON_ERC20;
-  process.env.PURCHASE_PRICE_TON = "5";
+  process.env.PURCHASE_USD_PRICE = "5";
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
   mockGetTransactionReceipt.mockResolvedValue({ to: TON_ERC20.toLowerCase(), logs: [] });
@@ -87,6 +96,7 @@ beforeEach(() => {
   mockRenewLiteLLMKey.mockResolvedValue({
     expiresAt: "2099-01-01T00:00:00.000Z",
   });
+  mockFetchTonUsdRate.mockResolvedValue(1.0); // rate=$1/TON → minValue=4 TON (5 USD * 0.8)
   mockKvSetNx.mockResolvedValue(true); // claim succeeds by default
   mockKvDel.mockResolvedValue(1); // del succeeds by default
 
@@ -196,5 +206,22 @@ describe("PUT /api/keys/purchase/renew", () => {
     const res = await PUT(makeReq());
     expect(res.status).toBe(200);
     expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 when price oracle is unavailable", async () => {
+    mockFetchTonUsdRate.mockRejectedValue(new Error("CoinGecko down"));
+    const res = await PUT(makeReq());
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toMatch(/price oracle/i);
+  });
+
+  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2 TON)", async () => {
+    mockFetchTonUsdRate.mockResolvedValue(2.0);
+    const threeToN = 3n * 10n ** 18n;
+    mockParseEventLogs.mockReturnValue([
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: threeToN } },
+    ]);
+    const res = await PUT(makeReq());
+    expect(res.status).toBe(200);
   });
 });
