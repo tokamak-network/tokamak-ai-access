@@ -48,7 +48,7 @@ import { POST as renewKey }  from "@/app/api/keys/renew/route";
 
 // ── Test helpers ─────────────────────────────────────────────────────────────
 const ADDR       = "0xdeadbeef00000000000000000000000000000001";
-const MIN_TON    = 10n * 10n ** 18n;   // matches route default (MIN_TON env unset)
+const MIN_TON    = 100n * 10n ** 18n;  // matches route default (MIN_TON env unset)
 const ENOUGH_TON = MIN_TON + 1n;
 
 const MOCK_KEY = {

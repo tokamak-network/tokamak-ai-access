@@ -6,8 +6,8 @@ import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
 import { useSiwe } from "@/lib/hooks/useSiwe";
 import HeroMark from "./HeroMark";
 
-// Inlined at build time: 10 in dev (.env.local), 200 in production (.env.production)
-const MIN_TON = process.env.NEXT_PUBLIC_MIN_TON ?? "10";
+// Inlined at build time: 100 in dev (.env.local), 100 in production (.env.production)
+const MIN_TON = process.env.NEXT_PUBLIC_MIN_TON ?? "100";
 
 const STATUS_LABELS: Record<string, string> = {
   "fetching-nonce": "Preparing…",

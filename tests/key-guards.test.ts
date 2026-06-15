@@ -17,7 +17,7 @@ vi.mock("@vercel/kv", () => ({
 import { assertStake, assertRotateCooldown, assertKeyCapacity, assertEligibility } from "@/lib/key-guards";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
-const MIN_TON_WEI = 10n * 10n ** 18n;
+const MIN_TON_WEI = 100n * 10n ** 18n;
 
 beforeEach(() => vi.clearAllMocks());
 

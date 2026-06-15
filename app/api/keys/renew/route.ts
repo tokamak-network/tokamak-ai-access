@@ -5,7 +5,7 @@ import { renewLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
 
-const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
+const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface KeyRecord {

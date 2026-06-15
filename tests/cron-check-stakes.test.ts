@@ -41,7 +41,7 @@ vi.mock("@/lib/kv", () => ({
 
 vi.mock("@/lib/staking", () => ({
   getTotalStakedTON: mockGetTotalStakedTON,
-  MIN_TON: 10n,
+  MIN_TON: 100n,
 }));
 
 vi.mock("@/lib/litellm", () => ({
@@ -119,7 +119,7 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
       mockKvGet
         .mockResolvedValueOnce(keyRecord) // key:0xabc
         .mockResolvedValueOnce(null); // purchase:0xabc (not found)
-      mockGetTotalStakedTON.mockResolvedValue(0n); // below MIN_TON_WEI (10 * 10^18)
+      mockGetTotalStakedTON.mockResolvedValue(0n); // below MIN_TON_WEI (100 * 10^18)
 
       const req = makeReq("GET", "Bearer test-secret");
       const res = await GET(req);
@@ -148,8 +148,8 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
 
       mockKvKeys.mockResolvedValue(["key:0xdef"]);
       mockKvGet.mockResolvedValue(keyRecord);
-      // 10 * 10^18 = minimum TON_WEI (matches MIN_TON_WEI)
-      mockGetTotalStakedTON.mockResolvedValue(10n * 10n ** 18n);
+      // 100 * 10^18 = minimum TON_WEI (matches MIN_TON_WEI)
+      mockGetTotalStakedTON.mockResolvedValue(100n * 10n ** 18n);
 
       const req = makeReq("GET", "Bearer test-secret");
       const res = await GET(req);
@@ -305,7 +305,7 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
         .mockResolvedValueOnce(keyRecord) // key:0xtest1 — active, staked
         .mockResolvedValueOnce({ ...keyRecord, revokedAt: Date.now() }); // key:0xtest2 — already revoked, skip
       // Only 0xtest1 is checked for stake; return sufficient balance
-      mockGetTotalStakedTON.mockResolvedValue(10n * 10n ** 18n);
+      mockGetTotalStakedTON.mockResolvedValue(100n * 10n ** 18n);
 
       const req = makeReq("GET", "Bearer test-secret");
       const res = await GET(req);

@@ -16,7 +16,7 @@ export interface KeyRecord {
 
 /** Throws a 403 NextResponse if address does not meet the minimum TON stake. */
 export async function assertStake(address: string): Promise<void> {
-  const minTonWei = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
+  const minTonWei = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
   const balance = await getTotalStakedTON(address);
   if (balance < minTonWei) {
     throw NextResponse.json({ error: "Insufficient stake" }, { status: 403 });
@@ -30,7 +30,7 @@ export interface PurchaseRecord {
 }
 
 export async function assertEligibility(address: string): Promise<void> {
-  const minTonWei = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
+  const minTonWei = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
   const balance = await getTotalStakedTON(address);
   if (balance >= minTonWei) return;
 

@@ -5,7 +5,7 @@ import { checkRateLimit } from "@/lib/with-rate-limit";
 import { kvGet } from "@/lib/kv";
 import type { PurchaseRecord } from "@/lib/key-guards";
 
-const MIN_TON = BigInt(process.env.MIN_TON ?? "10");
+const MIN_TON = BigInt(process.env.MIN_TON ?? "100");
 // Convert to 18-decimal bigint for comparison with getTotalStakedTON output
 const MIN_TON_WEI = MIN_TON * 10n ** 18n;
 

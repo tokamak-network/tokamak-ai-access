@@ -6,7 +6,7 @@ import { kvGet, kvSet, hashKey } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
 import { assertRotateCooldown } from "@/lib/key-guards";
 
-const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
+const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
 
 /**
  * POST /api/keys/rotate
