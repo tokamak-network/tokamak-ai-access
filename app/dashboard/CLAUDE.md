@@ -8,6 +8,13 @@
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
 | #16106 | 6:13 PM | 🔵 | TON AI Access CLI configuration architecture analysis | ~672 |
+
+### Jun 15, 2026
+
+| ID | Time | T | Title | Read |
+|----|------|---|-------|------|
+| #16937 | 11:56 PM | ✅ | Dashboard CLAUDE.md updated with Buy Access card and expiry banner documentation | ~303 |
+| #16933 | 11:54 PM | 🔵 | Empty CLAUDE.md placeholders identified in CLI subdirectories | ~402 |
 </claude-mem-context>
 
 # Dashboard Page
@@ -22,4 +29,6 @@ Uses `useSiwe` hook for session state. Without a live Vercel KV connection, the 
 
 - **CLI Setup panel** — step-by-step instructions to install and configure the CLI (`configure` / `revert` cards)
 - **API Key panel** — issue, view, and rotate LiteLLM virtual keys
+- **Buy Access card** — ERC-20 TON payment flow for non-stakers (`usePurchase` hook, `keys/purchase` API)
+- **Expiry banner** — shown when the purchased access key is nearing expiration
 - **Logo** — navigates back to `/` (home)

@@ -40,6 +40,7 @@ async function handleCron(req: NextRequest) {
     // ---- Scan all key:{address} records ----
     const keyPatterns = await kv.keys("key:*");
     if (!keyPatterns) {
+      console.log("[cron] check-stakes: no keys found");
       return NextResponse.json({ revoked: 0, total: 0, status: "success" }, { status: 200 });
     }
 
@@ -50,6 +51,8 @@ async function handleCron(req: NextRequest) {
         cleanKeys.push(pattern);
       }
     }
+
+    console.log(`[cron] check-stakes started: ${cleanKeys.length} keys to check`);
 
     let revokeCount = 0;
     let activeCount = 0;
@@ -105,6 +108,8 @@ async function handleCron(req: NextRequest) {
 
     // ---- Drift correction: SET stats:active-keys to actual count ----
     await kvSet("stats:active-keys", activeCount);
+
+    console.log(`[cron] check-stakes done: revoked=${revokeCount} active=${activeCount} total=${cleanKeys.length}`);
 
     return NextResponse.json(
       {
