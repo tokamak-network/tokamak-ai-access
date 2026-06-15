@@ -1,0 +1,16 @@
+name: Check Stakes (Hourly)
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check-stakes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger check-stakes endpoint
+        run: |
+          curl -f -s -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://ai-access.tokamak.network/api/cron/check-stakes
