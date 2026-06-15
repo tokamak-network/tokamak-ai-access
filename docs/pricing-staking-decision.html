@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TON AI Access — 가격 · 스테이킹 결정 플로우</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --border:#2d333b;
+    --text:#e6edf3; --muted:#9aa6b2; --accent:#58a6ff;
+    --green:#3fb950; --amber:#e3b341; --red:#f85149; --violet:#bc8cff;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo",sans-serif;
+    line-height:1.6;font-size:15px}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:27px;margin:0 0 6px;letter-spacing:-.3px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:28px}
+  h2{font-size:20px;margin:46px 0 6px;display:flex;align-items:center;gap:8px}
+  h2 .b{width:4px;height:20px;background:var(--accent);border-radius:2px;display:inline-block}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 18px}
+
+  /* decision cards */
+  .decisions{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:8px 0 8px}
+  .dcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;position:relative;overflow:hidden}
+  .dcard .tag{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+  .dcard .big{font-size:40px;font-weight:800;letter-spacing:-1px;margin:6px 0 2px}
+  .dcard .sm{font-size:13px;color:var(--muted)}
+  .dcard.key .big{color:var(--accent)}
+  .dcard.stake .big{color:var(--green)}
+  .dcard .glow{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;opacity:.12}
+  .dcard.key .glow{background:var(--accent)} .dcard.stake .glow{background:var(--green)}
+
+  /* two paths */
+  .paths{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+  .path{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .path.b{border-color:rgba(88,166,255,.4)} .path.a{border-color:rgba(63,185,80,.4)}
+  .path h3{margin:0 0 4px;font-size:16px}
+  .path .who{font-size:12px;color:var(--muted);margin-bottom:14px}
+  .step{display:flex;gap:12px;align-items:flex-start;padding:9px 0}
+  .step:not(:last-child){border-bottom:1px dashed var(--border)}
+  .dot{flex:0 0 24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+       font-size:12px;font-weight:700;color:#0d1117}
+  .a .dot{background:var(--green)} .b .dot{background:var(--accent)}
+  .step .t{font-size:13.5px}.step .t b{color:var(--text)} .step .t span{color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-top:2px}
+  .pill.g{background:rgba(63,185,80,.15);color:var(--green)}
+  .pill.b{background:rgba(88,166,255,.15);color:var(--accent)}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;margin-top:8px}
+  .statrow{display:flex;flex-wrap:wrap;gap:24px;margin-bottom:10px}
+  .stat .n{font-size:24px;font-weight:700} .stat .l{font-size:12px;color:var(--muted)}
+  .stat .n.red{color:var(--red)} .stat .n.green{color:var(--green)} .stat .n.acc{color:var(--accent)}
+  figcaption{font-size:12.5px;color:var(--muted);margin-top:10px}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+  .note{background:rgba(88,166,255,.06);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;
+        padding:12px 16px;font-size:13.5px;margin-top:14px}
+  .note.amber{background:rgba(227,179,65,.06);border-left-color:var(--amber)}
+  code{font-family:var(--mono);font-size:12.5px;background:var(--panel2);padding:1px 5px;border-radius:4px}
+  footer{margin-top:46px;padding-top:20px;border-top:1px solid var(--border);color:var(--muted);font-size:12.5px}
+  @media(max-width:720px){.decisions,.paths{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>TON AI Access — 가격 · 스테이킹 결정</h1>
+  <div class="sub">두 가지 접근 경로와 그 숫자가 나온 근거 · 2026-06-15</div>
+
+  <div class="decisions">
+    <div class="dcard key"><div class="glow"></div>
+      <div class="tag">키 구매 (비스테이커)</div>
+      <div class="big">$5 <span style="font-size:18px;color:var(--muted)">/ 월</span></div>
+      <div class="sm">USD 페그 · TON으로 결제·소각 (≈ 7 TON @ $0.7)</div>
+    </div>
+    <div class="dcard stake"><div class="glow"></div>
+      <div class="tag">스테이킹 자격 (보유자)</div>
+      <div class="big">100 <span style="font-size:18px;color:var(--muted)">TON</span></div>
+      <div class="sm">환불성 락업 · 스테이킹 유지 동안 키 사용 (≈ $70)</div>
+    </div>
+  </div>
+
+  <!-- ============ 두 경로 ============ -->
+  <h2><span class="b"></span>두 가지 접근 경로</h2>
+  <p class="lead">유저는 둘 중 하나를 택합니다. 락업이 싫은 신규 유저는 <b>구매(번)</b>, TON 보유·커밋 유저는 <b>스테이킹</b>.</p>
+  <div class="paths">
+    <div class="path a">
+      <h3>① 스테이킹 경로</h3>
+      <div class="who">대상: TON 보유자 · 기존 스테이커 (로열티)</div>
+      <div class="step"><div class="dot">1</div><div class="t"><b>지갑 연결 + SIWE 서명</b> <span>(가스 없음)</span></div></div>
+      <div class="step"><div class="dot">2</div><div class="t"><b>100 TON 스테이킹</b> <span>L2 오퍼레이터에 위임 → 시뇨리지 수익</span></div></div>
+      <div class="step"><div class="dot">3</div><div class="t"><b>API 키 발급</b> <span>스테이킹 유지 동안 사용</span></div></div>
+      <div class="step"><div class="dot">4</div><div class="t"><b>언스테이크 시 키 회수</b> <span>(cron 1h 내) · 원금 환불</span></div></div>
+      <div style="margin-top:10px"><span class="pill g">실질 비용 ≈ 0 (환불 + 수익)</span></div>
+    </div>
+    <div class="path b">
+      <h3>② 구매(번) 경로</h3>
+      <div class="who">대상: 락업 싫은 신규 유저 (편의)</div>
+      <div class="step"><div class="dot">1</div><div class="t"><b>지갑 연결 + SIWE 서명</b></div></div>
+      <div class="step"><div class="dot">2</div><div class="t"><b>$5 결제</b> <span>견적 시세로 ≈ 7 TON 전송 → 소각/트레저리</span></div></div>
+      <div class="step"><div class="dot">3</div><div class="t"><b>30일 키 발급</b> <span>만료 시 갱신</span></div></div>
+      <div class="step"><div class="dot">4</div><div class="t"><b>TON 영구 소비</b> <span>토큰 유틸리티가 수치로 기록</span></div></div>
+      <div style="margin-top:10px"><span class="pill b">실질 비용 = $5 (소비)</span></div>
+    </div>
+  </div>
+  <div class="note">두 경로는 <b>의도적으로 비대칭</b>입니다. 스테이킹은 환불·수익형이라 관대하게(로열티), 번은 실비를 받습니다(편의). 자격 단위는 같은 <code>stakeOf</code> 기준 — 표시는 둘 다 직관적인 형태로.</div>
+
+  <!-- ============ 왜 100 TON ============ -->
+  <h2><span class="b"></span>왜 스테이킹 100 TON 인가</h2>
+  <p class="lead">355명 실스테이커의 staked TON 분포(온체인, Dune 24.8M 검증)에서 도출. 극단적 멱법칙 — 절반이 dust.</p>
+  <div class="card">
+    <div class="statrow">
+      <div class="stat"><div class="n">355</div><div class="l">활성 스테이커</div></div>
+      <div class="stat"><div class="n red">7.25</div><div class="l">중앙값 (TON)</div></div>
+      <div class="stat"><div class="n">69,853</div><div class="l">평균 (고래 편중)</div></div>
+      <div class="stat"><div class="n green">82</div><div class="l">≥100 TON (코어 23%)</div></div>
+    </div>
+
+    <!-- histogram -->
+    <svg viewBox="0 0 760 270" width="100%" role="img" aria-label="스테이커 staked TON 구간별 인원 분포">
+      <!-- baseline -->
+      <line x1="40" y1="210" x2="740" y2="210" stroke="#2d333b"/>
+      <!-- bars: [label, count, color] -->
+      <!-- scale: 180px / 191 -->
+      <g font-size="11" font-family="-apple-system,sans-serif">
+        <!-- <10 -->
+        <rect x="46"  y="30"  width="56" height="180" rx="3" fill="#f85149"/>
+        <text x="74"  y="24"  fill="#f85149" text-anchor="middle" font-weight="700">191</text>
+        <text x="74"  y="226" fill="#9aa6b2" text-anchor="middle">&lt;10</text>
+        <!-- 10-50 -->
+        <rect x="116" y="149" width="56" height="61"  rx="3" fill="#e3b341"/>
+        <text x="144" y="143" fill="#e3b341" text-anchor="middle" font-weight="700">65</text>
+        <text x="144" y="226" fill="#9aa6b2" text-anchor="middle">10–50</text>
+        <!-- 50-100 -->
+        <rect x="186" y="194" width="56" height="16"  rx="3" fill="#e3b341"/>
+        <text x="214" y="188" fill="#e3b341" text-anchor="middle" font-weight="700">17</text>
+        <text x="214" y="226" fill="#9aa6b2" text-anchor="middle">50–100</text>
+        <!-- divider 100 TON -->
+        <line x1="256" y1="20" x2="256" y2="214" stroke="#3fb950" stroke-dasharray="4 3"/>
+        <text x="256" y="246" fill="#3fb950" text-anchor="middle" font-weight="700">← dust 191명(54%)  ┊  100 TON  ┊  커밋 코어 82명(23%) →</text>
+        <!-- 100-250 -->
+        <rect x="266" y="204" width="42" height="6"   rx="2" fill="#3fb950"/>
+        <text x="287" y="198" fill="#3fb950" text-anchor="middle" font-weight="700">6</text>
+        <text x="287" y="226" fill="#9aa6b2" text-anchor="middle">100–250</text>
+        <!-- 250-500 -->
+        <rect x="322" y="201" width="42" height="9"   rx="2" fill="#3fb950"/>
+        <text x="343" y="195" fill="#3fb950" text-anchor="middle" font-weight="700">10</text>
+        <text x="343" y="226" fill="#9aa6b2" text-anchor="middle">250–500</text>
+        <!-- 500-1k -->
+        <rect x="378" y="202" width="42" height="8"   rx="2" fill="#3fb950"/>
+        <text x="399" y="196" fill="#3fb950" text-anchor="middle" font-weight="700">8</text>
+        <text x="399" y="226" fill="#9aa6b2" text-anchor="middle">.5k–1k</text>
+        <!-- 1k-2.5k -->
+        <rect x="434" y="204" width="42" height="6"   rx="2" fill="#3fb950"/>
+        <text x="455" y="198" fill="#3fb950" text-anchor="middle" font-weight="700">6</text>
+        <text x="455" y="226" fill="#9aa6b2" text-anchor="middle">1–2.5k</text>
+        <!-- 2.5k-5k -->
+        <rect x="490" y="202" width="42" height="8"   rx="2" fill="#3fb950"/>
+        <text x="511" y="196" fill="#3fb950" text-anchor="middle" font-weight="700">8</text>
+        <text x="511" y="226" fill="#9aa6b2" text-anchor="middle">2.5–5k</text>
+        <!-- 5k-10k -->
+        <rect x="546" y="208" width="42" height="2"   rx="1" fill="#3fb950"/>
+        <text x="567" y="202" fill="#3fb950" text-anchor="middle" font-weight="700">2</text>
+        <text x="567" y="226" fill="#9aa6b2" text-anchor="middle">5–10k</text>
+        <!-- >=10k -->
+        <rect x="602" y="170" width="56" height="40"  rx="3" fill="#bc8cff"/>
+        <text x="630" y="164" fill="#bc8cff" text-anchor="middle" font-weight="700">42</text>
+        <text x="630" y="226" fill="#9aa6b2" text-anchor="middle">≥10k</text>
+      </g>
+    </svg>
+    <div class="legend">
+      <span><i style="background:#f85149"></i>dust (&lt;10 TON)</span>
+      <span><i style="background:#e3b341"></i>소액 (10–100)</span>
+      <span><i style="background:#3fb950"></i>커밋 코어 (≥100)</span>
+      <span><i style="background:#bc8cff"></i>고래/오퍼레이터 (≥10k)</span>
+    </div>
+    <figcaption>구간별 스테이커 수. 절반 이상이 10 TON 미만(dust). 100 TON 위로는 인원이 평탄 — "코어"가 거기서 시작.</figcaption>
+
+    <!-- attrition -->
+    <div style="margin-top:22px;font-size:13px;color:var(--muted)">문턱을 올릴 때 <b style="color:var(--text)">잃는 스테이커 수</b> — 100을 넘으면 손실이 급감(=비용 대비 효과의 변곡):</div>
+    <svg viewBox="0 0 760 96" width="100%" role="img" aria-label="임계값 상향 시 스테이커 손실">
+      <g font-size="12" font-family="-apple-system,sans-serif">
+        <text x="10" y="28" fill="#9aa6b2">10→50</text>
+        <rect x="90" y="16" width="430" height="18" rx="4" fill="#f85149"/>
+        <text x="528" y="29" fill="#f85149" font-weight="700">−65명</text>
+        <text x="10" y="58" fill="#9aa6b2">50→100</text>
+        <rect x="90" y="46" width="112" height="18" rx="4" fill="#e3b341"/>
+        <text x="210" y="59" fill="#e3b341" font-weight="700">−17명</text>
+        <text x="10" y="88" fill="#9aa6b2">100→250</text>
+        <rect x="90" y="76" width="40" height="18" rx="4" fill="#3fb950"/>
+        <text x="138" y="89" fill="#3fb950" font-weight="700">−6명</text>
+      </g>
+    </svg>
+
+    <div class="note">100 TON은 "유일 정답"이 아니라 <b>dust 대량 구간을 지나 손실이 완만해지는 합리적 컷</b>입니다. $70 락업 + 2주 출금 지연으로 farming도 억제(현재 10 TON=$7은 무방비). 더 넓게 50 TON(99명, 28%) / 좁게 500 TON(66명, 19%·시뇨리지 등가)도 같은 근거로 가능.</div>
+  </div>
+
+  <!-- ============ 왜 $5 ============ -->
+  <h2><span class="b"></span>왜 키 가격 $5 인가</h2>
+  <p class="lead">경쟁 분석이 상·하한을 결정. 우리 모델(qwen-3.6·deepseek-v4-flash·gemma-4)은 이미 여러 곳에서 무료(레이트 제한)라, 파는 건 "모델"이 아니라 <b>높은 한도 + 무카드 편의</b>.</p>
+  <div class="card">
+    <!-- price scale -->
+    <svg viewBox="0 0 760 170" width="100%" role="img" aria-label="경쟁사 가격 대비 위치">
+      <!-- axis -->
+      <line x1="40" y1="120" x2="720" y2="120" stroke="#2d333b"/>
+      <g font-size="11" fill="#9aa6b2" font-family="-apple-system,sans-serif" text-anchor="middle">
+        <text x="40"  y="140">$0</text>
+        <text x="210" y="140">$5</text>
+        <text x="380" y="140">$10</text>
+        <text x="550" y="140">$15</text>
+        <text x="720" y="140">$20</text>
+      </g>
+      <!-- free zone marker -->
+      <circle cx="40" cy="120" r="7" fill="#3fb950"/>
+      <text x="40" y="96" font-size="11" fill="#3fb950" text-anchor="middle" font-weight="700">무료</text>
+      <text x="40" y="158" font-size="10.5" fill="#9aa6b2" text-anchor="middle">OpenRouter·Cerebras·Groq</text>
+      <text x="40" y="170" font-size="10.5" fill="#9aa6b2" text-anchor="middle">(동일 모델·레이트 제한)</text>
+      <!-- per-token equiv band $3-8 -->
+      <rect x="142" y="112" width="170" height="16" rx="8" fill="#e3b341" opacity="0.28"/>
+      <text x="227" y="84" font-size="11" fill="#e3b341" text-anchor="middle">종량 환산 $3–8</text>
+      <line x1="227" y1="88" x2="227" y2="112" stroke="#e3b341" stroke-dasharray="3 3" opacity=".6"/>
+      <!-- managed band $10-20 -->
+      <rect x="380" y="112" width="340" height="16" rx="8" fill="#9aa6b2" opacity="0.22"/>
+      <text x="550" y="84" font-size="11" fill="#9aa6b2" text-anchor="middle">매니지드 로컬모델 구독 $10–20 (상한)</text>
+      <line x1="550" y1="88" x2="550" y2="112" stroke="#9aa6b2" stroke-dasharray="3 3" opacity=".6"/>
+      <!-- our marker $5 -->
+      <line x1="210" y1="40" x2="210" y2="120" stroke="#58a6ff" stroke-width="2"/>
+      <circle cx="210" cy="120" r="9" fill="#58a6ff"/>
+      <rect x="168" y="22" width="84" height="22" rx="6" fill="#58a6ff"/>
+      <text x="210" y="37" font-size="13" fill="#0d1117" text-anchor="middle" font-weight="800">$5 우리</text>
+    </svg>
+    <figcaption>무료(하한)보다 약간 위, 매니지드 $10–20(상한)보다 아래. 중간 유저 종량 환산($3–8)의 중앙 = $5.</figcaption>
+
+    <table>
+      <thead><tr><th>비교군</th><th>가격</th><th>역할</th></tr></thead>
+      <tbody>
+        <tr><td>매니지드 클라우드 로컬모델 구독</td><td>$10–20/월</td><td>상한 (우리 모델은 더 약함)</td></tr>
+        <tr><td>종량 (우리 3개 모델급)</td><td>$0.05–0.60/1M</td><td>중간 유저 ≈ $3–8 상당</td></tr>
+        <tr><td>OpenRouter / Cerebras / Groq 무료</td><td>$0 (레이트 제한)</td><td>하한 (동일 모델이 공짜)</td></tr>
+        <tr><td style="color:var(--accent);font-weight:700">TON AI Access</td><td style="color:var(--accent);font-weight:700">$5/월</td><td>차별점 = 4M TPM·600 RPM·무카드</td></tr>
+      </tbody>
+    </table>
+    <div class="note">회의에서 Theo가 "커피값"으로 잡은 10 TON이 시세 $0.5–0.7면 ≈ $5–7 — <b>경쟁 분석과 같은 밴드</b>. 원래 직감은 옳았고, 바뀐 건 그게 <b>스테이크 수량(→100 TON)이 아니라 월 번 가격</b>이라는 점.</div>
+  </div>
+
+  <!-- ============ 표시/결제 ============ -->
+  <h2><span class="b"></span>표시 vs 결제</h2>
+  <div class="card">
+    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+      <div style="flex:1;min-width:220px">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">사용자에게 표시</div>
+        <div style="font-size:30px;font-weight:800;color:var(--accent)">$5 / 월</div>
+        <div style="font-size:13px;color:var(--muted)">비크립토 개발자도 즉시 판단 · 시세 변동 무관(예측 가능)</div>
+      </div>
+      <div style="font-size:26px;color:var(--muted)">→</div>
+      <div style="flex:1;min-width:220px">
+        <div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">실제 결제·소각</div>
+        <div style="font-size:30px;font-weight:800;color:var(--violet)">≈ 7 TON</div>
+        <div style="font-size:13px;color:var(--muted)">견적 시세로 환산 · 토큰 유틸리티/소각은 TON으로 기록</div>
+      </div>
+    </div>
+    <div class="note amber"><b>진짜 마찰은 단위 표기가 아니라 "TON을 사야 한다"는 온램프.</b> 표시는 판단을 쉽게 할 뿐 — 행동 장벽(TON 취득)은 그대로. 결제 흐름에 법정화폐→TON 스왑 내장 또는 USDT 허용(멀티토큰)을 검토하면 마찰이 더 줄어듦.</div>
+  </div>
+
+  <footer>
+    숫자 근거: 스테이커 분포는 온체인 Deposited/Withdrawal 이벤트 + sWTON 스케일로 산출(합 24,797,933 TON = Dune 검증). 가격은 경쟁사 애그리게이터(2차 출처) 기반.<br>
+    가정·검증 필요: TON 스팟 $0.48–1.69로 편차 큼(USD 페그 권장) · 시뇨리지 비례 스케일 가정 · 100 TON은 평탄구간 내 둥근 컷(80~150 가능). 토크노믹스 설계 가이드이며 투자 조언 아님.
+  </footer>
+
+</div>
+</body>
+</html>
