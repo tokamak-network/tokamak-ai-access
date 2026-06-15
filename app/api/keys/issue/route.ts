@@ -17,7 +17,8 @@ export async function POST(req: NextRequest) {
     await assertEligibility(address);
     await assertKeyCapacity();
   } catch (err) {
-    return err as NextResponse;
+    if (err instanceof Response) return err as NextResponse;
+    throw err;
   }
 
   return issueKeyForAddress(address);
