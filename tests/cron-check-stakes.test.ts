@@ -285,7 +285,9 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
       expect(body.total).toBe(0);
     });
 
-    it("corrects stats:active-keys count at end", async () => {
+    it("corrects stats:active-keys count at end (excludes already-revoked keys)", async () => {
+      // key:0xtest1 = staked (active), key:0xtest2 = already revoked
+      // activeCount should be 1, NOT 2
       const keyRecord = {
         liteLlmKeyId: "sk-test",
         hash: "hash-test",
@@ -296,16 +298,19 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
 
       mockKvKeys.mockResolvedValue(["key:0xtest1", "key:0xtest2"]);
       mockKvGet
-        .mockResolvedValueOnce(keyRecord)
-        .mockResolvedValueOnce({ ...keyRecord, revokedAt: Date.now() });
-      mockGetTotalStakedTON.mockResolvedValue(0n);
+        .mockResolvedValueOnce(keyRecord) // key:0xtest1 — active, staked
+        .mockResolvedValueOnce({ ...keyRecord, revokedAt: Date.now() }); // key:0xtest2 — already revoked, skip
+      // Only 0xtest1 is checked for stake; return sufficient balance
+      mockGetTotalStakedTON.mockResolvedValue(10n * 10n ** 18n);
 
       const req = makeReq("GET", "Bearer test-secret");
       const res = await GET(req);
 
       expect(res.status).toBe(200);
-      // Final drift correction call to set stats:active-keys
-      expect(mockKvSet).toHaveBeenCalledWith("stats:active-keys", expect.any(Number));
+      const body = await res.json();
+      expect(body.activeCount).toBe(1);
+      // Drift correction must write exactly 1, not 2
+      expect(mockKvSet).toHaveBeenCalledWith("stats:active-keys", 1);
     });
   });
 });

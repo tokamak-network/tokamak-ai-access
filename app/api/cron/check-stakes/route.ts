@@ -97,14 +97,13 @@ async function handleCron(req: NextRequest) {
     }
 
     // ---- Drift correction: SET stats:active-keys to actual count ----
-    const totalActive = activeCount + (cleanKeys.length - activeCount - revokeCount);
-    await kvSet("stats:active-keys", totalActive);
+    await kvSet("stats:active-keys", activeCount);
 
     return NextResponse.json(
       {
         revoked: revokeCount,
         total: cleanKeys.length,
-        activeCount: totalActive,
+        activeCount,
         status: "success",
       },
       { status: 200 },
