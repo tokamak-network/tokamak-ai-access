@@ -4,7 +4,7 @@ import { mainnet, sepolia } from "viem/chains";
 import { getSessionAddress } from "@/lib/siwe";
 import { assertKeyCapacity, type PurchaseRecord } from "@/lib/key-guards";
 import { issueKeyForAddress } from "@/lib/issue-key";
-import { kvGet, kvSet } from "@/lib/kv";
+import { kvSet, kvSetNx, kvDel } from "@/lib/kv";
 
 const TRANSFER_EVENT_ABI = [
   {
@@ -31,8 +31,6 @@ function getPublicClient() {
   });
 }
 
-const PRICE_TON = BigInt(process.env.PURCHASE_PRICE_TON ?? "5");
-
 export async function POST(req: NextRequest) {
   const address = await getSessionAddress(req);
   if (!address) {
@@ -54,7 +52,8 @@ export async function POST(req: NextRequest) {
 
   const tonErc20 = (process.env.TON_ERC20_ADDRESS ?? "").toLowerCase();
   const treasury = (process.env.TREASURY_ADDRESS ?? "").toLowerCase();
-  const minValue = PRICE_TON * 10n ** 18n;
+  const priceTon = BigInt(process.env.PURCHASE_PRICE_TON ?? "5");
+  const minValue = priceTon * 10n ** 18n;
 
   const client = getPublicClient();
   const receipt = await client.getTransactionReceipt({ hash: txHash as `0x${string}` }).catch(() => null);
@@ -82,16 +81,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Valid Transfer event not found" }, { status: 403 });
   }
 
-  const alreadyUsed = await kvGet<{ address: string; usedAt: number }>(`txhash:${txHash}`);
-  if (alreadyUsed) {
+  // Atomic claim: only succeed if we can set the dedup record
+  const claimed = await kvSetNx(`txhash:${txHash}`, { address, usedAt: Date.now() });
+  if (!claimed) {
     return NextResponse.json({ error: "Transaction already used" }, { status: 409 });
   }
 
   const now = Date.now();
   const expiresAt = now + 30 * 24 * 60 * 60 * 1000;
 
-  await kvSet(`txhash:${txHash}`, { address, usedAt: now });
-  await kvSet(`purchase:${address}`, { txHash, paidAt: now, expiresAt } satisfies PurchaseRecord);
+  try {
+    await kvSet(`purchase:${address}`, {
+      txHash,
+      paidAt: now,
+      expiresAt,
+    } satisfies PurchaseRecord);
 
-  return issueKeyForAddress(address);
+    return await issueKeyForAddress(address);
+  } catch (err) {
+    // Release the dedup claim if issuance fails
+    await kvDel(`txhash:${txHash}`);
+    throw err;
+  }
 }

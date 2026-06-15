@@ -43,11 +43,17 @@ export async function kvKeys(pattern: string): Promise<string[]> {
 }
 
 /**
- * SET NX EX — returns true if the key was set, false if it already existed.
+ * SET NX — returns true if the key was set, false if it already existed.
+ * @param ttlSeconds optional; omit for no expiry
  * Used for TOCTOU issue lock: SET key:{address}:lock 1 NX EX 10
+ * Used for dedup: SET txhash:{hash} {...} NX (no TTL = permanent)
  */
-export async function kvSetNx(key: string, value: unknown, ttlSeconds: number): Promise<boolean> {
-  const result = await kv.set(key, value, { nx: true, ex: ttlSeconds });
+export async function kvSetNx(key: string, value: unknown, ttlSeconds?: number): Promise<boolean> {
+  const opts = { nx: true } as Parameters<typeof kv.set>[2];
+  if (ttlSeconds !== undefined) {
+    opts.ex = ttlSeconds;
+  }
+  const result = await kv.set(key, value, opts);
   return result !== null;
 }
 

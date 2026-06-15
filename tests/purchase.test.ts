@@ -3,8 +3,8 @@ import { NextRequest } from "next/server";
 
 const {
   mockGetSessionAddress,
-  mockKvGet,
   mockKvSet,
+  mockKvDel,
   mockKvIncr,
   mockAssertKeyCapacity,
   mockIssueKeyForAddress,
@@ -12,8 +12,8 @@ const {
   mockParseEventLogs,
 } = vi.hoisted(() => ({
   mockGetSessionAddress: vi.fn(),
-  mockKvGet: vi.fn(),
   mockKvSet: vi.fn(),
+  mockKvDel: vi.fn(),
   mockKvIncr: vi.fn(),
   mockAssertKeyCapacity: vi.fn(),
   mockIssueKeyForAddress: vi.fn(),
@@ -22,7 +22,7 @@ const {
 }));
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
-vi.mock("@vercel/kv", () => ({ kv: { get: mockKvGet, set: mockKvSet, incr: mockKvIncr } }));
+vi.mock("@vercel/kv", () => ({ kv: { set: mockKvSet, del: mockKvDel, incr: mockKvIncr } }));
 vi.mock("@/lib/key-guards", () => ({
   assertKeyCapacity: mockAssertKeyCapacity,
   PurchaseRecord: undefined,
@@ -90,7 +90,14 @@ beforeEach(() => {
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
   mockAssertKeyCapacity.mockResolvedValue(undefined);
-  mockKvGet.mockResolvedValue(null); // no prior txhash
+  // kv.set with nx: true returns "OK" on success, null on failure
+  mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: any) => {
+    if (opts?.nx === true) {
+      return Promise.resolve("OK"); // kvSetNx succeeds by default
+    }
+    return Promise.resolve(undefined); // normal kvSet
+  });
+  mockKvDel.mockResolvedValue(undefined);
   mockGetTransactionReceipt.mockResolvedValue(makeReceipt());
   mockParseEventLogs.mockReturnValue([
     { args: { from: ADDR, to: TREASURY, value: FIVE_TON } },
@@ -159,11 +166,11 @@ describe("POST /api/keys/purchase", () => {
   });
 
   it("returns 409 when txHash already used", async () => {
-    mockKvGet.mockImplementation((key: string) => {
-      if (key.startsWith("txhash:")) {
-        return Promise.resolve({ address: ADDR, usedAt: Date.now() });
+    mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: any) => {
+      if (opts?.nx === true) {
+        return Promise.resolve(null); // claim fails — already taken
       }
-      return Promise.resolve(null);
+      return Promise.resolve(undefined);
     });
     const res = await POST(makeReq());
     expect(res.status).toBe(409);
@@ -173,10 +180,11 @@ describe("POST /api/keys/purchase", () => {
     const res = await POST(makeReq());
     expect(res.status).toBe(200);
 
-    // txhash:{hash} written
+    // txhash:{hash} claimed via kv.set with nx: true
     expect(mockKvSet).toHaveBeenCalledWith(
       expect.stringContaining("txhash:"),
       expect.objectContaining({ address: ADDR }),
+      expect.objectContaining({ nx: true }),
     );
     // purchase:{address} written with expiresAt ~30 days from now
     expect(mockKvSet).toHaveBeenCalledWith(
@@ -185,5 +193,7 @@ describe("POST /api/keys/purchase", () => {
     );
     // issueKeyForAddress called
     expect(mockIssueKeyForAddress).toHaveBeenCalledWith(ADDR);
+    // kvDel NOT called on success (only on failure)
+    expect(mockKvDel).not.toHaveBeenCalled();
   });
 });
