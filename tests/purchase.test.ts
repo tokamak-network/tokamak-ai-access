@@ -10,6 +10,7 @@ const {
   mockIssueKeyForAddress,
   mockGetTransactionReceipt,
   mockParseEventLogs,
+  mockFetchTonUsdRate,
 } = vi.hoisted(() => ({
   mockGetSessionAddress: vi.fn(),
   mockKvSet: vi.fn(),
@@ -19,6 +20,7 @@ const {
   mockIssueKeyForAddress: vi.fn(),
   mockGetTransactionReceipt: vi.fn(),
   mockParseEventLogs: vi.fn(),
+  mockFetchTonUsdRate: vi.fn(),
 }));
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
@@ -28,6 +30,13 @@ vi.mock("@/lib/key-guards", () => ({
   PurchaseRecord: undefined,
 }));
 vi.mock("@/lib/issue-key", () => ({ issueKeyForAddress: mockIssueKeyForAddress }));
+vi.mock("@/lib/ton-price", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/ton-price")>();
+  return {
+    ...actual,
+    fetchTonUsdRate: mockFetchTonUsdRate,
+  };
+});
 vi.mock("viem", async (importOriginal) => {
   const actual = await importOriginal<typeof import("viem")>();
   return {
@@ -86,10 +95,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   process.env.TREASURY_ADDRESS = TREASURY;
   process.env.TON_ERC20_ADDRESS = TON_ERC20;
-  process.env.PURCHASE_PRICE_TON = "5";
+  process.env.PURCHASE_USD_PRICE = "5";
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
   mockAssertKeyCapacity.mockResolvedValue(undefined);
+  mockFetchTonUsdRate.mockResolvedValue(1.0); // rate = $1/TON
   // kv.set with nx: true returns "OK" on success, null on failure
   mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: any) => {
     if (opts?.nx === true) {
@@ -156,13 +166,20 @@ describe("POST /api/keys/purchase", () => {
   });
 
   it("returns 403 when payment amount is insufficient", async () => {
-    const insufficientValue = 4n * 10n ** 18n;
+    const insufficientValue = 3n * 10n ** 18n; // 3 TON < 4 TON minimum (at rate 1.0)
     mockGetTransactionReceipt.mockResolvedValue(makeReceipt({ value: insufficientValue }));
     mockParseEventLogs.mockReturnValue([
       { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: insufficientValue } },
     ]);
     const res = await POST(makeReq());
     expect(res.status).toBe(403);
+  });
+
+  it("returns 503 when price oracle is unavailable", async () => {
+    mockFetchTonUsdRate.mockRejectedValue(new Error("CoinGecko down"));
+    const res = await POST(makeReq());
+    expect(res.status).toBe(503);
+    expect((await res.json()).error).toMatch(/price oracle/i);
   });
 
   it("returns 409 when txHash already used", async () => {

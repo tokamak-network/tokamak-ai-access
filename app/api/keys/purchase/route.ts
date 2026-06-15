@@ -5,6 +5,7 @@ import { getSessionAddress } from "@/lib/siwe";
 import { assertKeyCapacity, type PurchaseRecord } from "@/lib/key-guards";
 import { issueKeyForAddress } from "@/lib/issue-key";
 import { kvSet, kvSetNx, kvDel } from "@/lib/kv";
+import { fetchTonUsdRate, usdToTonWei } from "@/lib/ton-price";
 
 const TRANSFER_EVENT_ABI = [
   {
@@ -52,8 +53,13 @@ export async function POST(req: NextRequest) {
 
   const tonErc20 = (process.env.TON_ERC20_ADDRESS ?? "").toLowerCase();
   const treasury = (process.env.TREASURY_ADDRESS ?? "").toLowerCase();
-  const priceTon = BigInt(process.env.PURCHASE_PRICE_TON ?? "5");
-  const minValue = priceTon * 10n ** 18n;
+
+  const rate = await fetchTonUsdRate().catch(() => null);
+  if (!rate) {
+    return NextResponse.json({ error: "Price oracle unavailable" }, { status: 503 });
+  }
+  const usdPrice = Number(process.env.PURCHASE_USD_PRICE ?? "5");
+  const minValue = usdToTonWei(usdPrice * 0.8, rate);
 
   const client = getPublicClient();
   const receipt = await client.getTransactionReceipt({ hash: txHash as `0x${string}` }).catch(() => null);
