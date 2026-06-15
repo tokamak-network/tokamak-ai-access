@@ -4,6 +4,7 @@ import { getTotalStakedTON } from "@/lib/staking";
 import { generateLiteLLMKey, revokeLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, hashKey } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
+import { assertRotateCooldown } from "@/lib/key-guards";
 
 const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
 
@@ -21,6 +22,12 @@ export async function POST(req: NextRequest) {
 
   const rl = await checkRateLimit(req, address);
   if (rl) return rl;
+
+  try {
+    await assertRotateCooldown(address);
+  } catch (err) {
+    return err as NextResponse;
+  }
 
   const totalWei = await getTotalStakedTON(address);
   if (totalWei < MIN_TON_WEI) {
@@ -43,6 +50,7 @@ export async function POST(req: NextRequest) {
     keySlice: key.slice(-4),
     createdAt: Date.now(),
     expiresAt,
+    lastRotatedAt: Date.now(),
   });
 
   return NextResponse.json({ key, expiresAt });

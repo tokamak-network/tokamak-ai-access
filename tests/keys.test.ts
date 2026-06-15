@@ -340,6 +340,40 @@ describe("POST /api/keys/rotate", () => {
     expect(res.status).toBe(200);
     expect((await res.json()).key).toBe(MOCK_KEY.key);
   });
+
+  it("returns 403 with hoursLeft when rotate cooldown is active", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    const twoHoursAgo = Date.now() - 2 * 60 * 60 * 1000;
+    mockKvGet.mockResolvedValue({ ...STORED_RECORD, lastRotatedAt: twoHoursAgo });
+
+    const res = await rotateKey(makeReq());
+    const body = await res.json();
+
+    expect(res.status).toBe(403);
+    expect(body.error).toBe("Rotation cooldown active");
+    expect(body.hoursLeft).toBeGreaterThan(20);
+    expect(body.hoursLeft).toBeLessThanOrEqual(22);
+    expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("allows rotation when cooldown has passed (25h since last rotation)", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    const twentyFiveHoursAgo = Date.now() - 25 * 60 * 60 * 1000;
+    mockKvGet.mockResolvedValue({ ...STORED_RECORD, lastRotatedAt: twentyFiveHoursAgo });
+    mockRevokeLiteLLMKey.mockResolvedValue(undefined);
+    mockGenerateLiteLLMKey.mockResolvedValue({ ...MOCK_KEY, key: "sk-litellm-new789" });
+    mockKvSet.mockResolvedValue(undefined);
+
+    const res = await rotateKey(makeReq());
+    expect(res.status).toBe(200);
+    expect((await res.json()).key).toBe("sk-litellm-new789");
+
+    // Verify lastRotatedAt was updated
+    const newCall = mockKvSet.mock.calls[mockKvSet.mock.calls.length - 1];
+    expect(newCall[1]).toHaveProperty("lastRotatedAt");
+    expect(newCall[1].lastRotatedAt).toBeGreaterThan(Date.now() - 1000);
+  });
 });
 
 // ── POST /api/keys/renew ─────────────────────────────────────────────────────
