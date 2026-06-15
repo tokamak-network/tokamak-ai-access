@@ -41,3 +41,22 @@ export function hashKey(key: string): string {
 export async function kvKeys(pattern: string): Promise<string[]> {
   return kv.keys(pattern);
 }
+
+/**
+ * SET NX EX — returns true if the key was set, false if it already existed.
+ * Used for TOCTOU issue lock: SET key:{address}:lock 1 NX EX 10
+ */
+export async function kvSetNx(key: string, value: unknown, ttlSeconds: number): Promise<boolean> {
+  const result = await kv.set(key, value, { nx: true, ex: ttlSeconds });
+  return result !== null;
+}
+
+/** Atomically increment a counter. Returns new value. */
+export async function kvIncr(key: string): Promise<number> {
+  return kv.incr(key);
+}
+
+/** Atomically decrement a counter. Returns new value. */
+export async function kvDecr(key: string): Promise<number> {
+  return kv.decr(key);
+}
