@@ -72,6 +72,7 @@ export async function POST(req: NextRequest) {
 
   const transferLog = logs.find(
     (log) =>
+      log.address?.toLowerCase() === tonErc20 &&
       log.args.from?.toLowerCase() === address.toLowerCase() &&
       log.args.to?.toLowerCase() === treasury &&
       (log.args.value ?? 0n) >= minValue,

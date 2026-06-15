@@ -82,7 +82,7 @@ beforeEach(() => {
   mockGetSessionAddress.mockResolvedValue(ADDR);
   mockGetTransactionReceipt.mockResolvedValue({ to: TON_ERC20.toLowerCase(), logs: [] });
   mockParseEventLogs.mockReturnValue([
-    { args: { from: ADDR, to: TREASURY, value: FIVE_TON } },
+    { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: FIVE_TON } },
   ]);
   mockRenewLiteLLMKey.mockResolvedValue({
     expiresAt: "2099-01-01T00:00:00.000Z",

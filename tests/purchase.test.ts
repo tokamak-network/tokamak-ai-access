@@ -100,7 +100,7 @@ beforeEach(() => {
   mockKvDel.mockResolvedValue(undefined);
   mockGetTransactionReceipt.mockResolvedValue(makeReceipt());
   mockParseEventLogs.mockReturnValue([
-    { args: { from: ADDR, to: TREASURY, value: FIVE_TON } },
+    { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: FIVE_TON } },
   ]);
   mockIssueKeyForAddress.mockResolvedValue(
     NextResponse.json({ key: "sk-litellm-xxx", expiresAt: "2099-01-01T00:00:00.000Z" })
@@ -138,7 +138,7 @@ describe("POST /api/keys/purchase", () => {
       makeReceipt({ fromAddr: "0xother00000000000000000000000000000002" })
     );
     mockParseEventLogs.mockReturnValue([
-      { args: { from: "0xother00000000000000000000000000000002", to: TREASURY, value: FIVE_TON } },
+      { address: TON_ERC20.toLowerCase(), args: { from: "0xother00000000000000000000000000000002", to: TREASURY, value: FIVE_TON } },
     ]);
     const res = await POST(makeReq());
     expect(res.status).toBe(403);
@@ -149,7 +149,7 @@ describe("POST /api/keys/purchase", () => {
       makeReceipt({ toAddr: "0xother00000000000000000000000000000003" })
     );
     mockParseEventLogs.mockReturnValue([
-      { args: { from: ADDR, to: "0xother00000000000000000000000000000003", value: FIVE_TON } },
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: "0xother00000000000000000000000000000003", value: FIVE_TON } },
     ]);
     const res = await POST(makeReq());
     expect(res.status).toBe(403);
@@ -159,7 +159,7 @@ describe("POST /api/keys/purchase", () => {
     const insufficientValue = 4n * 10n ** 18n;
     mockGetTransactionReceipt.mockResolvedValue(makeReceipt({ value: insufficientValue }));
     mockParseEventLogs.mockReturnValue([
-      { args: { from: ADDR, to: TREASURY, value: insufficientValue } },
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: insufficientValue } },
     ]);
     const res = await POST(makeReq());
     expect(res.status).toBe(403);
