@@ -15,7 +15,7 @@ import { kv } from "@vercel/kv";
 import { kvGet, kvSet } from "@/lib/kv";
 import { getTotalStakedTON, MIN_TON } from "@/lib/staking";
 import { revokeLiteLLMKey } from "@/lib/litellm";
-import type { KeyRecord } from "@/lib/key-guards";
+import type { KeyRecord, PurchaseRecord } from "@/lib/key-guards";
 
 export async function GET(req: NextRequest) {
   return handleCron(req);
@@ -71,6 +71,13 @@ async function handleCron(req: NextRequest) {
       const balance = await getTotalStakedTON(address);
 
       if (balance < MIN_TON_WEI) {
+        // Purchase exemption: skip revoke if active purchase exists
+        const purchase = await kvGet<PurchaseRecord>(`purchase:${address}`);
+        if (purchase && purchase.expiresAt > Date.now()) {
+          activeCount++;
+          continue;
+        }
+
         // Revoke the key
         try {
           await revokeLiteLLMKey(record.liteLlmKeyId);

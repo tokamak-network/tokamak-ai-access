@@ -116,7 +116,9 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
       };
 
       mockKvKeys.mockResolvedValue(["key:0xabc"]);
-      mockKvGet.mockResolvedValue(keyRecord);
+      mockKvGet
+        .mockResolvedValueOnce(keyRecord) // key:0xabc
+        .mockResolvedValueOnce(null); // purchase:0xabc (not found)
       mockGetTotalStakedTON.mockResolvedValue(0n); // below MIN_TON_WEI (10 * 10^18)
 
       const req = makeReq("GET", "Bearer test-secret");
@@ -219,8 +221,10 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
 
       mockKvKeys.mockResolvedValue(["key:0xfail", "key:0xsuccess"]);
       mockKvGet
-        .mockResolvedValueOnce(keyRecord1)
-        .mockResolvedValueOnce(keyRecord2);
+        .mockResolvedValueOnce(keyRecord1) // key:0xfail
+        .mockResolvedValueOnce(null) // purchase:0xfail (not found)
+        .mockResolvedValueOnce(keyRecord2) // key:0xsuccess
+        .mockResolvedValueOnce(null); // purchase:0xsuccess (not found)
       mockGetTotalStakedTON.mockResolvedValue(0n);
       mockRevokeLiteLLMKey
         .mockRejectedValueOnce(new Error("LiteLLM API error"))
@@ -311,6 +315,68 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
       expect(body.activeCount).toBe(1);
       // Drift correction must write exactly 1, not 2
       expect(mockKvSet).toHaveBeenCalledWith("stats:active-keys", 1);
+    });
+  });
+
+  describe("cron: purchase exemption", () => {
+    it("does not revoke a key when purchase is active (balance < min but purchase valid)", async () => {
+      // balance below minimum
+      mockGetTotalStakedTON.mockResolvedValue(0n);
+      // purchase active
+      const FUTURE = Date.now() + 30 * 24 * 60 * 60 * 1000;
+      mockKvGet.mockImplementation((key: string) => {
+        if (key === "key:0xaddr1") {
+          return {
+            liteLlmKeyId: "key-id-1",
+            hash: "hash-addr1",
+            keySlice: "addr1",
+            createdAt: Date.now(),
+            expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+            revokedAt: undefined,
+          };
+        }
+        if (key === `purchase:0xaddr1`) {
+          return { txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE };
+        }
+        return null;
+      });
+      mockKvKeys.mockResolvedValue(["key:0xaddr1"]);
+
+      const req = makeReq("GET", "Bearer test-secret");
+      const res = await GET(req);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.revoked).toBe(0);
+      expect(mockRevokeLiteLLMKey).not.toHaveBeenCalled();
+    });
+
+    it("revokes a key when purchase is expired (balance < min, purchase.expiresAt < now)", async () => {
+      mockGetTotalStakedTON.mockResolvedValue(0n);
+      const PAST = Date.now() - 1000;
+      mockKvGet.mockImplementation((key: string) => {
+        if (key === "key:0xaddr1") {
+          return {
+            liteLlmKeyId: "key-id-1",
+            hash: "hash-addr1",
+            keySlice: "addr1",
+            createdAt: Date.now(),
+            expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+            revokedAt: undefined,
+          };
+        }
+        if (key === `purchase:0xaddr1`) {
+          return { txHash: "0xabc", paidAt: PAST, expiresAt: PAST };
+        }
+        return null;
+      });
+      mockKvKeys.mockResolvedValue(["key:0xaddr1"]);
+
+      const req = makeReq("GET", "Bearer test-secret");
+      const res = await GET(req);
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.revoked).toBe(1);
+      expect(mockRevokeLiteLLMKey).toHaveBeenCalledWith("key-id-1");
     });
   });
 });
