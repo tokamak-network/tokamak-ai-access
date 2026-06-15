@@ -1,31 +1,21 @@
 import { NextResponse } from "next/server";
 import { fetchTonUsdRate } from "@/lib/ton-price";
-
-interface CacheEntry {
-  usdPerTon: number;
-  tonRequired: number;
-  usdPrice: number;
-  updatedAt: number;
-}
-
-let _cache: CacheEntry | null = null;
-
-export function _resetCacheForTest() {
-  _cache = null;
-}
+import { getPriceCache, setPriceCache } from "@/lib/price-cache";
 
 export async function GET() {
   const now = Date.now();
-  if (_cache && now - _cache.updatedAt < 60_000) {
-    return NextResponse.json(_cache);
+  const cache = getPriceCache();
+  if (cache && now - cache.updatedAt < 60_000) {
+    return NextResponse.json(cache);
   }
 
   try {
     const usdPerTon = await fetchTonUsdRate();
     const usdPrice = Number(process.env.PURCHASE_USD_PRICE ?? "5");
     const tonRequired = Math.ceil((usdPrice / usdPerTon) * 10_000) / 10_000;
-    _cache = { usdPerTon, tonRequired, usdPrice, updatedAt: now };
-    return NextResponse.json(_cache);
+    const entry = { usdPerTon, tonRequired, usdPrice, updatedAt: now };
+    setPriceCache(entry);
+    return NextResponse.json(entry);
   } catch {
     return NextResponse.json({ error: "Price oracle unavailable" }, { status: 503 });
   }

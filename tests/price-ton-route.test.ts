@@ -9,7 +9,8 @@ vi.mock("@/lib/ton-price", async (importOriginal) => {
   return { ...actual, fetchTonUsdRate: mockFetchTonUsdRate };
 });
 
-import { GET, _resetCacheForTest } from "@/app/api/price/ton/route";
+import { GET } from "@/app/api/price/ton/route";
+import { _resetCacheForTest } from "@/lib/price-cache";
 
 beforeEach(() => {
   vi.clearAllMocks();
