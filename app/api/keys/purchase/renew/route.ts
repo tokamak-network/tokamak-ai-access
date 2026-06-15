@@ -4,7 +4,7 @@ import { mainnet, sepolia } from "viem/chains";
 import { getSessionAddress } from "@/lib/siwe";
 import { type PurchaseRecord, type KeyRecord } from "@/lib/key-guards";
 import { renewLiteLLMKey } from "@/lib/litellm";
-import { kvGet, kvSet, kvSetNx } from "@/lib/kv";
+import { kvGet, kvSet, kvSetNx, kvDel } from "@/lib/kv";
 
 const TRANSFER_EVENT_ABI = [
   {
@@ -95,7 +95,10 @@ export async function PUT(req: NextRequest) {
   }
 
   const txError = await verifyTransferTx(txHash, address);
-  if (txError) return txError;
+  if (txError) {
+    await kvDel(`txhash:${txHash}`);
+    return txError;
+  }
 
   const now = Date.now();
   const newExpiresAt = Math.max(purchase.expiresAt, now) + 30 * 24 * 60 * 60 * 1000;

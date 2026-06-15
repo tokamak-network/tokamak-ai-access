@@ -6,6 +6,7 @@ const {
   mockKvGet,
   mockKvSet,
   mockKvSetNx,
+  mockKvDel,
   mockRenewLiteLLMKey,
   mockGetTransactionReceipt,
   mockParseEventLogs,
@@ -14,6 +15,7 @@ const {
   mockKvGet: vi.fn(),
   mockKvSet: vi.fn(),
   mockKvSetNx: vi.fn(),
+  mockKvDel: vi.fn(),
   mockRenewLiteLLMKey: vi.fn(),
   mockGetTransactionReceipt: vi.fn(),
   mockParseEventLogs: vi.fn(),
@@ -35,6 +37,7 @@ vi.mock("@vercel/kv", () => {
     kv: {
       get: mockKvGet,
       set: kvSet,
+      del: mockKvDel,
     },
   };
 });
@@ -85,6 +88,7 @@ beforeEach(() => {
     expiresAt: "2099-01-01T00:00:00.000Z",
   });
   mockKvSetNx.mockResolvedValue(true); // claim succeeds by default
+  mockKvDel.mockResolvedValue(1); // del succeeds by default
 
   // Default KV state: txhash not used, purchase exists, key record exists
   mockKvGet.mockImplementation((key: string) => {
@@ -172,5 +176,25 @@ describe("PUT /api/keys/purchase/renew", () => {
     // expiresAt should be ~30d from now (not from the past)
     const thirtyDays = 30 * 24 * 60 * 60 * 1000;
     expect(body.expiresAt).toBeGreaterThanOrEqual(NOW + thirtyDays - 5000);
+  });
+
+  it("releases txHash dedup claim when tx verification fails (422)", async () => {
+    mockGetTransactionReceipt.mockResolvedValue(null); // tx not found
+    const res = await PUT(makeReq());
+    expect(res.status).toBe(422);
+    // dedup claim should be released
+    expect(mockKvDel).toHaveBeenCalledWith(`txhash:${TX_HASH}`);
+  });
+
+  it("skips renewLiteLLMKey when key record is missing", async () => {
+    mockKvGet.mockImplementation((key: string) => {
+      if (key.startsWith("txhash:")) return Promise.resolve(null);
+      if (key.startsWith("purchase:")) return Promise.resolve({ txHash: "0xold", paidAt: NOW, expiresAt: FUTURE });
+      if (key.startsWith("key:")) return Promise.resolve(null); // no key record
+      return Promise.resolve(null);
+    });
+    const res = await PUT(makeReq());
+    expect(res.status).toBe(200);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
   });
 });
