@@ -14,7 +14,7 @@ vi.mock("@vercel/kv", () => ({
   kv: { get: mockKvGet, set: vi.fn(), keys: vi.fn() },
 }));
 
-import { assertStake, assertRotateCooldown, assertKeyCapacity } from "@/lib/key-guards";
+import { assertStake, assertRotateCooldown, assertKeyCapacity, assertEligibility } from "@/lib/key-guards";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
 const MIN_TON_WEI = 10n * 10n ** 18n;
@@ -86,5 +86,42 @@ describe("assertKeyCapacity", () => {
     expect(err.status).toBe(503);
     const body = await err.json();
     expect(body.error).toBe("Service at capacity");
+  });
+});
+
+// ── assertEligibility ────────────────────────────────────────────────────────
+describe("assertEligibility", () => {
+  const NOW = Date.now();
+  const FUTURE = NOW + 30 * 24 * 60 * 60 * 1000;
+  const PAST = NOW - 1000;
+
+  it("passes when staking balance meets minimum", async () => {
+    mockGetTotalStakedTON.mockResolvedValue(MIN_TON_WEI + 1n);
+    mockKvGet.mockResolvedValue(null); // no purchase record
+    await expect(assertEligibility(ADDR)).resolves.toBeUndefined();
+  });
+
+  it("passes when active purchase exists (no staking)", async () => {
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    mockKvGet.mockResolvedValue({ txHash: "0xabc", paidAt: NOW, expiresAt: FUTURE });
+    await expect(assertEligibility(ADDR)).resolves.toBeUndefined();
+  });
+
+  it("throws 403 when staking insufficient and purchase expired", async () => {
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    mockKvGet.mockResolvedValue({ txHash: "0xabc", paidAt: NOW, expiresAt: PAST });
+    const err = await assertEligibility(ADDR).catch((e) => e);
+    expect(err).toBeInstanceOf(NextResponse);
+    expect(err.status).toBe(403);
+    const body = await err.json();
+    expect(body.error).toBe("Not eligible");
+  });
+
+  it("throws 403 when staking insufficient and no purchase", async () => {
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    mockKvGet.mockResolvedValue(null);
+    const err = await assertEligibility(ADDR).catch((e) => e);
+    expect(err).toBeInstanceOf(NextResponse);
+    expect(err.status).toBe(403);
   });
 });

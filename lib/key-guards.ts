@@ -23,6 +23,23 @@ export async function assertStake(address: string): Promise<void> {
   }
 }
 
+export interface PurchaseRecord {
+  txHash: string;
+  paidAt: number;
+  expiresAt: number; // unix ms
+}
+
+export async function assertEligibility(address: string): Promise<void> {
+  const minTonWei = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
+  const balance = await getTotalStakedTON(address);
+  if (balance >= minTonWei) return;
+
+  const purchase = await kvGet<PurchaseRecord>(`purchase:${address}`);
+  if (purchase && purchase.expiresAt > Date.now()) return;
+
+  throw NextResponse.json({ error: "Not eligible" }, { status: 403 });
+}
+
 /**
  * Throws a 403 NextResponse with hoursLeft if the address rotated a key
  * within the last 24 hours.
