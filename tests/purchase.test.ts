@@ -175,6 +175,17 @@ describe("POST /api/keys/purchase", () => {
     expect(res.status).toBe(403);
   });
 
+  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2 TON)", async () => {
+    mockFetchTonUsdRate.mockResolvedValue(2.0); // $2/TON → minValue = usdToTonWei(4, 2.0) = 2 TON
+    const threeToN = 3n * 10n ** 18n;
+    mockGetTransactionReceipt.mockResolvedValue(makeReceipt({ value: threeToN }));
+    mockParseEventLogs.mockReturnValue([
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: threeToN } },
+    ]);
+    const res = await POST(makeReq());
+    expect(res.status).toBe(200); // 3 TON passes because dynamic minValue is only 2 TON
+  });
+
   it("returns 503 when price oracle is unavailable", async () => {
     mockFetchTonUsdRate.mockRejectedValue(new Error("CoinGecko down"));
     const res = await POST(makeReq());
