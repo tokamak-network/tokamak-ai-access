@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
     } satisfies Omit<KeyRecord, "revokedAt" | "lastRotatedAt">);
 
     // F-03: increment global counter
-    await kvIncr("stats:active-keys");
+    try {
+      await kvIncr("stats:active-keys");
+    } catch {
+      // Best-effort: cron resync corrects drift hourly
+    }
 
     return NextResponse.json({ key, expiresAt });
   } finally {

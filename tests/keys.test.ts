@@ -16,6 +16,7 @@ const {
   mockRenewLiteLLMKey,
   mockKvGet,
   mockKvSet,
+  mockKvIncr,
   mockCheckRateLimit,
 } = vi.hoisted(() => ({
   mockGetSessionAddress:  vi.fn(),
@@ -25,6 +26,7 @@ const {
   mockRenewLiteLLMKey:    vi.fn(),
   mockKvGet:              vi.fn(),
   mockKvSet:              vi.fn(),
+  mockKvIncr:             vi.fn(),
   mockCheckRateLimit:     vi.fn(),
 }));
 
@@ -35,7 +37,7 @@ vi.mock("@/lib/litellm",       () => ({
   revokeLiteLLMKey:   mockRevokeLiteLLMKey,
   renewLiteLLMKey:    mockRenewLiteLLMKey,
 }));
-vi.mock("@vercel/kv",          () => ({ kv: { get: mockKvGet, set: mockKvSet, del: vi.fn(), incr: vi.fn() } }));
+vi.mock("@vercel/kv",          () => ({ kv: { get: mockKvGet, set: mockKvSet, del: vi.fn(), incr: mockKvIncr } }));
 vi.mock("@/lib/with-rate-limit", () => ({ checkRateLimit: mockCheckRateLimit }));
 
 // Modules imported AFTER mocks are registered
@@ -93,6 +95,8 @@ describe("POST /api/keys/issue", () => {
     // hash only — never the plaintext key
     expect(mockKvSet.mock.calls[1][1]).not.toHaveProperty("key");
     expect(mockKvSet.mock.calls[1][1]).toHaveProperty("hash");
+    expect(mockKvIncr).toHaveBeenCalledOnce();
+    expect(mockKvIncr).toHaveBeenCalledWith("stats:active-keys");
   });
 
   it("returns 401 when no session", async () => {
