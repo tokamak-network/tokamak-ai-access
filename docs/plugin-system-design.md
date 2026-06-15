@@ -11,7 +11,7 @@
 
 ### 서비스 개요
 
-TON AI Access는 Tokamak Network에 10 TON 이상 스테이킹한 사용자에게 LiteLLM API 키를 무료로 발급하는 서비스다. EVM 지갑 연결 → SIWE 서명 → 즉시 키 발급의 3단계로 이루어지며, 가스비나 트랜잭션 없이 작동한다.
+TON AI Access는 Tokamak Network에 100 TON 이상 스테이킹한 사용자에게 LiteLLM API 키를 무료로 발급하는 서비스다. EVM 지갑 연결 → SIWE 서명 → 즉시 키 발급의 3단계로 이루어지며, 가스비나 트랜잭션 없이 작동한다.
 
 발급된 키는 `https://api2.ai.tokamak.network` 엔드포인트를 통해 OpenAI-compatible REST API로 LLM 모델에 접근할 수 있다. 현재 기본 제공 모델은 `qwen-3.6`이며, 엔드포인트에서 추가 모델을 동적으로 탐색할 수 있다.
 

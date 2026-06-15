@@ -5,7 +5,7 @@
 
 ## Problem
 
-API key 취득 경로가 스테이킹(≥10 TON)으로만 한정되어 있어, 스테이킹 의사가 없는 사용자는 서비스를 이용할 수 없다.
+API key 취득 경로가 스테이킹(≥100 TON)으로만 한정되어 있어, 스테이킹 의사가 없는 사용자는 서비스를 이용할 수 없다.
 
 ## Solution
 
@@ -63,8 +63,8 @@ Buy Access 선택 시:
 
 | 조건 | 화면 |
 |------|------|
-| staked ≥ 10 TON | 기존 대시보드 (Key 상태 카드 + Extend/New 카드) |
-| staked < 10 TON AND no active purchase | [Stake TON] [Buy Access] 카드 병렬 |
+| staked ≥ 100 TON | 기존 대시보드 (Key 상태 카드 + Extend/New 카드) |
+| staked < 100 TON AND no active purchase | [Stake TON] [Buy Access] 카드 병렬 |
 | active purchase (`expiresAt > now`) | Eligible via Purchase 대시보드 |
 
 ### 2-2. Key 상태 카드 — 4가지 상태
@@ -121,7 +121,7 @@ txHash 재사용(replay attack) 방지용 글로벌 deduplicate 레코드.
 ```typescript
 export async function assertEligibility(address: string): Promise<void> {
   // Path 1: staking
-  const minTonWei = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
+  const minTonWei = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
   const balance = await getTotalStakedTON(address);
   if (balance >= minTonWei) return;
 
@@ -307,7 +307,7 @@ curl -X POST http://localhost:3000/api/cron/check-stakes \
 ### T-01 구매 정상 플로우
 
 ```
-전제: 지갑 연결, SIWE 완료, 스테이킹 < 10 TON
+전제: 지갑 연결, SIWE 완료, 스테이킹 < 100 TON
 
 1. 대시보드 진입 → [Stake TON] [Buy Access] 카드 표시 확인
 2. [Buy Access] 클릭 → 패널 확장 확인

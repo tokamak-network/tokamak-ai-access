@@ -7,5 +7,5 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #16933 | 11:54 PM | 🔵 | Empty CLAUDE.md placeholders identified in CLI subdirectories | ~402 |
+| #16939 | 11:57 PM | 🔵 | Cron job implements purchase exemption for stake-checking revocation logic | ~449 |
 </claude-mem-context>
