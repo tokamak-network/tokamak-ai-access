@@ -626,6 +626,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
   const [selectedCard, setSelectedCard] = useState<"stake" | "buy" | null>(null);
+  const [priceData, setPriceData] = useState<{ tonRequired: number; usdPrice: number } | null>(null);
+  const [priceLoading, setPriceLoading] = useState(false);
   const setupRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
@@ -651,6 +653,16 @@ export default function DashboardPage() {
   const purchase = usePurchase(fetchAll);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    if (selectedCard !== "buy") return;
+    setPriceLoading(true);
+    fetch("/api/price/ton")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setPriceData(d))
+      .catch(() => setPriceData(null))
+      .finally(() => setPriceLoading(false));
+  }, [selectedCard]);
 
   async function issueKey() {
     setActionLoading(true); setError(null);
@@ -801,7 +813,7 @@ export default function DashboardPage() {
                     <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "12px", lineHeight: 1.5 }}>
                       No staking needed. Same models and rate limits.
                     </p>
-                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>5 TON</span>
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>≈$5 in TON</span>
                     <br />
                     <span style={{ fontSize: "0.6875rem", color: "var(--muted)" }}>30 days</span>
                   </div>
@@ -819,9 +831,16 @@ export default function DashboardPage() {
                 {selectedCard === "buy" && (
                   <div className="card" style={{ marginBottom: "16px" }}>
                     <span className="card__label">Buy 30-day access</span>
-                    <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "16px" }}>
-                      Sends 5 TON ERC-20 to treasury. Access activates after on-chain confirmation (~15s).
+                    <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "4px" }}>
+                      {priceData
+                        ? `Sends ${priceData.tonRequired} TON ERC-20 to treasury. Access activates after on-chain confirmation (~15s).`
+                        : "Sends TON ERC-20 to treasury. Access activates after on-chain confirmation (~15s)."}
                     </p>
+                    {priceData && (
+                      <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)", marginBottom: "16px" }}>
+                        ≈ ${priceData.usdPrice} · Rate updates every 60s
+                      </p>
+                    )}
                     {purchase.error && (
                       <p style={{ fontSize: "0.8125rem", color: "#dc2626", marginBottom: "12px" }}>{purchase.error}</p>
                     )}
@@ -831,12 +850,14 @@ export default function DashboardPage() {
                       <button
                         className="btn-primary"
                         onClick={purchase.purchase}
-                        disabled={purchase.status !== "idle" && purchase.status !== "error"}
+                        disabled={priceLoading || !priceData || (purchase.status !== "idle" && purchase.status !== "error")}
                       >
                         {purchase.status === "signing" && "Confirm in wallet…"}
                         {purchase.status === "confirming" && "Confirming on-chain…"}
                         {purchase.status === "verifying" && "Verifying payment…"}
-                        {(purchase.status === "idle" || purchase.status === "error") && "Pay 5 TON →"}
+                        {(purchase.status === "idle" || purchase.status === "error") && (
+                          priceLoading ? "Loading price…" : priceData ? `Pay ${priceData.tonRequired} TON →` : "Price unavailable"
+                        )}
                       </button>
                     )}
                   </div>
@@ -876,7 +897,7 @@ export default function DashboardPage() {
                       style={{ flexShrink: 0 }}
                     >
                       {purchase.status === "idle" || purchase.status === "error"
-                        ? "Renew 30 days (+5 TON) →"
+                        ? "Renew 30 days →"
                         : "Processing…"}
                     </button>
                   </div>
