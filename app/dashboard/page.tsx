@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useDisconnect } from "wagmi";
 import { useTonBalance, useStake, LAYER2_OPTIONS, DEFAULT_LAYER2 } from "@/lib/hooks/useStake";
+import { usePurchase } from "@/lib/hooks/usePurchase";
 import {
   useStakedBalance,
   usePendingUnstaked,
@@ -20,6 +21,8 @@ interface BalanceData {
   totalStakedTON: string;
   eligible: boolean;
   minTon: number;
+  activePurchase: boolean;
+  purchaseExpiresAt: number | null;
 }
 interface KeyData {
   hasActiveKey: boolean;
@@ -622,6 +625,7 @@ export default function DashboardPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<"stake" | "buy" | null>(null);
   const setupRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
@@ -643,6 +647,8 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }, [router]);
+
+  const purchase = usePurchase(fetchAll);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
@@ -743,9 +749,8 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {!loading && balance && !balance.eligible && (
+            {!loading && balance && !balance.eligible && !balance.activePurchase && (
               <>
-                {/* Current staked amount + gap */}
                 <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
                   <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.25rem, 3.5vw, 3rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1 }}>
                     {balance.totalStakedTON}
@@ -755,24 +760,127 @@ export default function DashboardPage() {
                   </span>
                   <span className="badge badge--no">Not eligible</span>
                 </div>
-                <p className="body-lead" style={{ marginBottom: "32px" }}>
-                  You need at least <strong style={{ color: "var(--ink)" }}>{balance.minTon} TON</strong> staked
-                  across any Tokamak Layer2 to receive an API key.
-                  You&apos;re <strong style={{ color: "var(--ink)" }}>
-                    {Math.max(0, balance.minTon - parseFloat(balance.totalStakedTON)).toFixed(1)} TON
-                  </strong> short.
+                <p className="body-lead" style={{ marginBottom: "24px" }}>
+                  Get API access by staking ≥{balance.minTon} TON or buying a 30-day pass.
                 </p>
 
-                {/* In-app staking panel */}
-                <div className="card">
-                  <span className="card__label">Stake TON directly</span>
-                  <StakePanel
-                    minTon={balance.minTon}
-                    onSuccess={fetchAll}
-                  />
+                {/* Two selection cards */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+                  {/* Stake card */}
+                  <div
+                    onClick={() => setSelectedCard("stake")}
+                    style={{
+                      border: `1px solid ${selectedCard === "stake" ? "var(--ink)" : "var(--hairline)"}`,
+                      borderRadius: "var(--radius)",
+                      padding: "16px",
+                      background: "var(--surface)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span className="eyebrow" style={{ display: "block", marginBottom: "8px" }}>Stake TON</span>
+                    <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "12px", lineHeight: 1.5 }}>
+                      Works as long as you stay staked. No recurring payment.
+                    </p>
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>Free</span>
+                    <br />
+                    <span style={{ fontSize: "0.6875rem", color: "var(--muted)" }}>while staked ≥{balance.minTon} TON</span>
+                  </div>
+
+                  {/* Buy card */}
+                  <div
+                    onClick={() => setSelectedCard("buy")}
+                    style={{
+                      border: `2px solid ${selectedCard === "buy" ? "#6366f1" : "#c7d2fe"}`,
+                      borderRadius: "var(--radius)",
+                      padding: "16px",
+                      background: selectedCard === "buy" ? "#fafeff" : "var(--surface)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span className="eyebrow" style={{ display: "block", marginBottom: "8px", color: "#6366f1" }}>Buy Access</span>
+                    <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "12px", lineHeight: 1.5 }}>
+                      No staking needed. Same models and rate limits.
+                    </p>
+                    <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>5 TON</span>
+                    <br />
+                    <span style={{ fontSize: "0.6875rem", color: "var(--muted)" }}>30 days</span>
+                  </div>
                 </div>
 
+                {/* Stake expanded panel */}
+                {selectedCard === "stake" && (
+                  <div className="card" style={{ marginBottom: "16px" }}>
+                    <span className="card__label">Stake TON directly</span>
+                    <StakePanel minTon={balance.minTon} onSuccess={fetchAll} />
+                  </div>
+                )}
 
+                {/* Buy expanded panel */}
+                {selectedCard === "buy" && (
+                  <div className="card" style={{ marginBottom: "16px" }}>
+                    <span className="card__label">Buy 30-day access</span>
+                    <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "16px" }}>
+                      Sends 5 TON ERC-20 to treasury. Access activates after on-chain confirmation (~15s).
+                    </p>
+                    {purchase.error && (
+                      <p style={{ fontSize: "0.8125rem", color: "#dc2626", marginBottom: "12px" }}>{purchase.error}</p>
+                    )}
+                    {purchase.status === "success" ? (
+                      <p style={{ fontSize: "0.9rem", color: "#16a34a" }}>✓ Payment verified — refreshing…</p>
+                    ) : (
+                      <button
+                        className="btn-primary"
+                        onClick={purchase.purchase}
+                        disabled={purchase.status !== "idle" && purchase.status !== "error"}
+                      >
+                        {purchase.status === "signing" && "Confirm in wallet…"}
+                        {purchase.status === "confirming" && "Confirming on-chain…"}
+                        {purchase.status === "verifying" && "Verifying payment…"}
+                        {(purchase.status === "idle" || purchase.status === "error") && "Pay 5 TON →"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            {!loading && balance && !balance.eligible && balance.activePurchase && (
+              <>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)" }}>
+                    Access via purchase
+                  </span>
+                  <span className="badge badge--ok">Eligible</span>
+                </div>
+
+                {/* Expiry banner — shown when < 7 days remaining */}
+                {balance.purchaseExpiresAt && balance.purchaseExpiresAt - Date.now() < 7 * 24 * 60 * 60 * 1000 && (
+                  <div style={{
+                    background: "#fffbeb",
+                    border: "1px solid #fcd34d",
+                    borderRadius: "var(--radius)",
+                    padding: "12px 16px",
+                    marginBottom: "16px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: "12px",
+                  }}>
+                    <span style={{ fontSize: "0.875rem", color: "#92400e" }}>
+                      Access expires in {Math.ceil((balance.purchaseExpiresAt - Date.now()) / (24 * 60 * 60 * 1000))} day(s)
+                    </span>
+                    <button
+                      className="btn-primary"
+                      onClick={purchase.renew}
+                      disabled={purchase.status !== "idle" && purchase.status !== "error"}
+                      style={{ flexShrink: 0 }}
+                    >
+                      {purchase.status === "idle" || purchase.status === "error"
+                        ? "Renew 30 days (+5 TON) →"
+                        : "Processing…"}
+                    </button>
+                  </div>
+                )}
               </>
             )}
 

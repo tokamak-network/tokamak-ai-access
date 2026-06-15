@@ -49,11 +49,11 @@ export async function kvKeys(pattern: string): Promise<string[]> {
  * Used for dedup: SET txhash:{hash} {...} NX (no TTL = permanent)
  */
 export async function kvSetNx(key: string, value: unknown, ttlSeconds?: number): Promise<boolean> {
-  const opts = { nx: true } as Parameters<typeof kv.set>[2];
+  const opts: Record<string, unknown> = { nx: true };
   if (ttlSeconds !== undefined) {
     opts.ex = ttlSeconds;
   }
-  const result = await kv.set(key, value, opts);
+  const result = await kv.set(key, value, opts as Parameters<typeof kv.set>[2]);
   return result !== null;
 }
 
