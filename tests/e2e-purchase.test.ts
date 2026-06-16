@@ -92,6 +92,8 @@ describe.skipIf(!E2E_PRIVATE_KEY)("Purchase e2e (Sepolia)", () => {
     const priceRes = await fetch(`${E2E_BASE_URL}/api/price/ton`);
     expect(priceRes.status, "price endpoint").toBe(200);
     const { usdPerTon, usdPrice } = await priceRes.json();
+    expect(usdPrice, "usdPrice").toBeTypeOf("number");
+    expect(usdPerTon, "usdPerTon").toBeTypeOf("number");
     const amountWei = usdToTonWei(usdPrice, usdPerTon);
 
     // 5. Send Sepolia TON ERC-20 transfer to burn address
@@ -103,7 +105,8 @@ describe.skipIf(!E2E_PRIVATE_KEY)("Purchase e2e (Sepolia)", () => {
     });
 
     // 6. Wait for on-chain confirmation
-    await publicClient.waitForTransactionReceipt({ hash: txHash });
+    const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash });
+    expect(receipt.status, "ERC-20 transfer must succeed").toBe("success");
 
     // 7. Call purchase API with session cookie
     const purchaseRes = await fetch(`${E2E_BASE_URL}/api/keys/purchase`, {
