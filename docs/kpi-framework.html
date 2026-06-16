@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TON AI Access — KPI 프레임워크 (1M · 6M · 1Y)</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --border:#2d333b;
+    --text:#e6edf3; --muted:#9aa6b2;
+    --acq:#58a6ff; --util:#bc8cff; --eng:#3fb950; --eco:#e3b341; --plat:#39c5cf; --rel:#9aa6b2; --red:#f85149;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo",sans-serif;line-height:1.55;font-size:15px}
+  .wrap{max-width:1060px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:26px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:26px}
+  h2{font-size:19px;margin:42px 0 6px;display:flex;align-items:center;gap:8px}
+  h2 .b{width:4px;height:19px;background:var(--acq);border-radius:2px}
+  .lead{color:var(--muted);font-size:14px;margin:0 0 16px}
+
+  /* north star */
+  .ns{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin:6px 0}
+  .nscard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px}
+  .nscard .tag{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--util)}
+  .nscard .big{font-size:21px;font-weight:800;margin:6px 0 2px;letter-spacing:-.3px}
+  .nscard .sm{font-size:13px;color:var(--muted)}
+  .nscard.co .tag{color:var(--acq)}
+  .guard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px}
+  .guard h4{margin:0 0 8px;font-size:13px;color:var(--rel);text-transform:uppercase;letter-spacing:.5px}
+  .guard li{font-size:13px;margin:4px 0;color:var(--text)}
+  .guard ul{margin:0;padding-left:18px}
+
+  /* horizon columns */
+  .cols{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:10px}
+  .col{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .col header{padding:16px 18px;border-bottom:1px solid var(--border);background:var(--panel2)}
+  .col header .h{font-size:17px;font-weight:700}
+  .col header .p{font-size:12px;color:var(--muted)}
+  .col .body{padding:6px 16px 14px}
+  .m{padding:11px 0;border-bottom:1px dashed var(--border)}
+  .m:last-child{border-bottom:none}
+  .m .top{display:flex;align-items:center;gap:7px;margin-bottom:2px}
+  .m .name{font-size:13.5px;font-weight:600}
+  .m .tgt{font-size:13px;color:var(--text);font-weight:700}
+  .m .def{font-size:11.5px;color:var(--muted)}
+  .dotp{width:9px;height:9px;border-radius:50%;flex:0 0 9px}
+  .lg{margin-left:auto;font-size:9.5px;color:var(--muted);border:1px solid var(--border);border-radius:10px;padding:1px 6px;white-space:nowrap}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin:14px 0 0}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+  .kill{background:rgba(248,81,73,.06);border:1px solid rgba(248,81,73,.35);border-radius:12px;padding:16px 18px;margin-top:10px}
+  .kill h3{margin:0 0 6px;font-size:15px;color:var(--red)}
+  .kill p{margin:6px 0;font-size:13.5px}
+  .note{background:rgba(88,166,255,.06);border-left:3px solid var(--acq);border-radius:0 8px 8px 0;padding:12px 16px;font-size:13.5px;margin-top:14px}
+  code{font-family:var(--mono);font-size:12px;background:var(--panel2);padding:1px 5px;border-radius:4px}
+  footer{margin-top:42px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:12.5px}
+  @media(max-width:820px){.cols{grid-template-columns:1fr}.ns{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>TON AI Access — KPI 프레임워크</h1>
+  <div class="sub">베타 오픈 기준 · 1개월 / 6개월 / 1년 · 전략 정렬: TON 유틸리티(B) + 플랫폼(C) + 신규 스테이커 유치</div>
+
+  <!-- North Star -->
+  <div class="ns">
+    <div class="nscard">
+      <div class="tag">North Star</div>
+      <div class="big">월간 TON 소각량 (키 구매)</div>
+      <div class="sm">B(토큰 유틸리티)를 직접 측정 — "AI 사용이 TON을 태운다"가 수치로. 가격 변동 분리 위해 TON·USD 동시 추적.</div>
+    </div>
+    <div class="nscard co">
+      <div class="tag">Co-primary</div>
+      <div class="big">서비스 경유 신규 스테이커 순증</div>
+      <div class="sm">원래 목적(스테이커 유치)의 직접 척도. 기존 베이스 355명 대비 증가분.</div>
+    </div>
+  </div>
+  <div class="guard" style="margin-top:16px">
+    <h4>가드레일 (상시 모니터 · 게이밍/품질 저하 방지)</h4>
+    <ul>
+      <li>업타임 ≥ 99% · 피크 동시접속 / 용량 &lt; 70% (자체 호스팅 = 용량이 제약)</li>
+      <li>어뷰즈율(스테이크 하락·파밍으로 회수된 키 비율) &lt; 10%</li>
+      <li>활성 키당 비용(allocated infra ÷ 활성 키) 하락 추세</li>
+    </ul>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--acq)"></i>Acquisition</span>
+    <span><i style="background:var(--util)"></i>TON 유틸리티</span>
+    <span><i style="background:var(--eng)"></i>Engagement</span>
+    <span><i style="background:var(--eco)"></i>Economics</span>
+    <span><i style="background:var(--plat)"></i>Platform(C)</span>
+    <span><i style="background:var(--rel)"></i>Reliability</span>
+    <span style="margin-left:auto">L = 선행지표 · G = 후행지표</span>
+  </div>
+
+  <!-- Horizons -->
+  <div class="cols">
+
+    <!-- 1M -->
+    <div class="col">
+      <header><div class="h">1개월</div><div class="p">베타 검증 — "파이프가 도나" (선행지표 위주, 수익·리텐션 판단 금지)</div></header>
+      <div class="body">
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--rel)"></span><span class="name">업타임</span><span class="lg">L</span></div><div class="tgt">≥ 99%</div><div class="def">장애·중단 시간 비율</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--acq)"></span><span class="name">키 발급 수</span><span class="lg">L</span></div><div class="tgt">50–150 <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">누적 발급 키</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--eng)"></span><span class="name">활성화율</span><span class="lg">L</span></div><div class="tgt">≥ 60%</div><div class="def">발급 → 실제 API 1회 이상 호출</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--acq)"></span><span class="name">신규 지갑</span><span class="lg">L</span></div><div class="tgt">≥ 30 <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">기존 스테이커 아닌 첫 유입</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--eng)"></span><span class="name">주간 활성 키(WAU)</span><span class="lg">L</span></div><div class="tgt">30–80 <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">주중 ≥1 호출</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--util)"></span><span class="name">TON 소각 (신호)</span><span class="lg">L</span></div><div class="tgt">&gt; 0</div><div class="def">유료(번) 경로가 작동하는지만 확인</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--rel)"></span><span class="name">어뷰즈/회수율</span><span class="lg">L</span></div><div class="tgt">&lt; 10%</div><div class="def">파밍·스테이크 하락 회수 비율</div></div>
+      </div>
+    </div>
+
+    <!-- 6M -->
+    <div class="col">
+      <header><div class="h">6개월</div><div class="p">트랙션 · TON 유틸리티 — 패턴이 보이기 시작</div></header>
+      <div class="body">
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--acq)"></span><span class="name">누적 키</span><span class="lg">G</span></div><div class="tgt">300–800 <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">누적 발급</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--eng)"></span><span class="name">M1 리텐션</span><span class="lg">G</span></div><div class="tgt">≥ 40%</div><div class="def">발급 후 다음 달 유지/갱신</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--util)"></span><span class="name">월간 TON 소각 ★</span><span class="lg">G</span></div><div class="tgt">우상향 + ≥ $X/월 <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">North Star · TON·USD 동시</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--util)"></span><span class="name">유료(번) 경로 비중</span><span class="lg">G</span></div><div class="tgt">≥ 25–30%</div><div class="def">전체 키 중 스테이크 아닌 구매</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--acq)"></span><span class="name">신규 스테이커 순증 ★</span><span class="lg">G</span></div><div class="tgt">≥ 50 (+14%) <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">Co-primary · 베이스 355 대비</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--eng)"></span><span class="name">월 서빙 토큰</span><span class="lg">G</span></div><div class="tgt">우상향</div><div class="def">총 처리 토큰 추세</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--eco)"></span><span class="name">BEP 커버리지</span><span class="lg">G</span></div><div class="tgt">≥ 20% <span style="color:var(--muted);font-weight:400">(할당% 결정 필요)</span></div><div class="def">번 수익 ÷ 할당 인프라비</div></div>
+      </div>
+    </div>
+
+    <!-- 1Y -->
+    <div class="col">
+      <header><div class="h">1년</div><div class="p">지속가능성 · 플랫폼 · 생태계 기여 검증</div></header>
+      <div class="body">
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--eco)"></span><span class="name">BEP 커버리지</span><span class="lg">G</span></div><div class="tgt">≥ 50–100% <span style="color:var(--muted);font-weight:400">(할당분)</span></div><div class="def">할당 인프라비를 번 수익이 충당</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--acq)"></span><span class="name">누적 신규 스테이커 ★</span><span class="lg">G</span></div><div class="tgt">≥ 150 (+40%) <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">원래 목적 검증 · 베이스 355 대비</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--util)"></span><span class="name">월간 TON 소각 ★</span><span class="lg">G</span></div><div class="tgt">안정적 우상향 · 목표치 <span style="color:var(--muted);font-weight:400">(보정)</span></div><div class="def">North Star 정착</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--plat)"></span><span class="name">외부 통합 (화이트라벨)</span><span class="lg">G</span></div><div class="tgt">≥ 1</div><div class="def">타 프로젝트 토큰/USDT 소각 연동(C)</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--eng)"></span><span class="name">M3 리텐션</span><span class="lg">G</span></div><div class="tgt">≥ 30%</div><div class="def">3개월 후 활성 유지</div></div>
+        <div class="m"><div class="top"><span class="dotp" style="background:var(--acq)"></span><span class="name">비크립토 유입 비중</span><span class="lg">G</span></div><div class="tgt">↑ 추세</div><div class="def">인지도(awareness) 프록시</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Kill / Reassess -->
+  <div class="kill">
+    <h3>⚠ 재검토 기준 (6개월 시점 — Zena: "안 되면 어떻게")</h3>
+    <p>아래가 <b>동시 충족</b>되면 서비스 축소·재설계 검토: 신규 스테이커 순증 &lt; ~20 <b>AND</b> 월 TON 소각 &lt; $X(보정) <b>AND</b> 활성 키 &lt; ~50.</p>
+    <p>단 인프라($10k/월)는 <b>sunk cost</b>(다른 용도 공용)라 "종료"가 아니라 <b>방향 전환</b> 결정입니다. 서비스가 6개월 내 폭발 안 한다고 멈추지 말 것(서비스는 누적·입소문이 필요) — 추세가 우하향일 때만 재검토.</p>
+  </div>
+
+  <div class="note">★ = North Star / Co-primary. 1개월엔 의도적으로 <b>선행지표만</b> 봅니다(리텐션·수익은 표본 부족). 6개월부터 후행지표가 의미를 갖습니다.</div>
+
+  <footer>
+    목표 수치는 모두 <b>보정 필요 placeholder</b> — 베타 첫 4주 데이터로 재설정하세요(데이터 없는 절대치는 추정).
+    <b>선행 결정 2개:</b> ① BEP "할당 인프라 %"(전체 $10k 중 이 서비스 몫) — Economics KPI의 분모. ② North Star 1순위가 "TON 소각"인지 "신규 스테이커"인지 — 둘 중 우선순위를 명시하면 트레이드오프 시 판단 기준이 생김.
+    KPI 설계 가이드이며 목표 달성을 보장하지 않음.
+  </footer>
+
+</div>
+</body>
+</html>
