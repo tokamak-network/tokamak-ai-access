@@ -43,3 +43,6 @@ outputs/
 # Claude tool artifacts
 .planning/
 .superpowers/
+
+# Playwright output
+playwright-report/
