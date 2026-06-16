@@ -67,7 +67,7 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
   const [status, setStatus] = useState<PurchaseStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const TREASURY = process.env.NEXT_PUBLIC_TREASURY_ADDRESS as `0x${string}`;
+  const BURN_ADDRESS = "0x000000000000000000000000000000000000dead" as `0x${string}`;
 
   async function executePurchase(
     endpoint: string,
@@ -110,7 +110,7 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
         address: TON_ADDRESS,
         abi: ERC20_TRANSFER_ABI,
         functionName: "transfer",
-        args: [TREASURY, amountWei],
+        args: [BURN_ADDRESS, amountWei],
       });
       setStatus("confirming");
       await executePurchase("/api/keys/purchase", "POST", hash);
@@ -141,7 +141,7 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
         address: TON_ADDRESS,
         abi: ERC20_TRANSFER_ABI,
         functionName: "transfer",
-        args: [TREASURY, amountWei],
+        args: [BURN_ADDRESS, amountWei],
       });
       setStatus("confirming");
       await executePurchase("/api/keys/purchase/renew", "PUT", hash);

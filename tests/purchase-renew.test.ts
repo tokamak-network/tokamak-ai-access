@@ -66,7 +66,7 @@ vi.mock("viem", async (importOriginal) => {
 import { PUT } from "@/app/api/keys/purchase/renew/route";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
-const TREASURY = "0xtreasury000000000000000000000000000001";
+const BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
 const TON_ERC20 = "0xton00000000000000000000000000000000001";
 const TX_HASH = "0xnewTxHash00000000000000000000000000000000000000000000000000000001";
 const FIVE_TON = 5n * 10n ** 18n;
@@ -84,19 +84,18 @@ function makeReq(body: object = { txHash: TX_HASH }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.TREASURY_ADDRESS = TREASURY;
   process.env.TON_ERC20_ADDRESS = TON_ERC20;
   process.env.PURCHASE_USD_PRICE = "5";
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
   mockGetTransactionReceipt.mockResolvedValue({ to: TON_ERC20.toLowerCase(), logs: [] });
   mockParseEventLogs.mockReturnValue([
-    { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: FIVE_TON } },
+    { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: BURN_ADDRESS, value: FIVE_TON } },
   ]);
   mockRenewLiteLLMKey.mockResolvedValue({
     expiresAt: "2099-01-01T00:00:00.000Z",
   });
-  mockFetchTonUsdRate.mockResolvedValue(1.0); // rate=$1/TON → minValue=4 TON (5 USD * 0.8)
+  mockFetchTonUsdRate.mockResolvedValue(1.0); // rate=$1/TON → minValue=5 TON
   mockKvSetNx.mockResolvedValue(true); // claim succeeds by default
   mockKvDel.mockResolvedValue(1); // del succeeds by default
 
@@ -215,11 +214,11 @@ describe("PUT /api/keys/purchase/renew", () => {
     expect((await res.json()).error).toMatch(/price oracle/i);
   });
 
-  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2 TON)", async () => {
+  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2.5 TON)", async () => {
     mockFetchTonUsdRate.mockResolvedValue(2.0);
     const threeToN = 3n * 10n ** 18n;
     mockParseEventLogs.mockReturnValue([
-      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: threeToN } },
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: BURN_ADDRESS, value: threeToN } },
     ]);
     const res = await PUT(makeReq());
     expect(res.status).toBe(200);

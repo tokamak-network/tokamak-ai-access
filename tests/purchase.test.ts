@@ -53,7 +53,7 @@ import { POST } from "@/app/api/keys/purchase/route";
 import { NextResponse } from "next/server";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
-const TREASURY = "0xtreasury000000000000000000000000000001";
+const BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
 const TON_ERC20 = "0xton00000000000000000000000000000000001";
 const TX_HASH = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab";
 const FIVE_TON = 5n * 10n ** 18n;
@@ -65,7 +65,7 @@ function makeReceipt(overrides: Partial<{
   value: bigint;
 }> = {}) {
   const from = overrides.fromAddr ?? ADDR;
-  const to = overrides.toAddr ?? TREASURY;
+  const to = overrides.toAddr ?? BURN_ADDRESS;
   const value = overrides.value ?? FIVE_TON;
   return {
     to: (overrides.to ?? TON_ERC20).toLowerCase(),
@@ -93,7 +93,6 @@ function makeReq(body: object = { txHash: TX_HASH }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.TREASURY_ADDRESS = TREASURY;
   process.env.TON_ERC20_ADDRESS = TON_ERC20;
   process.env.PURCHASE_USD_PRICE = "5";
 
@@ -110,7 +109,7 @@ beforeEach(() => {
   mockKvDel.mockResolvedValue(undefined);
   mockGetTransactionReceipt.mockResolvedValue(makeReceipt());
   mockParseEventLogs.mockReturnValue([
-    { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: FIVE_TON } },
+    { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: BURN_ADDRESS, value: FIVE_TON } },
   ]);
   mockIssueKeyForAddress.mockResolvedValue(
     NextResponse.json({ key: "sk-litellm-xxx", expiresAt: "2099-01-01T00:00:00.000Z" })
@@ -148,7 +147,7 @@ describe("POST /api/keys/purchase", () => {
       makeReceipt({ fromAddr: "0xother00000000000000000000000000000002" })
     );
     mockParseEventLogs.mockReturnValue([
-      { address: TON_ERC20.toLowerCase(), args: { from: "0xother00000000000000000000000000000002", to: TREASURY, value: FIVE_TON } },
+      { address: TON_ERC20.toLowerCase(), args: { from: "0xother00000000000000000000000000000002", to: BURN_ADDRESS, value: FIVE_TON } },
     ]);
     const res = await POST(makeReq());
     expect(res.status).toBe(403);
@@ -166,24 +165,24 @@ describe("POST /api/keys/purchase", () => {
   });
 
   it("returns 403 when payment amount is insufficient", async () => {
-    const insufficientValue = 3n * 10n ** 18n; // 3 TON < 4 TON minimum (at rate 1.0)
+    const insufficientValue = 3n * 10n ** 18n; // 3 TON < 5 TON minimum (at rate 1.0)
     mockGetTransactionReceipt.mockResolvedValue(makeReceipt({ value: insufficientValue }));
     mockParseEventLogs.mockReturnValue([
-      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: insufficientValue } },
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: BURN_ADDRESS, value: insufficientValue } },
     ]);
     const res = await POST(makeReq());
     expect(res.status).toBe(403);
   });
 
-  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2 TON)", async () => {
-    mockFetchTonUsdRate.mockResolvedValue(2.0); // $2/TON → minValue = usdToTonWei(4, 2.0) = 2 TON
+  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2.5 TON)", async () => {
+    mockFetchTonUsdRate.mockResolvedValue(2.0); // $2/TON → minValue = usdToTonWei(5, 2.0) = 2.5 TON
     const threeToN = 3n * 10n ** 18n;
     mockGetTransactionReceipt.mockResolvedValue(makeReceipt({ value: threeToN }));
     mockParseEventLogs.mockReturnValue([
-      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: TREASURY, value: threeToN } },
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: BURN_ADDRESS, value: threeToN } },
     ]);
     const res = await POST(makeReq());
-    expect(res.status).toBe(200); // 3 TON passes because dynamic minValue is only 2 TON
+    expect(res.status).toBe(200); // 3 TON passes because dynamic minValue is only 2.5 TON
   });
 
   it("returns 503 when price oracle is unavailable", async () => {

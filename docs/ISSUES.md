@@ -81,6 +81,27 @@ npm run test:watch  # watch 모드
 
 ---
 
+## TODO-001: 트레저리 지갑 — 멀티시그 전환
+
+**현재:** 하드웨어 지갑(Ledger/Trezor) 단일 서명자  
+**목표:** Gnosis Safe 멀티시그 (M-of-N) 전환  
+**상태:** ⬜ 보류 (현재 개인 프로젝트 규모에서는 하드웨어 지갑으로 충분)
+
+**전환 시점 기준:**
+- 공동 운영자 합류 시
+- 월 수익이 의미 있는 규모가 될 때
+- 조직 차원의 자산 관리가 필요해질 때
+
+**전환 시 작업:**
+1. Gnosis Safe 배포 (Ethereum mainnet)
+2. 아래 3개 파일의 하드코딩 상수를 Safe 주소로 교체:
+   - `lib/hooks/usePurchase.ts` — `BURN_ADDRESS`
+   - `app/api/keys/purchase/route.ts` — `treasury`
+   - `app/api/keys/purchase/renew/route.ts` — `treasury` (in `verifyTransferTx()`)
+3. 위 3개 파일의 단위 테스트에서 `BURN_ADDRESS` → Safe 주소로 업데이트
+
+---
+
 ## NOTE-003: Alchemy free tier eth_getLogs 10블록 제한
 
 **파일:** `scripts/snapshot_eligible_stakers.py`  

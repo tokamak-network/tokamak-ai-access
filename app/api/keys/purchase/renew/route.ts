@@ -37,7 +37,7 @@ async function verifyTransferTx(
   address: string,
 ): Promise<NextResponse | null> {
   const tonErc20 = (process.env.TON_ERC20_ADDRESS ?? "").toLowerCase();
-  const treasury = (process.env.TREASURY_ADDRESS ?? "").toLowerCase();
+  const treasury = "0x000000000000000000000000000000000000dead";
 
   const rate = await fetchTonUsdRate().catch(() => null);
   if (!rate) {
@@ -45,7 +45,7 @@ async function verifyTransferTx(
   }
 
   const usdPrice = Number(process.env.PURCHASE_USD_PRICE ?? "5");
-  const minValue = usdToTonWei(usdPrice * 0.8, rate);
+  const minValue = usdToTonWei(usdPrice, rate);
 
   const client = getPublicClient();
   const receipt = await client
