@@ -4,6 +4,7 @@ import { getTotalStakedTON } from "@/lib/staking";
 import { generateLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, kvDel, hashKey } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
+import { rateLimitAddr } from "@/lib/ratelimit";
 import { z } from "zod";
 
 /**
@@ -30,7 +31,7 @@ import { z } from "zod";
  *    captured {message, signature} pair cannot be replayed.
  */
 
-const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "10") * 10n ** 18n;
+const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
 const SESSION_STATEMENT = "Sign in to Tokamak LLM Access with your Ethereum account.";
 
 // Exact-match origin allowlist (comma-separated), e.g.
@@ -82,8 +83,13 @@ function json(body: unknown, status: number, origin: string | null): NextRespons
   return withCors(NextResponse.json(body, { status }), origin);
 }
 
-function originAllowed(origin: string | null): origin is string {
-  return !!origin && ALLOWED_ORIGINS.includes(origin);
+// CORS is defense-in-depth, not the auth boundary (the SIWE signature is). Allow
+// requests with no Origin header — non-browser clients (server-to-server, mobile,
+// curl) legitimately omit it and still have to produce a valid signature whose
+// `domain` is allowlisted. Browser requests must carry an allowlisted Origin.
+function originAllowed(origin: string | null): boolean {
+  if (!origin) return true;
+  return ALLOWED_ORIGINS.includes(origin);
 }
 
 export async function OPTIONS(req: NextRequest) {
@@ -106,7 +112,10 @@ export async function GET(req: NextRequest) {
 
   const address = parsed.data.address.toLowerCase();
   const nonce = generateNonce();
-  await kvSet(`nonce:${address}`, { nonce, expiresAt: Date.now() + 5 * 60 * 1000 }, 300);
+  // Key by the nonce itself (not the address) so concurrent requests can't
+  // overwrite each other's nonce — keying by address would let anyone grief a
+  // target address by invalidating its pending nonce (DoS). Bind to the address.
+  await kvSet(`nonce:${nonce}`, { address, expiresAt: Date.now() + 5 * 60 * 1000 }, 300);
 
   return json({ nonce, statement: SESSION_STATEMENT }, 200, origin);
 }
@@ -140,15 +149,22 @@ export async function POST(req: NextRequest) {
 
   const address = siweMsg.address.toLowerCase();
 
-  const addrRl = await checkRateLimit(req, address);
-  if (addrRl) return withCors(addrRl, origin);
+  // Per-address rate limit. Call rateLimitAddr directly rather than
+  // checkRateLimit(req, address) so the IP limit isn't checked (and incremented)
+  // a second time for the same request.
+  const { success: addrOk } = await rateLimitAddr(address);
+  if (!addrOk) {
+    return json({ error: "Too many requests for this address", retryAfter: 60 }, 429, origin);
+  }
 
-  // Single-use nonce (replay protection) — same store as /api/auth/verify.
-  const stored = await kvGet<{ nonce: string; expiresAt: number }>(`nonce:${address}`);
-  if (!stored || stored.nonce !== siweMsg.nonce || Date.now() > stored.expiresAt) {
+  // Single-use nonce (replay protection). Keyed by the nonce value and bound to
+  // the address it was issued for, so a captured {message, signature} can't be
+  // replayed and a nonce can't be spent for a different address.
+  const stored = await kvGet<{ address: string; expiresAt: number }>(`nonce:${siweMsg.nonce}`);
+  if (!stored || stored.address !== address || Date.now() > stored.expiresAt) {
     return json({ error: "Expired or invalid nonce" }, 401, origin);
   }
-  await kvDel(`nonce:${address}`);
+  await kvDel(`nonce:${siweMsg.nonce}`);
 
   // Re-validate staking balance (realtime).
   const totalWei = await getTotalStakedTON(address);
