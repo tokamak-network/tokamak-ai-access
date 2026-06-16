@@ -81,7 +81,7 @@ describe('getSessionAddress', () => {
 | U-T1 | 단일 Layer2에 스테이킹 | multicall mock: [100 TON ray, 0, 0, ...] | `100n * 10^18n` |
 | U-T2 | 복수 Layer2 합산 | multicall mock: [50 TON, 30 TON, 20 TON, ...] | `100n * 10^18n` |
 | U-T3 | 스테이킹 없음 | multicall mock: 전부 0 | `0n` |
-| U-T4 | 적격 임계값 정확히 10 TON | multicall mock: 10 TON ray 1개 | `10n * 10^18n` (eligible) |
+| U-T4 | 적격 임계값 정확히 100 TON | multicall mock: 100 TON ray 1개 | `100n * 10^18n` (eligible) |
 | U-T5 | multicall 일부 실패 | status: 'failure' 포함된 결과 배열 | 성공 항목만 합산 |
 | U-T6 | 캐시 히트 | 동일 주소 2회 호출 | 2번째 호출 시 RPC mock 호출 횟수 1 |
 | U-T7 | WTON ray → TON 변환 정확도 | `1_000_000_000_000_000_000_000_000_000n` (1 TON in ray) | `1_000_000_000_000_000_000n` (1 TON in wei) |
@@ -145,8 +145,8 @@ describe('getTotalStakedTON', () => {
 
 | # | 케이스 | 전제 | 기대 응답 |
 |---|--------|------|-----------|
-| I-B1 | 적격 지갑 (≥ 10 TON) | 유효 세션, mainnet 스테이킹 지갑 | 200 `{ eligible: true, totalStakedTON: "..." }` |
-| I-B2 | 미적격 지갑 (< 10 TON) | 유효 세션, 스테이킹 없는 지갑 | 200 `{ eligible: false }` |
+| I-B1 | 적격 지갑 (≥ 100 TON) | 유효 세션, mainnet 스테이킹 지갑 | 200 `{ eligible: true, totalStakedTON: "..." }` |
+| I-B2 | 미적격 지갑 (< 100 TON) | 유효 세션, 스테이킹 없는 지갑 | 200 `{ eligible: false }` |
 | I-B3 | 세션 없음 | 쿠키 없음 | 401 `UNAUTHORIZED` |
 | I-B4 | 캐시 동작 확인 | I-B1 직후 재호출 | 200, RPC 재호출 없음 (응답 시간 < 100ms) |
 

@@ -19,7 +19,10 @@ export async function checkRateLimit(
   req: NextRequest,
   address?: string | null,
 ): Promise<NextResponse | null> {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  const ip =
+    req.headers.get("x-real-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ??
+    "unknown";
 
   const { success: ipOk } = await rateLimitIP(ip);
   if (!ipOk) {

@@ -1,6 +1,6 @@
 # TON AI Access
 
-**TON AI Access** — Stake ≥ 10 TON on Ethereum L1 → Receive a LiteLLM virtual API key, then configure Claude Code or Codex in one command.
+**TON AI Access** — Stake ≥ 100 TON on Ethereum L1 → Receive a LiteLLM virtual API key, then configure Claude Code or Codex in one command.
 
 > PoC. Built in 3 days. See `docs/` for PRD, Functional Spec, and Test Plan.
 
@@ -39,7 +39,7 @@ npm run dev
 | `KV_REST_API_URL` | Vercel KV (Upstash) REST URL — Vercel Dashboard에서 자동 주입 |
 | `KV_REST_API_TOKEN` | Vercel KV (Upstash) token — Vercel Dashboard에서 자동 주입 |
 | `SESSION_SECRET` | 세션 서명 키 (`openssl rand -base64 32`) |
-| `MIN_TON` | 최소 스테이킹 TON (기본값: `10`) |
+| `MIN_TON` | 최소 스테이킹 TON (기본값: `100`) |
 
 전체 목록과 예시값은 `.env.example` 참조.
 

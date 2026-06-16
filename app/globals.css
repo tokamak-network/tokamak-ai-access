@@ -57,6 +57,9 @@ html, body {
 }
 
 /* Two-column editorial section */
+main > .section:first-child {
+  overflow: hidden;
+}
 .section {
   position: relative;
   z-index: 1;
@@ -75,11 +78,16 @@ html, body {
 
 /* Mobile: collapse to single column */
 @media (max-width: 768px) {
+  :root { --pad-x: 20px; }
   .split-line { display: none; }
   .section {
     grid-template-columns: 1fr;
     row-gap: 24px;
     padding: 64px 24px;
+  }
+  .cli-pre {
+    white-space: pre-wrap;
+    word-break: break-all;
   }
 }
 
@@ -128,6 +136,46 @@ h2.section-heading {
   color: var(--muted);
   max-width: 60ch;
   margin-bottom: 36px;
+}
+
+/* ── Hero 3D mark ─────────────────────────────────────────────────────
+   The striped torus renders in .hero-mark, positioned behind the headline.
+   Text stays above via .hero-content stacking context. */
+.hero-content {
+  position: relative;
+  z-index: 1;
+}
+.hero-content > .h1-rule,
+.hero-content > h1.display,
+.hero-content > .body-lead,
+.hero-content > * {
+  position: relative;
+  z-index: 1;
+}
+.hero-mark {
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 560px;
+  height: 560px;
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+@media (max-width: 768px) {
+  .hero-mark {
+    width: 400px;
+    height: 400px;
+    opacity: 0.5;
+  }
+}
+@media (max-width: 480px) {
+  .hero-mark {
+    width: 280px;
+    height: 280px;
+  }
 }
 
 /* Narrow column metadata labels */
@@ -388,15 +436,75 @@ h2.section-heading {
   }
 }
 
-.card--dark {
+/* ── Agent setup (CLI) section — dark ───────────────────────────────────── */
+.cli-card {
   background: #0e1929;
   border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: var(--radius);
+  overflow: hidden;
 }
+.cli-card-hd {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+.cli-copy {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  color: #7aa2ff;
+  background: none;
+  border: 1px solid rgba(122,162,255,0.5);
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.cli-copy:hover { background: #7aa2ff; color: #0c1a2c; }
+.cli-pre {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.75);
+  padding: 14px 16px;
+  margin: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+.cli-tabs {
+  display: flex;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-bottom: none;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  background: #0e1929;
+}
+.cli-tab {
+  flex: 1;
+  padding: 10px 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.4);
+  background: none;
+  border: none;
+  border-right: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+}
+.cli-tab:last-child { border-right: none; }
+.cli-tab:hover { color: #fff; }
+.cli-tab--on {
+  background: #fff;
+  color: #0c1a2c;
+  font-weight: 600;
+}
+.cli-tab--on:hover { color: #0c1a2c; }
 
 /* ── FAQ section ─────────────────────────────────────────────────────────── */
 .faq-list {
@@ -404,16 +512,16 @@ h2.section-heading {
   flex-direction: column;
 }
 .faq-item {
-  border-bottom: 1px solid #e8eaef;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
   padding: 20px 0;
 }
 .faq-item:first-child {
-  border-top: 1px solid #e8eaef;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 .faq-q {
   font-weight: 600;
   font-size: 1rem;
-  color: var(--ink);
+  color: rgba(255,255,255,0.92);
   margin-bottom: 8px;
   display: flex;
   justify-content: space-between;
@@ -424,17 +532,17 @@ h2.section-heading {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 1px solid var(--hairline);
+  border: 1px solid rgba(255,255,255,0.15);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.65rem;
-  color: var(--muted);
+  color: rgba(255,255,255,0.4);
   flex-shrink: 0;
 }
 .faq-a {
   font-size: 0.9375rem;
-  color: var(--muted);
+  color: rgba(255,255,255,0.55);
   line-height: 1.7;
   max-width: 58ch;
 }

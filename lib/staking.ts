@@ -35,8 +35,8 @@ export const LAYER2_REGISTRY_PROXY = (
   layer2RegistryAbi._meta.addresses[CHAIN as "mainnet" | "sepolia"].proxy
 ) as `0x${string}`;
 
-// ---- Eligibility threshold (env override; default 10 TON) ----
-export const MIN_TON = BigInt(process.env.MIN_TON ?? "10");
+// ---- Eligibility threshold (env override; default 100 TON) ----
+export const MIN_TON = BigInt(process.env.MIN_TON ?? "100");
 
 // ---- ABIs (minimal, confirmed selectors) ----
 const SEIG_STAKE_ABI = [

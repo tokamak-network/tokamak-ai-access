@@ -16,7 +16,7 @@ pip install web3==7.* python-dotenv
 
 ## Run
 export RPC_URL="https://eth-mainnet.g.alchemy.com/v2/<YOUR_KEY>"
-export MIN_TON=10
+export MIN_TON=100
 python scripts/snapshot_eligible_stakers.py
 
 ## Output

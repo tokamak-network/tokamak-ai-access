@@ -32,3 +32,14 @@ tsconfig.tsbuildinfo
 
 # Local docs
 docs/superpowers
+
+# CLI build artifacts
+cli/dist/
+cli/*.tgz
+
+# Script outputs
+outputs/
+
+# Claude tool artifacts
+.planning/
+.superpowers/

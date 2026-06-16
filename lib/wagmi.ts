@@ -2,9 +2,8 @@
  * wagmi v2 config — mainnet only
  *
  * Connectors:
- *   1. MetaMask      — explicit metaMask() connector
- *   2. OKX Wallet    — injected({ target }) targeting window.okxwallet
- *   3. Browser Wallet — generic injected() fallback for any other EVM wallet
+ *   1. MetaMask   — explicit metaMask() connector
+ *   2. OKX Wallet — injected({ target }) targeting window.okxwallet
  *
  * Transport: uses NEXT_PUBLIC_RPC_URL when set, falling back to reliable
  * public endpoints. http() alone without a URL uses cloudflare-eth.com which
@@ -37,7 +36,6 @@ export const wagmiConfig = createConfig({
         };
       },
     }),
-    injected(), // generic browser wallet fallback
   ],
   transports: {
     [mainnet.id]: rpcUrl

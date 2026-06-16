@@ -5,7 +5,7 @@
 ```
 +--------------------------------------------+
 |  Tokamak LLM Access                        |
-|  Stake >= 10 TON -> Get your API key       |
+|  Stake >= 100 TON -> Get your API key      |
 |                                            |
 |  [ Connect Wallet ]                        |
 |                                            |
@@ -54,7 +54,7 @@
 +--------------------------------------------+
 |  0xabcd...1234                             |
 |  Total Staked: 3.2 TON  [X] Not eligible   |
-|  Stake at least 10 TON to receive a key.   |
+|  Stake at least 100 TON to receive a key.  |
 |  -> tokamak.network/staking                |
 +--------------------------------------------+
 ```

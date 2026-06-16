@@ -4,7 +4,7 @@
 
 1. Navigate to `/`
 2. Click "Connect Wallet" → MetaMask opens
-3. Select eligible address (≥10 TON staked on mainnet)
+3. Select eligible address (≥100 TON staked on mainnet)
 4. Sign SIWE message
 5. Verify redirect to `/dashboard`
 6. Confirm "Total Staked" shows correct amount, badge shows "✓ Eligible"
@@ -24,7 +24,7 @@
 ## Ineligible wallet
 
 1. Navigate to `/`
-2. Connect wallet with < 10 TON staked
+2. Connect wallet with < 100 TON staked
 3. Sign SIWE message
 4. Verify redirect to `/dashboard`
 5. Confirm "✗ Not eligible" badge and staking link shown
