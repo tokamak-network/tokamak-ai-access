@@ -98,7 +98,7 @@ beforeEach(() => {
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
   mockAssertKeyCapacity.mockResolvedValue(undefined);
-  mockFetchTonUsdRate.mockResolvedValue(1.0); // rate = $1/TON
+  mockFetchTonUsdRate.mockResolvedValue(1.0); // rate=$1/TON → minValue=4 TON (5 USD * 0.8)
   // kv.set with nx: true returns "OK" on success, null on failure
   mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: any) => {
     if (opts?.nx === true) {
@@ -174,8 +174,8 @@ describe("POST /api/keys/purchase", () => {
     expect(res.status).toBe(403);
   });
 
-  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2.5 TON)", async () => {
-    mockFetchTonUsdRate.mockResolvedValue(2.0); // $2/TON → minValue = usdToTonWei(5, 2.0) = 2.5 TON
+  it("accepts transfer ≥ dynamic minimum when rate changes (rate=$2/TON → min 2 TON)", async () => {
+    mockFetchTonUsdRate.mockResolvedValue(2.0); // $2/TON → minValue = usdToTonWei(4, 2.0) = 2 TON
     const threeToN = 3n * 10n ** 18n;
     mockGetTransactionReceipt.mockResolvedValue(makeReceipt({ value: threeToN }));
     mockParseEventLogs.mockReturnValue([

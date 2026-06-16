@@ -45,7 +45,7 @@ async function verifyTransferTx(
   }
 
   const usdPrice = Number(process.env.PURCHASE_USD_PRICE ?? "5");
-  const minValue = usdToTonWei(usdPrice, rate);
+  const minValue = usdToTonWei(usdPrice * 0.8, rate);
 
   const client = getPublicClient();
   const receipt = await client
