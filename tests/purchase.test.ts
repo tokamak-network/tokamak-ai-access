@@ -238,4 +238,12 @@ describe("POST /api/keys/purchase", () => {
     // kvDel NOT called on success (only on failure)
     expect(mockKvDel).not.toHaveBeenCalled();
   });
+
+  it("success response body contains key and expiresAt (contract usePurchase hook depends on)", async () => {
+    const res = await POST(makeReq());
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty("key", "sk-litellm-xxx");
+    expect(body).toHaveProperty("expiresAt");
+  });
 });

@@ -714,7 +714,10 @@ export default function DashboardPage() {
     }
   }, [router]);
 
-  const purchase = usePurchase(fetchAll);
+  const purchase = usePurchase((key?: string) => {
+    if (key) setOneTimeKey(key);
+    fetchAll();
+  });
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

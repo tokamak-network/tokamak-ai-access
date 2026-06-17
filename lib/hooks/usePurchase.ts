@@ -60,7 +60,7 @@ export interface UsePurchaseResult {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
+export function usePurchase(onSuccess?: (key?: string) => void): UsePurchaseResult {
   const { writeContractAsync, data: txHash, reset: resetWrite } = useWriteContract();
   const publicClient = usePublicClient();
 
@@ -81,12 +81,12 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ txHash: receivedTxHash }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? `HTTP ${res.status}`);
       }
       setStatus("success");
-      onSuccess?.();
+      onSuccess?.(data.key);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
       setStatus("error");
