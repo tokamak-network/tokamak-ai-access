@@ -19,7 +19,7 @@ const TRANSFER_EVENT_ABI = [
   },
 ] as const;
 
-const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "sepolia" : "mainnet";
+const CHAIN_ID = "sepolia";
 
 function getPublicClient() {
   const rpcUrl =
