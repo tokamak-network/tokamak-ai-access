@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 
 const {
   mockGetSessionAddress,
+  mockKvGet,
   mockKvSet,
   mockKvDel,
   mockKvIncr,
@@ -13,6 +14,7 @@ const {
   mockFetchTonUsdRate,
 } = vi.hoisted(() => ({
   mockGetSessionAddress: vi.fn(),
+  mockKvGet: vi.fn(),
   mockKvSet: vi.fn(),
   mockKvDel: vi.fn(),
   mockKvIncr: vi.fn(),
@@ -24,7 +26,7 @@ const {
 }));
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
-vi.mock("@vercel/kv", () => ({ kv: { set: mockKvSet, del: mockKvDel, incr: mockKvIncr } }));
+vi.mock("@vercel/kv", () => ({ kv: { get: mockKvGet, set: mockKvSet, del: mockKvDel, incr: mockKvIncr } }));
 vi.mock("@/lib/key-guards", () => ({
   assertKeyCapacity: mockAssertKeyCapacity,
   PurchaseRecord: undefined,
@@ -98,6 +100,7 @@ beforeEach(() => {
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
   mockAssertKeyCapacity.mockResolvedValue(undefined);
+  mockKvGet.mockResolvedValue(null); // no existing key by default
   mockFetchTonUsdRate.mockResolvedValue(1.0); // rate=$1/TON → minValue=4 TON (5 USD * 0.8)
   // kv.set with nx: true returns "OK" on success, null on failure
   mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: any) => {
@@ -126,6 +129,19 @@ describe("POST /api/keys/purchase", () => {
   it("returns 400 when txHash missing", async () => {
     const res = await POST(makeReq({}));
     expect(res.status).toBe(400);
+  });
+
+  it("returns 409 when address already has an active key", async () => {
+    mockKvGet.mockResolvedValue({
+      liteLlmKeyId: "key-abc",
+      hash: "hash",
+      keySlice: "xxxx",
+      createdAt: Date.now() - 1000,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+    const res = await POST(makeReq());
+    expect(res.status).toBe(409);
+    expect((await res.json()).error).toMatch(/active key/i);
   });
 
   it("returns 503 when at capacity", async () => {

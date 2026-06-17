@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient, http, parseEventLogs } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 import { getSessionAddress } from "@/lib/siwe";
-import { assertKeyCapacity, type PurchaseRecord } from "@/lib/key-guards";
+import { assertKeyCapacity, type PurchaseRecord, type KeyRecord } from "@/lib/key-guards";
 import { issueKeyForAddress } from "@/lib/issue-key";
-import { kvSet, kvSetNx, kvDel } from "@/lib/kv";
+import { kvGet, kvSet, kvSetNx, kvDel } from "@/lib/kv";
 import { fetchTonUsdRate, usdToTonWei } from "@/lib/ton-price";
 
 const TRANSFER_EVENT_ABI = [
@@ -49,6 +49,12 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof Response) return err as NextResponse;
     throw err;
+  }
+
+  const existingKey = await kvGet<KeyRecord>(`key:${address}`);
+  const isExpired = !!existingKey?.expiresAt && existingKey.expiresAt < new Date().toISOString();
+  if (existingKey && !existingKey.revokedAt && !isExpired) {
+    return NextResponse.json({ error: "Active key already exists" }, { status: 409 });
   }
 
   const tonErc20 = (process.env.TON_ERC20_ADDRESS ?? "").toLowerCase();
