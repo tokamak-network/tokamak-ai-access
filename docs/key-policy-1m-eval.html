@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TON AI Access — $5 키 정책(1M/일) 적정성 평가</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --border:#2d333b;
+    --text:#e6edf3; --muted:#9aa6b2; --accent:#58a6ff;
+    --ok:#3fb950; --warn:#e3b341; --bad:#f85149; --violet:#bc8cff;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo",sans-serif;line-height:1.55;font-size:15px}
+  .wrap{max-width:1000px;margin:0 auto;padding:40px 24px 80px}
+  h1{font-size:25px;margin:0 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:22px}
+  h2{font-size:18px;margin:36px 0 4px;display:flex;align-items:center;gap:8px}
+  h2 .b{width:4px;height:18px;background:var(--accent);border-radius:2px}
+  .cap{color:var(--muted);font-size:12.5px;margin:0 0 12px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-top:6px}
+
+  .spec{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:6px 0}
+  .spec div{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center}
+  .spec .v{font-size:22px;font-weight:800;letter-spacing:-.3px}
+  .spec .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+  .spec .price .v{color:var(--accent)}
+
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
+  .col{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+  .col h3{margin:0 0 10px;font-size:15px}
+  .col.can h3{color:var(--ok)} .col.cant h3{color:var(--bad)}
+  .li{display:flex;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border);font-size:13.5px}
+  .li:last-child{border-bottom:none}
+  .ic{flex:0 0 18px;font-weight:800}
+  .ic.ok{color:var(--ok)} .ic.warn{color:var(--warn)} .ic.bad{color:var(--bad)}
+  .li b{color:var(--text)} .li span{color:var(--muted)}
+
+  table{width:100%;border-collapse:collapse;margin:6px 0;font-size:13px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.3px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap}
+  .b-ok{background:rgba(63,185,80,.15);color:var(--ok)}
+  .b-warn{background:rgba(227,179,65,.15);color:var(--warn)}
+  .b-bad{background:rgba(248,81,73,.15);color:var(--bad)}
+  .mono{font-family:var(--mono);font-size:12px}
+
+  .nums{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0}
+  .nums div{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+  .nums .n{font-size:21px;font-weight:800;color:var(--violet)}
+  .nums .t{font-size:12px;color:var(--muted);margin-top:3px}
+
+  .verdict{border-radius:14px;padding:18px 22px;margin-top:8px;border:1px solid}
+  .verdict.mid{background:rgba(227,179,65,.07);border-color:rgba(227,179,65,.4)}
+  .verdict h3{margin:0 0 8px;font-size:16px;color:var(--warn)}
+  .verdict ol{margin:8px 0 0;padding-left:20px} .verdict li{margin:5px 0;font-size:13.5px}
+  .note{background:rgba(88,166,255,.06);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:12px 16px;font-size:13.5px;margin-top:14px}
+  .note.bad{background:rgba(248,81,73,.07);border-left-color:var(--bad)}
+  code{font-family:var(--mono);font-size:12px;background:var(--panel2);padding:1px 5px;border-radius:4px}
+  footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--border);color:var(--muted);font-size:12.5px}
+  @media(max-width:760px){.spec,.nums{grid-template-columns:1fr 1fr}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>$5 키 정책 (1M/일) — 적정성 평가</h1>
+  <div class="sub">정책: 일일 토큰 cap 1M · TPM 2M · RPM 300 · $5 상당 TON · 부하테스트(gemma-4·deepseek-v4-flash) 측정 기반 평가 · 2026-06</div>
+
+  <div class="spec">
+    <div class="price"><div class="v">$5</div><div class="l">월 (TON 결제)</div></div>
+    <div><div class="v">1M</div><div class="l">일일 토큰 cap</div></div>
+    <div><div class="v">2M</div><div class="l">TPM</div></div>
+    <div><div class="v">300</div><div class="l">RPM</div></div>
+  </div>
+
+  <div class="note bad"><b>전제 — cap은 반드시 output(출력) 기준.</b> total(입력+출력) 기준이면 에이전틱은 입력 컨텍스트(40~64K)가 매 턴 잡아먹어 <b>1M ÷ ~50K ≈ 하루 20턴(≈4 태스크)</b>으로 사실상 못 씁니다. 이하 모든 평가는 <code>token_rate_limit_type: output</code> 전제.</div>
+
+  <!-- 무엇을 사주나 -->
+  <h2><span class="b"></span>1M output/일이 사주는 것 (gemma 측정 기반)</h2>
+  <p class="cap">턴당 출력 ~840(answer 450 + reasoning 390), 턴 wall 49~132s, 단일 세션 연속 소비 0.55~1.5M/일.</p>
+  <div class="nums">
+    <div><div class="n">~1,190</div><div class="t">턴/일 (1M ÷ 840)</div></div>
+    <div><div class="n">~238</div><div class="t">5턴 태스크/일</div></div>
+    <div><div class="n">~16–24h</div><div class="t">단일 에이전트 연속 가동</div></div>
+  </div>
+
+  <!-- 할 수 있는 것 / 없는 것 -->
+  <h2><span class="b"></span>이 키로 할 수 있는 것 / 없는 것</h2>
+  <div class="two">
+    <div class="col can">
+      <h3>✓ 잘 맞음</h3>
+      <div class="li"><span class="ic ok">✓</span><div><b>개인화 에이전트</b> (Openclaw·Hermes·커스텀) <span>— 버스트성 개인 사용, ~1,190턴/일이면 헤비 유저도 충분</span></div></div>
+      <div class="li"><span class="ic ok">✓</span><div><b>백그라운드/스케줄 자동화</b> <span>— CI 봇·주기 리뷰·cron 에이전트, ~1분 1턴꼴 또는 배치</span></div></div>
+      <div class="li"><span class="ic ok">✓</span><div><b>중간 배치 처리</b> <span>— 요약·분류 ~2,000건/일 (1M ÷ ~500/건)</span></div></div>
+      <div class="li"><span class="ic ok">✓</span><div><b>단일 에이전트 종일 가동</b> <span>— 클러스터 부하에 따라 ~16~24h</span></div></div>
+    </div>
+    <div class="col cant">
+      <h3>△ 경계 / ✗ 안 맞음</h3>
+      <div class="li"><span class="ic warn">△</span><div><b>완전 풀가동 24/7(피크 속도)</b> <span>— 빠른 구간선 ~1.5M 필요 → 막판 끊김. 보장하려면 2M(Plus)</span></div></div>
+      <div class="li"><span class="ic warn">△</span><div><b>deepseek 라우팅 작업</b> <span>— cap 안이라도 느려서(턴당 30s~8분) 배치 전용 → gemma/qwen으로</span></div></div>
+      <div class="li"><span class="ic bad">✗</span><div><b>메인 인터랙티브 코딩</b> (CC·Cursor 대체) <span>— cap 아니라 지연(TTFA 16~54s) 때문에 부적합</span></div></div>
+      <div class="li"><span class="ic bad">✗</span><div><b>리셀·다중유저 팬아웃 / 고볼륨 프로덕션</b> <span>— 1M/일론 부족 (+스테이크로 farming 제한)</span></div></div>
+    </div>
+  </div>
+
+  <!-- 적정성 평가 -->
+  <h2><span class="b"></span>성능 측정 기반 적정성 평가</h2>
+  <p class="cap">각 파라미터를 부하테스트 실측치와 대조.</p>
+  <div class="card" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>파라미터</th><th>값</th><th>측정 근거</th><th>평가</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><b>일일 cap</b></td><td>1M/일</td>
+          <td>연속 단일 세션 실소비 <span class="mono">0.55~1.5M/일</span></td>
+          <td><span class="badge b-warn">적정~약간 부족</span> 혼잡 시 종일 OK, 한가하면 ~16h 후 소진. 24/7 보장은 2M</td>
+        </tr>
+        <tr>
+          <td><b>cap 단위</b></td><td>output 가정</td>
+          <td>total이면 에이전틱 ~20턴/일</td>
+          <td><span class="badge b-bad">필수 조건</span> output 아니면 정책 자체가 부적합</td>
+        </tr>
+        <tr>
+          <td><b>TPM</b></td><td>2M</td>
+          <td>단일 세션 물리 decode <span class="mono">~600~3,000 tok/분</span>, 일일 cap 1M</td>
+          <td><span class="badge b-bad">과대·비구속</span> 일일 cap의 2배, 물리 decode의 ~600×. 100~200K로도 동일</td>
+        </tr>
+        <tr>
+          <td><b>RPM</b></td><td>300</td>
+          <td>에이전틱 세션당 <span class="mono">&lt;2 RPM</span></td>
+          <td><span class="badge b-bad">과대·비구속</span> 무해하나 30~60이면 충분</td>
+        </tr>
+        <tr>
+          <td><b>동시성(max_parallel)</b></td><td>미지정</td>
+          <td>GPU 실제 제약 = KV/동시성 (deepseek c8, gemma c32)</td>
+          <td><span class="badge b-warn">누락</span> cap/TPM/RPM은 GPU 보호 못 함. 이게 진짜 레버</td>
+        </tr>
+        <tr>
+          <td><b>모델 균일 적용</b></td><td>가정</td>
+          <td>deepseek 백엔드 ~2.5M/일·인터랙티브 부적합</td>
+          <td><span class="badge b-warn">분리 필요</span> deepseek 제외/서브캡, gemma·qwen만 이 정책</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note"><b>구조 요약:</b> 이 조합에서 실제로 묶는 건 <b>일일 cap 1M 하나</b>뿐입니다 — TPM 2M·RPM 300은 일일 cap과 물리 decode에 가려 비구속(장식). 그리고 <b>GPU를 지키는 레버(동시성/KV admission)는 이 정책에 없음</b> → 별도로 반드시 추가.</div>
+
+  <!-- 종합 판정 -->
+  <h2><span class="b"></span>종합 판정</h2>
+  <div class="verdict mid">
+    <h3>⚖ 의도한 용도(개인화·백그라운드 에이전트)엔 적정 — 단 4가지 조정 전제</h3>
+    <p style="font-size:13.5px;color:var(--muted);margin:0">"개인화 에이전트 + 중간 자동화/배치"에 맞는 실용적 중간 티어(Basic과 Plus 사이). 인터랙티브 코딩·24/7 풀점유·리셀은 불가(전자는 지연, 후자는 cap). 적정성 성립 조건:</p>
+    <ol>
+      <li><b>cap을 output 기준으로</b> 운영 (<code>token_rate_limit_type: output</code>) — 안 하면 부적합.</li>
+      <li><b>동시성/KV admission 별도 추가</b> — cap/TPM/RPM은 GPU를 보호하지 못함. 백엔드별 <code>max_parallel</code> + KV 예산.</li>
+      <li><b>deepseek 분리</b> — 이 cap에서 제외하거나 작은 서브캡(배치/옵트인). 인터랙티브 라우팅은 gemma/qwen.</li>
+      <li><b>TPM/RPM 정리(선택)</b> — 2M/300은 비구속이라 100~200K/30~60으로 낮춰도 사용자 영향 0. 둘지 말지는 선택.</li>
+    </ol>
+  </div>
+
+  <div class="note"><b>티어 위치:</b> 1M/일 = Basic(가벼움)과 Plus(24/7 보장, 2M)의 중간. 24/7 풀가동을 보장 상품으로 팔 거면 2M로, "헤비하지만 풀점유 아님"이면 1M가 맞습니다.</div>
+
+  <footer>
+    측정 출처: gateprobe 부하테스트(gemma-4-31B 2026-06-10 · deepseek-v4-flash 2026-06-09~12). gemma 턴당 출력·turn wall·TPOT, deepseek decode·동시성. 단일 세션 소비·turns/day는 측정 turn시간 × 턴당 출력으로 유도(클러스터 부하에 따라 변동). 정책 수치(1M/2M/300)는 제안치 — 실키 1시간 연속 측정으로 cap 확정 권장. 평가 가이드이며 수요/전환 보장 아님.
+  </footer>
+
+</div>
+</body>
+</html>
