@@ -25,8 +25,7 @@ import tonAbi from "@/abi/TON.json";
 import depositManagerAbi from "@/abi/DepositManagerV1_1.json";
 
 // ---- Network selection (matches lib/staking.ts) ----
-const CHAIN =
-  process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "sepolia" : "mainnet";
+const CHAIN = "sepolia";
 
 const TON_ADDRESS = (
   tonAbi._meta.addresses[CHAIN as "mainnet" | "sepolia"].proxy
