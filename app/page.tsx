@@ -205,11 +205,7 @@ export default function LandingPage() {
             <span className="n-lbl">Gas required</span>
             <span className="n-val">None</span>
             <span className="n-lbl">Supported wallets</span>
-            <span className="n-val">MetaMask, OKX Wallet, Browser Wallet</span>
-            <span className="n-lbl">Access</span>
-            <span className="n-val" style={{ marginBottom: 0 }}>
-              {howItWorksTab === "staker" ? "Free while staked" : "~$5 / 30 days"}
-            </span>
+            <span className="n-val" style={{ marginBottom: 0 }}>MetaMask, OKX Wallet, Browser Wallet</span>
           </aside>
 
           <div>
