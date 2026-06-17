@@ -691,6 +691,7 @@ export default function DashboardPage() {
   const [selectedCard, setSelectedCard] = useState<"stake" | "buy" | null>(null);
   const [priceData, setPriceData] = useState<{ tonRequired: number; usdPrice: number } | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const setupRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
@@ -762,7 +763,12 @@ export default function DashboardPage() {
     finally { setActionLoading(false); }
   }
 
-  function handleDisconnect() { disconnect(); router.push("/"); }
+  function handleDisconnect() {
+    setIsSigningOut(true);
+    fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    disconnect();
+    router.push("/");
+  }
 
   return (
     <>
@@ -786,9 +792,10 @@ export default function DashboardPage() {
             {address && <span>{shortAddr(address)}</span>}
             <button
               onClick={handleDisconnect}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.08em" }}
+              disabled={isSigningOut}
+              style={{ background: "none", border: "none", cursor: isSigningOut ? "default" : "pointer", color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.08em", opacity: isSigningOut ? 0.5 : 1 }}
             >
-              Sign out
+              {isSigningOut ? "Signing out…" : "Sign out"}
             </button>
           </div>
         </div>

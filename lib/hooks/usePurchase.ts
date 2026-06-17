@@ -13,7 +13,7 @@
  */
 
 import { useState } from "react";
-import { useWriteContract } from "wagmi";
+import { usePublicClient, useWriteContract } from "wagmi";
 import tonAbi from "@/abi/TON.json";
 import { usdToTonWei } from "@/lib/ton-price";
 
@@ -63,6 +63,7 @@ export interface UsePurchaseResult {
 
 export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
   const { writeContractAsync, data: txHash, reset: resetWrite } = useWriteContract();
+  const publicClient = usePublicClient();
 
   const [status, setStatus] = useState<PurchaseStatus>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +114,7 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
         args: [BURN_ADDRESS, amountWei],
       });
       setStatus("confirming");
+      await publicClient!.waitForTransactionReceipt({ hash });
       await executePurchase("/api/keys/purchase", "POST", hash);
     } catch (e) {
       if ((e as Error)?.message?.includes("User rejected")) {
@@ -144,6 +146,7 @@ export function usePurchase(onSuccess?: () => void): UsePurchaseResult {
         args: [BURN_ADDRESS, amountWei],
       });
       setStatus("confirming");
+      await publicClient!.waitForTransactionReceipt({ hash });
       await executePurchase("/api/keys/purchase/renew", "PUT", hash);
     } catch (e) {
       if ((e as Error)?.message?.includes("User rejected")) {
