@@ -46,6 +46,8 @@ interface UnstakeTabContentProps {
   pendingUnstaked: PendingUnstakedResult;
   withdrawal: UseRequestWithdrawalResult;
   claim: UseProcessRequestResult;
+  contractTimedOut: boolean;
+  setContractTimedOut: (v: boolean) => void;
 }
 
 function UnstakeTabContent({
@@ -57,6 +59,8 @@ function UnstakeTabContent({
   pendingUnstaked,
   withdrawal,
   claim,
+  contractTimedOut,
+  setContractTimedOut,
 }: UnstakeTabContentProps) {
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -121,9 +125,23 @@ function UnstakeTabContent({
       <div>
         <span style={labelStyle}>Staked TON (this operator)</span>
         <span style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", fontWeight: 700, color: "var(--ink)" }}>
-          {stakedBalance.isLoading ? "…" : `${stakedBalance.formatted} TON`}
+          {stakedBalance.isLoading
+            ? contractTimedOut ? "—" : "…"
+            : `${stakedBalance.formatted} TON`}
         </span>
       </div>
+
+      {contractTimedOut && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626", margin: "0" }}>
+          Balance unavailable — RPC timeout.{" "}
+          <button
+            onClick={() => { setContractTimedOut(false); stakedBalance.refetch(); }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent)", textDecoration: "underline", padding: 0, font: "inherit" }}
+          >
+            Retry
+          </button>
+        </p>
+      )}
 
       {/* Operator selector */}
       <div>
@@ -294,6 +312,7 @@ function StakePanel({
   const [unstakeLayer2, setUnstakeLayer2] = useState<`0x${string}`>(DEFAULT_LAYER2);
   const [unstakeAmount, setUnstakeAmount] = useState("");
   const [balanceTimedOut, setBalanceTimedOut] = useState(false);
+  const [contractTimedOut, setContractTimedOut] = useState(false);
   const stakedBalance = useStakedBalance(address as `0x${string}` | undefined, unstakeLayer2);
   const pendingUnstaked = usePendingUnstaked(address as `0x${string}` | undefined, unstakeLayer2);
   const withdrawal = useRequestWithdrawal();
@@ -324,6 +343,16 @@ function StakePanel({
     const t = setTimeout(() => setBalanceTimedOut(true), 10_000);
     return () => clearTimeout(t);
   }, [tonBalance.isLoading]);
+
+  // RPC timeout for staked balance loading
+  useEffect(() => {
+    if (!stakedBalance.isLoading) {
+      setContractTimedOut(false);
+      return;
+    }
+    const t = setTimeout(() => setContractTimedOut(true), 8_000);
+    return () => clearTimeout(t);
+  }, [stakedBalance.isLoading]);
 
   async function handleStake() {
     if (!amount || !hasEnough) return;
@@ -560,6 +589,8 @@ function StakePanel({
           pendingUnstaked={pendingUnstaked}
           withdrawal={withdrawal}
           claim={claim}
+          contractTimedOut={contractTimedOut}
+          setContractTimedOut={setContractTimedOut}
         />
       )}
     </div>
