@@ -56,7 +56,7 @@ import { NextResponse } from "next/server";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
 const BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
-const TON_ERC20 = "0xton00000000000000000000000000000000001";
+const TON_ERC20 = "0xa30fe40285b8f5c0457dbc3b7c8a280373c40044"; // Sepolia TON from abi/TON.json
 const TX_HASH = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab";
 const FIVE_TON = 5n * 10n ** 18n;
 
@@ -95,7 +95,6 @@ function makeReq(body: object = { txHash: TX_HASH }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.TON_ERC20_ADDRESS = TON_ERC20;
   process.env.PURCHASE_USD_PRICE = "5";
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
