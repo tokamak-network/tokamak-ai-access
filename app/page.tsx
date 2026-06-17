@@ -21,7 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default function LandingPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const { connect, connectors, isPending: isConnecting } = useConnect();
+  const { connect, connectors, isPending: isConnecting, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
   const { status: siweStatus, error: siweError, signIn } = useSiwe();
 
@@ -113,6 +113,7 @@ export default function LandingPage() {
                   <WalletModal
                     connectors={connectors}
                     isPending={isConnecting}
+                    connectError={connectError}
                     onConnect={(c) => connect({ connector: c })}
                     onClose={() => setModalOpen(false)}
                   />
@@ -388,23 +389,37 @@ function AgentSetupSection() {
   );
 }
 
-const WALLET_ICONS: Record<string, string> = {
-  MetaMask: "🦊",
+const WALLET_ICON_PATHS: Record<string, string> = {
+  MetaMask: "/metamask-icon.svg",
+  Rabby: "/rabby-icon.png",
+  "Rabby Wallet": "/rabby-icon.png",
+  "OKX Wallet": "/okx-icon.svg",
 };
 
 function WalletModal({
   connectors,
   isPending,
+  connectError,
   onConnect,
   onClose,
 }: {
   connectors: readonly Connector[];
   isPending: boolean;
+  connectError?: Error | null;
   onConnect: (c: Connector) => void;
   onClose: () => void;
 }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [connecting, setConnecting] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (connectError) setConnecting(null);
+  }, [connectError]);
+
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log("[WalletModal] connectors:", connectors.map((c) => ({ id: c.id, name: c.name, icon: c.icon?.slice(0, 60) ?? null })));
+  }, [connectors]);
 
   function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
     if (e.target === overlayRef.current) onClose();
@@ -472,10 +487,25 @@ function WalletModal({
             ×
           </button>
         </div>
+        {connectError && (
+          <div
+            style={{
+              margin: "8px 20px 0",
+              padding: "8px 12px",
+              background: "rgba(220,53,69,0.08)",
+              border: "1px solid rgba(220,53,69,0.25)",
+              borderRadius: "6px",
+              fontSize: "0.8125rem",
+              color: "#dc3545",
+            }}
+          >
+            {connectError.message}
+          </div>
+        )}
         <div style={{ padding: "8px 0" }}>
           {unique.map((c) => {
             const isConnecting = isPending && connecting === c.id;
-            const icon = WALLET_ICONS[c.name] ?? "🔗";
+            const iconSrc = c.icon ?? WALLET_ICON_PATHS[c.name];
             return (
               <button
                 key={c.id}
@@ -502,11 +532,11 @@ function WalletModal({
                   (e.currentTarget as HTMLButtonElement).style.background = "none";
                 }}
               >
-                {c.icon ? (
+                {iconSrc ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={c.icon} alt={c.name} style={{ width: "1.5rem", height: "1.5rem", borderRadius: "4px", flexShrink: 0 }} />
+                  <img src={iconSrc} alt={c.name} style={{ width: "1.5rem", height: "1.5rem", borderRadius: "4px", flexShrink: 0 }} />
                 ) : (
-                  <span style={{ fontSize: "1.25rem", flexShrink: 0 }}>{icon}</span>
+                  <span style={{ width: "1.5rem", height: "1.5rem", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem" }}>🔗</span>
                 )}
                 <span style={{ fontSize: "0.9375rem", fontWeight: 500 }}>{c.name}</span>
                 {isConnecting && (

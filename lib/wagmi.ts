@@ -22,6 +22,7 @@ export const wagmiConfig = createConfig({
   chains: [mainnet],
   connectors: [
     metaMask(),
+    injected(), // EIP-6963 multi-wallet (Rabby, Coinbase Wallet, etc.)
     injected({
       target() {
         if (typeof window === "undefined") return undefined;
