@@ -27,6 +27,7 @@ export default function LandingPage() {
   const { status: siweStatus, error: siweError, signIn } = useSiwe();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [howItWorksTab, setHowItWorksTab] = useState<"staker" | "buyer">("staker");
 
   useEffect(() => {
     if (isConnected) setModalOpen(false);
@@ -204,17 +205,52 @@ export default function LandingPage() {
             <span className="n-lbl">Gas required</span>
             <span className="n-val">None</span>
             <span className="n-lbl">Supported wallets</span>
+            <span className="n-val">MetaMask, OKX Wallet, Browser Wallet</span>
+            <span className="n-lbl">Access</span>
             <span className="n-val" style={{ marginBottom: 0 }}>
-              MetaMask, OKX Wallet, Browser Wallet
+              {howItWorksTab === "staker" ? "Free while staked" : "~$5 / 30 days"}
             </span>
           </aside>
 
           <div>
-            <p className="body-lead" style={{ marginBottom: "48px" }}>
+            <p className="body-lead" style={{ marginBottom: "32px" }}>
               Connect any EVM wallet, prove ownership with a single off-chain
-              signature, and receive your API key immediately — no transactions,
-              no waiting.
+              signature, then stake or buy — your key arrives instantly.
             </p>
+
+            {/* Tab toggle */}
+            <div style={{
+              display: "flex",
+              gap: 0,
+              border: "1px solid var(--divider)",
+              borderRadius: "8px",
+              overflow: "hidden",
+              marginBottom: "32px",
+              width: "fit-content",
+            }}>
+              {(["staker", "buyer"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setHowItWorksTab(tab)}
+                  style={{
+                    padding: "8px 20px",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    fontFamily: "var(--font-mono)",
+                    cursor: "pointer",
+                    border: "none",
+                    background: howItWorksTab === tab ? "var(--ink)" : "transparent",
+                    color: howItWorksTab === tab ? "#fff" : "var(--muted)",
+                    transition: "background 120ms, color 120ms",
+                  }}
+                >
+                  {tab === "staker" ? "Stakers" : "Buyers"}
+                </button>
+              ))}
+            </div>
+
+            {/* Step list */}
             <ol style={{
               listStyle: "none",
               display: "flex",
@@ -225,7 +261,9 @@ export default function LandingPage() {
               {[
                 ["01", "Connect wallet", "MetaMask, WalletConnect, or any EVM-compatible wallet."],
                 ["02", "Sign a message", "One SIWE signature proves ownership. No gas, no transactions."],
-                ["03", "Get your API key", `${MIN_TON} TON staked across any Layer2 qualifies. Key issued instantly.`],
+                howItWorksTab === "staker"
+                  ? ["03", `Stake ≥${MIN_TON} TON`, "Stake across any Layer2. Key issued instantly — free for 30 days, auto-renewable while you stay staked."]
+                  : ["03", "Buy a 30-day pass (~$5 in TON)", "TON ERC-20 is burned on purchase. Key activates after on-chain confirmation (~15s). No staking required."],
               ].map(([num, title, desc]) => (
                 <li key={num} style={{ display: "flex", gap: "20px" }}>
                   <span style={{
