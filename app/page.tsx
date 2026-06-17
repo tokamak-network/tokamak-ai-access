@@ -232,6 +232,7 @@ export default function LandingPage() {
                 <button
                   key={tab}
                   onClick={() => setHowItWorksTab(tab)}
+                  aria-pressed={howItWorksTab === tab}
                   style={{
                     padding: "8px 20px",
                     fontSize: "0.75rem",
