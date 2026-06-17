@@ -319,9 +319,43 @@ describe("POST /api/keys/rotate", () => {
     expect(res.status).toBe(401);
   });
 
-  it("returns 403 when stake falls below minimum", async () => {
+  it("returns 403 when stake falls below minimum and no purchase", async () => {
     mockGetSessionAddress.mockResolvedValue(ADDR);
     mockGetTotalStakedTON.mockResolvedValue(0n);
+    mockKvGet.mockResolvedValue(null); // no key record, no purchase record
+
+    const res = await rotateKey(makeReq());
+    expect(res.status).toBe(403);
+    expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("allows rotation when active purchase exists and stake is 0", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    const FUTURE = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    mockKvGet.mockImplementation((key: string) =>
+      key.startsWith("purchase:")
+        ? Promise.resolve({ txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE })
+        : Promise.resolve(null),
+    );
+    mockGenerateLiteLLMKey.mockResolvedValue(MOCK_KEY);
+    mockKvSet.mockResolvedValue(undefined);
+
+    const res = await rotateKey(makeReq());
+    expect(res.status).toBe(200);
+    expect((await res.json()).key).toBe(MOCK_KEY.key);
+    expect(mockGenerateLiteLLMKey).toHaveBeenCalled();
+  });
+
+  it("blocks rotation when stake is 0 and purchase has expired", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    const PAST = Date.now() - 1000;
+    mockKvGet.mockImplementation((key: string) =>
+      key.startsWith("purchase:")
+        ? Promise.resolve({ txHash: "0xabc", paidAt: Date.now() - 31 * 24 * 60 * 60 * 1000, expiresAt: PAST })
+        : Promise.resolve(null),
+    );
 
     const res = await rotateKey(makeReq());
     expect(res.status).toBe(403);
@@ -440,13 +474,48 @@ describe("POST /api/keys/renew", () => {
     expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
   });
 
-  it("returns 403 when stake is below minimum", async () => {
+  it("returns 403 when stake is below minimum and no purchase", async () => {
     mockGetSessionAddress.mockResolvedValue(ADDR);
     mockGetTotalStakedTON.mockResolvedValue(MIN_TON - 1n);
+    mockKvGet.mockResolvedValue(null); // no purchase record
 
     const res = await renewKey(makeReq());
     expect(res.status).toBe(403);
-    expect((await res.json()).error).toMatch(/insufficient/i);
+    expect((await res.json()).error).toMatch(/not eligible/i);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("allows renewal when active purchase exists and stake is 0", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    const FUTURE = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    const OLD_CREATED = Date.now() - 31 * 24 * 60 * 60 * 1000;
+    mockKvGet.mockImplementation((key: string) => {
+      if (key.startsWith("purchase:")) {
+        return Promise.resolve({ txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE });
+      }
+      return Promise.resolve({ ...STORED_RECORD, createdAt: OLD_CREATED });
+    });
+    mockRenewLiteLLMKey.mockResolvedValue({ expiresAt: "2099-07-01T00:00:00.000Z" });
+    mockKvSet.mockResolvedValue(undefined);
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(200);
+    expect(mockRenewLiteLLMKey).toHaveBeenCalled();
+  });
+
+  it("blocks renewal when stake is 0 and purchase has expired", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    const PAST = Date.now() - 1000;
+    mockKvGet.mockImplementation((key: string) =>
+      key.startsWith("purchase:")
+        ? Promise.resolve({ txHash: "0xabc", paidAt: Date.now() - 31 * 24 * 60 * 60 * 1000, expiresAt: PAST })
+        : Promise.resolve(null),
+    );
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(403);
     expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
   });
 

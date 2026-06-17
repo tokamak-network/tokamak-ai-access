@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionAddress } from "@/lib/siwe";
-import { getTotalStakedTON } from "@/lib/staking";
 import { generateLiteLLMKey, revokeLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, hashKey } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
-import { assertRotateCooldown } from "@/lib/key-guards";
-
-const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
+import { assertRotateCooldown, assertEligibility } from "@/lib/key-guards";
 
 /**
  * POST /api/keys/rotate
@@ -25,13 +22,9 @@ export async function POST(req: NextRequest) {
 
   try {
     await assertRotateCooldown(address);
+    await assertEligibility(address);
   } catch (err) {
     return err as NextResponse;
-  }
-
-  const totalWei = await getTotalStakedTON(address);
-  if (totalWei < MIN_TON_WEI) {
-    return NextResponse.json({ error: "Insufficient stake" }, { status: 403 });
   }
 
   // Revoke old key if present — archive to key:{address}:prev before overwriting
