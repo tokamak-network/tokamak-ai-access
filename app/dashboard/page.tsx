@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useDisconnect } from "wagmi";
+import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
 import { useTonBalance, useStake, LAYER2_OPTIONS, DEFAULT_LAYER2 } from "@/lib/hooks/useStake";
 import { usePurchase } from "@/lib/hooks/usePurchase";
 import {
@@ -674,8 +674,12 @@ function CliSetupPanel() {
 /* ── Dashboard ────────────────────────────────────────────────────── */
 export default function DashboardPage() {
   const router = useRouter();
-  const { address } = useAccount();
+  const { address, chainId } = useAccount();
   const { disconnect } = useDisconnect();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
+  const targetChainId = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? 11155111 : 1;
+  const targetChainName = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "Sepolia" : "Ethereum Mainnet";
+  const isWrongNetwork = !!address && chainId !== targetChainId;
 
   const [balance, setBalance] = useState<BalanceData | null>(null);
   const [keyData, setKeyData] = useState<KeyData | null>(null);
@@ -767,6 +771,18 @@ export default function DashboardPage() {
         <div className="topbar-inner">
           <a href="/" className="topbar-logo" style={{ textDecoration: "none", color: "inherit" }}>TON AI Access</a>
           <div className="topbar-meta">
+            {isWrongNetwork && (
+              <>
+                <span className="badge badge--no">Wrong Network</span>
+                <button
+                  onClick={() => switchChain({ chainId: targetChainId })}
+                  disabled={isSwitchingChain}
+                  style={{ background: "transparent", color: "var(--ink)", border: "1px solid var(--hairline)", cursor: isSwitchingChain ? "default" : "pointer", padding: "3px 10px", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.08em", opacity: isSwitchingChain ? 0.5 : 1, transition: "border-color 140ms" }}
+                >
+                  {isSwitchingChain ? "Switching…" : `Switch to ${targetChainName}`}
+                </button>
+              </>
+            )}
             {address && <span>{shortAddr(address)}</span>}
             <button
               onClick={handleDisconnect}
@@ -807,11 +823,11 @@ export default function DashboardPage() {
                 </span>
                 {balance.activePurchase && (
                   <span className="n-lbl" style={{ fontSize: "0.6875rem", color: "var(--muted)", marginTop: "-12px" }}>
-                    Stake ≥{balance.minTon} TON for permanent free access
+                    Stake ≥{balance.minTon} TON for free monthly key
                   </span>
                 )}
                 <span className="n-lbl">Network</span>
-                <span className="n-val" style={{ marginBottom: 0 }}>Ethereum Mainnet</span>
+                <span className="n-val" style={{ marginBottom: 0 }}>{targetChainName}</span>
               </>
             )}
             {loading && <span className="n-val" style={{ color: "var(--muted)" }}>Loading…</span>}
@@ -979,18 +995,20 @@ export default function DashboardPage() {
               </>
             )}
 
-            {!loading && balance?.eligible && !oneTimeKey && (
+            {!loading && (balance?.eligible || balance?.activePurchase) && !oneTimeKey && (
               <>
-                {/* Staking amount + badge */}
-                <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
-                  <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.25rem, 3.5vw, 3rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1 }}>
-                    {balance?.totalStakedTON}
-                  </span>
-                  <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)" }}>
-                    TON staked
-                  </span>
-                  <span className="badge badge--ok">Eligible</span>
-                </div>
+                {/* Staking amount + badge — stakers only */}
+                {balance?.eligible && (
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "8px", flexWrap: "wrap" }}>
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: "clamp(2.25rem, 3.5vw, 3rem)", fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)", lineHeight: 1 }}>
+                      {balance?.totalStakedTON}
+                    </span>
+                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--muted)" }}>
+                      TON staked
+                    </span>
+                    <span className="badge badge--ok">Eligible</span>
+                  </div>
+                )}
 
                 {/* Key card */}
                 <div className="card" data-testid="active-key-card">

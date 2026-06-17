@@ -1,5 +1,5 @@
 /**
- * wagmi v2 config — mainnet only
+ * wagmi v2 config — chain selected via NEXT_PUBLIC_CHAIN env var
  *
  * Connectors:
  *   - Rabby Wallet: explicit target (Rabby does not support EIP-6963)
@@ -16,52 +16,63 @@
  * Transport: uses NEXT_PUBLIC_RPC_URL when set, falling back to reliable
  * public endpoints. http() alone without a URL uses cloudflare-eth.com which
  * can be rate-limited, causing useReadContract to silently return undefined.
- *
- * Sepolia support is intentionally excluded from the production config;
- * staking balances are read from Ethereum mainnet SeigManagerV1_3.
  */
 import { createConfig, http, fallback } from "wagmi";
-import { mainnet } from "wagmi/chains";
+import { mainnet, sepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
+const isSepolia = process.env.NEXT_PUBLIC_CHAIN === "sepolia";
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
-export const wagmiConfig = createConfig({
-  chains: [mainnet],
-  connectors: [
-    // Rabby does not announce via EIP-6963 — target it explicitly.
-    // window.rabby is Rabby's own namespace (works even when OKX overrides
-    // window.ethereum). Falls back to the providers array or isRabby flag.
-    injected({
-      target() {
-        if (typeof window === "undefined") return undefined;
-        const win = window as Window & {
-          rabby?: object;
-          ethereum?: {
-            isRabby?: boolean;
-            providers?: Array<{ isRabby?: boolean }>;
-          };
+const connectors = [
+  // Rabby does not announce via EIP-6963 — target it explicitly.
+  // window.rabby is Rabby's own namespace (works even when OKX overrides
+  // window.ethereum). Falls back to the providers array or isRabby flag.
+  injected({
+    target() {
+      if (typeof window === "undefined") return undefined;
+      const win = window as Window & {
+        rabby?: object;
+        ethereum?: {
+          isRabby?: boolean;
+          providers?: Array<{ isRabby?: boolean }>;
         };
-        const rabby =
-          win.rabby ??
-          win.ethereum?.providers?.find((p: { isRabby?: boolean }) => p.isRabby) ??
-          (win.ethereum?.isRabby ? win.ethereum : undefined);
-        if (!rabby) return undefined;
-        return {
-          id: "rabby",
-          name: "Rabby Wallet",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          provider: rabby as any,
-        };
+      };
+      const rabby =
+        win.rabby ??
+        win.ethereum?.providers?.find((p: { isRabby?: boolean }) => p.isRabby) ??
+        (win.ethereum?.isRabby ? win.ethereum : undefined);
+      if (!rabby) return undefined;
+      return {
+        id: "rabby",
+        name: "Rabby Wallet",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        provider: rabby as any,
+      };
+    },
+  }),
+  // MetaMask, OKX, Coinbase Wallet, and all other EIP-6963 wallets are
+  // auto-discovered at runtime via multiInjectedProviderDiscovery (default).
+];
+
+export const wagmiConfig = isSepolia
+  ? createConfig({
+      chains: [sepolia],
+      connectors,
+      transports: {
+        [sepolia.id]: rpcUrl
+          ? fallback([http(rpcUrl), http()])
+          : http(),
       },
-    }),
-    // MetaMask, OKX, Coinbase Wallet, and all other EIP-6963 wallets are
-    // auto-discovered at runtime via multiInjectedProviderDiscovery (default).
-  ],
-  transports: {
-    [mainnet.id]: rpcUrl
-      ? fallback([http(rpcUrl), http("https://eth.llamarpc.com"), http()])
-      : fallback([http("https://eth.llamarpc.com"), http("https://rpc.ankr.com/eth"), http()]),
-  },
-  ssr: true,
-});
+      ssr: true,
+    })
+  : createConfig({
+      chains: [mainnet],
+      connectors,
+      transports: {
+        [mainnet.id]: rpcUrl
+          ? fallback([http(rpcUrl), http("https://eth.llamarpc.com"), http()])
+          : fallback([http("https://eth.llamarpc.com"), http("https://rpc.ankr.com/eth"), http()]),
+      },
+      ssr: true,
+    });
