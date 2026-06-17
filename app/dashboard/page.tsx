@@ -732,10 +732,25 @@ export default function DashboardPage() {
                 <span className="n-val">{balance.minTon} TON</span>
                 <span className="n-lbl">Status</span>
                 <span className="n-val" style={{ marginBottom: "18px" }}>
-                  <span className={`badge ${balance.eligible ? "badge--ok" : "badge--no"}`}>
-                    {balance.eligible ? "Eligible" : "Not eligible"}
+                  <span className={`badge ${
+                    balance.eligible
+                      ? "badge--ok"
+                      : balance.activePurchase
+                        ? "badge--grey"
+                        : "badge--no"
+                  }`}>
+                    {balance.eligible
+                      ? "Eligible"
+                      : balance.activePurchase
+                        ? "Not staking"
+                        : "Not eligible"}
                   </span>
                 </span>
+                {balance.activePurchase && (
+                  <span className="n-lbl" style={{ fontSize: "0.6875rem", color: "var(--muted)", marginTop: "-12px" }}>
+                    Stake ≥{balance.minTon} TON for permanent free access
+                  </span>
+                )}
                 <span className="n-lbl">Network</span>
                 <span className="n-val" style={{ marginBottom: 0 }}>Ethereum Mainnet</span>
               </>

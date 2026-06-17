@@ -303,6 +303,7 @@ h2.section-heading {
 .badge--ok   { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
 .badge--no   { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
 .badge--blue { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+.badge--grey { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
 
 /* ── Accessibility utilities ─────────────────────────────────────────── */
 .sr-only {
