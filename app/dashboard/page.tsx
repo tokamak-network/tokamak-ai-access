@@ -798,7 +798,13 @@ export default function DashboardPage() {
         {/* ── Balance section ── */}
         <section className="section">
           <aside>
-            <span className="eyebrow">Staking status</span>
+            <span className="eyebrow">
+              {balance?.eligible
+                ? "Staking status"
+                : balance?.activePurchase
+                  ? "Purchase status"
+                  : "Staking status"}
+            </span>
             {balance && (
               <>
                 <span className="n-lbl">Total staked</span>
@@ -919,8 +925,8 @@ export default function DashboardPage() {
                     <span className="card__label">Buy 30-day access</span>
                     <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "4px" }}>
                       {priceData
-                        ? `Sends ${priceData.tonRequired} TON ERC-20 to treasury. Access activates after on-chain confirmation (~15s).`
-                        : "Sends TON ERC-20 to treasury. Access activates after on-chain confirmation (~15s)."}
+                        ? `Sends ${priceData.tonRequired} TON ERC-20 — burned on purchase. Access activates after on-chain confirmation (~15s).`
+                        : "TON ERC-20 is burned on purchase. Access activates after on-chain confirmation (~15s)."}
                     </p>
                     {priceData && (
                       <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)", marginBottom: "16px" }}>
