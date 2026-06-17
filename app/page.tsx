@@ -98,7 +98,7 @@ export default function LandingPage() {
               Your stake<br />earns you AI.
             </h1>
             <p className="body-lead">
-              TON stakers with {MIN_TON} TON or more get a free 30-day LiteLLM API key —
+              TON stakers with {MIN_TON} TON or more get a free 30-day AI API key —
               no sign-up, no credit card. Just your wallet.
             </p>
 
