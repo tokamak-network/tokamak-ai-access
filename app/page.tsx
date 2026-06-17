@@ -338,8 +338,8 @@ export default function LandingPage() {
             </aside>
             <div className="faq-list">
             <div className="faq-item">
-              <div className="faq-q">How long is access free? <span className="faq-chevron">▾</span></div>
-              <div className="faq-a">As long as you maintain your stake. Each issued key is valid for 30 days — rotate it in the dashboard to renew. Staking is only checked at key issuance.</div>
+              <div className="faq-q">How long is access valid? <span className="faq-chevron">▾</span></div>
+              <div className="faq-a">Stakers: free as long as you stay staked — each key is valid for 30 days and auto-renewable. Buyers: 30 days per purchase, renewable anytime from the dashboard.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Which AI tools can I use this with? <span className="faq-chevron">▾</span></div>
@@ -352,6 +352,10 @@ export default function LandingPage() {
             <div className="faq-item">
               <div className="faq-q">What if I lose my key? <span className="faq-chevron">▾</span></div>
               <div className="faq-a">Hit <strong>Rotate key</strong> in the dashboard — your old key is revoked instantly and a new one is issued. Keys are shown once and cannot be retrieved after that.</div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-q">What if I buy access instead of staking? <span className="faq-chevron">▾</span></div>
+              <div className="faq-a">No staking required. Pay ~$5 in TON ERC-20 — it&apos;s burned on purchase. You get the same models, same rate limits, and a 30-day key. Renew from the dashboard anytime.</div>
             </div>
             </div>
           </section>
