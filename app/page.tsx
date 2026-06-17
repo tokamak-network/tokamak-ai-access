@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
 import { useSiwe } from "@/lib/hooks/useSiwe";
@@ -411,21 +412,19 @@ function WalletModal({
 }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [connecting, setConnecting] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (connectError) setConnecting(null);
   }, [connectError]);
 
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log("[WalletModal] connectors:", connectors.map((c) => ({ id: c.id, name: c.name, icon: c.icon?.slice(0, 60) ?? null })));
-  }, [connectors]);
-
   function handleOverlayClick(e: React.MouseEvent<HTMLDivElement>) {
     if (e.target === overlayRef.current) onClose();
   }
 
-  async function handleConnect(c: Connector) {
+  function handleConnect(c: Connector) {
     setConnecting(c.id);
     onConnect(c);
   }
@@ -437,7 +436,9 @@ function WalletModal({
     return true;
   });
 
-  return (
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       ref={overlayRef}
       onClick={handleOverlayClick}
@@ -448,7 +449,7 @@ function WalletModal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 9999,
+        zIndex: 2147483647,
       }}
     >
       <div
@@ -549,7 +550,8 @@ function WalletModal({
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
