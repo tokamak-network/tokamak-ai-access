@@ -293,6 +293,7 @@ function StakePanel({
   const [activeTab, setActiveTab] = useState<"stake" | "unstake">("stake");
   const [unstakeLayer2, setUnstakeLayer2] = useState<`0x${string}`>(DEFAULT_LAYER2);
   const [unstakeAmount, setUnstakeAmount] = useState("");
+  const [balanceTimedOut, setBalanceTimedOut] = useState(false);
   const stakedBalance = useStakedBalance(address as `0x${string}` | undefined, unstakeLayer2);
   const pendingUnstaked = usePendingUnstaked(address as `0x${string}` | undefined, unstakeLayer2);
   const withdrawal = useRequestWithdrawal();
@@ -302,7 +303,9 @@ function StakePanel({
   const balanceReady = !tonBalance.isLoading && !tonBalance.isError;
   const walletTON = parseFloat(tonBalance.formatted);
   const inputAmount = parseFloat(amount) || 0;
-  const hasEnough = balanceReady && inputAmount > 0 && walletTON >= inputAmount;
+  const hasEnough =
+    balanceTimedOut ||
+    (balanceReady && inputAmount > 0 && walletTON >= inputAmount);
 
   // Auto-notify parent on success
   useEffect(() => {
@@ -311,6 +314,16 @@ function StakePanel({
       return () => clearTimeout(t);
     }
   }, [status, onSuccess, reset]);
+
+  // RPC timeout for balance loading
+  useEffect(() => {
+    if (!tonBalance.isLoading) {
+      setBalanceTimedOut(false);
+      return;
+    }
+    const t = setTimeout(() => setBalanceTimedOut(true), 10_000);
+    return () => clearTimeout(t);
+  }, [tonBalance.isLoading]);
 
   async function handleStake() {
     if (!amount || !hasEnough) return;
@@ -381,9 +394,23 @@ function StakePanel({
           Wallet TON balance
         </span>
         <span style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", fontWeight: 700, color: "var(--ink)" }}>
-          {tonBalance.isLoading ? "…" : `${tonBalance.formatted} TON`}
+          {tonBalance.isLoading
+            ? balanceTimedOut ? "—" : "…"
+            : `${tonBalance.formatted} TON`}
         </span>
       </div>
+
+      {balanceTimedOut && (
+        <p style={{ fontSize: "0.8125rem", color: "#dc2626", margin: "0" }}>
+          Balance unavailable — RPC timeout.{" "}
+          <button
+            onClick={() => { setBalanceTimedOut(false); tonBalance.refetch(); }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--accent)", textDecoration: "underline", padding: 0, font: "inherit" }}
+          >
+            Retry
+          </button>
+        </p>
+      )}
 
       {/* Amount input */}
       <div>
@@ -487,6 +514,7 @@ function StakePanel({
         >
           {status === "pending"    ? "Confirm in wallet…" :
            status === "confirming" ? "Confirming tx…" :
+           balanceTimedOut         ? `Stake ${amount || "—"} TON → (unverified)` :
                                      `Stake ${amount || "—"} TON →`}
         </button>
       ) : (
