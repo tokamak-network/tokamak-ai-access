@@ -821,11 +821,7 @@ export default function DashboardPage() {
                         : "Not eligible"}
                   </span>
                 </span>
-                {balance.activePurchase && (
-                  <span className="n-lbl" style={{ fontSize: "0.6875rem", color: "var(--muted)", marginTop: "-12px" }}>
-                    Stake ≥{balance.minTon} TON for a free 30-day key
-                  </span>
-                )}
+
                 <span className="n-lbl">Network</span>
                 <span className="n-val" style={{ marginBottom: 0 }}>{targetChainName}</span>
               </>
