@@ -85,9 +85,11 @@ export default function LandingPage() {
             <span className="n-lbl">Status</span>
             <span className="n-val">Beta · 2026</span>
             <span className="n-lbl">Access</span>
-            <span className="n-val">Free for TON stakers</span>
+            <span className="n-val">Stake or buy</span>
             <span className="n-lbl">Minimum stake</span>
             <span className="n-val">{MIN_TON} TON</span>
+            <span className="n-lbl">Or buy</span>
+            <span className="n-val">~$5 / 30 days</span>
             <span className="n-lbl">Network</span>
             <span className="n-val">Ethereum Mainnet</span>
           </aside>
@@ -95,11 +97,11 @@ export default function LandingPage() {
           <div className="hero-content">
             <div className="h1-rule" />
             <h1 className="display">
-              Your stake<br />earns you AI.
+              Your wallet.<br />Your AI access.
             </h1>
             <p className="body-lead">
-              TON stakers with {MIN_TON} TON or more get a free 30-day API key for using AI —
-              no sign-up, no credit card. Just your wallet.
+              Stake ≥{MIN_TON} TON for a free 30-day API key, or buy one for ~$5.
+              No sign-up, no credit card required.
             </p>
 
             {!isConnected ? (
