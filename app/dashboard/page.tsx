@@ -823,7 +823,7 @@ export default function DashboardPage() {
                 </span>
                 {balance.activePurchase && (
                   <span className="n-lbl" style={{ fontSize: "0.6875rem", color: "var(--muted)", marginTop: "-12px" }}>
-                    Stake ≥{balance.minTon} TON for free monthly key
+                    Stake ≥{balance.minTon} TON for a free 30-day key
                   </span>
                 )}
                 <span className="n-lbl">Network</span>
@@ -881,7 +881,7 @@ export default function DashboardPage() {
                   >
                     <span className="eyebrow" style={{ display: "block", marginBottom: "8px" }}>Stake TON</span>
                     <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "12px", lineHeight: 1.5 }}>
-                      Works as long as you stay staked. No recurring payment.
+                      30-day key, renews free while you stay staked.
                     </p>
                     <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>Free</span>
                     <br />
@@ -1035,7 +1035,7 @@ export default function DashboardPage() {
                             fontSize: "0.875rem",
                             color: "var(--muted)",
                           }}>
-                            This key has no expiry. Rotate to enable 30-day TTL.
+                            This key has no expiry date. Rotating issues a fresh 30-day key.
                           </div>
                         );
                         const msLeft = new Date(keyData.expiresAt).getTime() - Date.now();
