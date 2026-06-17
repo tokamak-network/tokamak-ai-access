@@ -7,7 +7,7 @@ import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "TON AI Access",
-  description: "Stake ≥ 100 TON on Tokamak Network → Get your AI API key",
+  description: "Stake ≥ 100 TON on Tokamak Network → Get your API key for using AI",
 };
 
 export default function RootLayout({
