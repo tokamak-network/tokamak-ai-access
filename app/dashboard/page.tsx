@@ -677,8 +677,8 @@ export default function DashboardPage() {
   const { address, chainId } = useAccount();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
-  const targetChainId = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? 11155111 : 1;
-  const targetChainName = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "Sepolia" : "Ethereum Mainnet";
+  const targetChainId = 11155111;
+  const targetChainName = "Sepolia";
   const isWrongNetwork = !!address && chainId !== targetChainId;
 
   const [balance, setBalance] = useState<BalanceData | null>(null);
