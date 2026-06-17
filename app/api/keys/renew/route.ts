@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionAddress } from "@/lib/siwe";
-import { getTotalStakedTON } from "@/lib/staking";
 import { renewLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
+import { assertEligibility } from "@/lib/key-guards";
 
-const MIN_TON_WEI = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface KeyRecord {
@@ -32,9 +31,10 @@ export async function POST(req: NextRequest) {
   const rl = await checkRateLimit(req, address);
   if (rl) return rl;
 
-  const totalWei = await getTotalStakedTON(address);
-  if (totalWei < MIN_TON_WEI) {
-    return NextResponse.json({ error: "Insufficient stake" }, { status: 403 });
+  try {
+    await assertEligibility(address);
+  } catch (err) {
+    return err as NextResponse;
   }
 
   const existing = await kvGet<KeyRecord>(`key:${address}`);

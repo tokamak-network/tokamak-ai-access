@@ -328,6 +328,24 @@ describe("POST /api/keys/rotate", () => {
     expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
   });
 
+  it("allows rotation for purchase user with no stake", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    const ACTIVE_PURCHASE = { txHash: "0xabc", paidAt: Date.now() - 1000, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === `key:${ADDR}`) return Promise.resolve(STORED_RECORD);
+      if (key === `purchase:${ADDR}`) return Promise.resolve(ACTIVE_PURCHASE);
+      return Promise.resolve(null);
+    });
+    mockRevokeLiteLLMKey.mockResolvedValue(undefined);
+    mockGenerateLiteLLMKey.mockResolvedValue({ ...MOCK_KEY, key: "sk-litellm-purchase123" });
+    mockKvSet.mockResolvedValue(undefined);
+
+    const res = await rotateKey(makeReq());
+    expect(res.status).toBe(200);
+    expect((await res.json()).key).toBe("sk-litellm-purchase123");
+  });
+
   it("still issues new key if LiteLLM revocation call fails (best-effort)", async () => {
     mockGetSessionAddress.mockResolvedValue(ADDR);
     mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
@@ -446,8 +464,26 @@ describe("POST /api/keys/renew", () => {
 
     const res = await renewKey(makeReq());
     expect(res.status).toBe(403);
-    expect((await res.json()).error).toMatch(/insufficient/i);
+    expect((await res.json()).error).toMatch(/not eligible/i);
     expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("renews key for purchase user with no stake", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(0n);
+    const ACTIVE_PURCHASE = { txHash: "0xabc", paidAt: Date.now() - 1000, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === `purchase:${ADDR}`) return Promise.resolve(ACTIVE_PURCHASE);
+      if (key === `key:${ADDR}`) return Promise.resolve(OLD_RECORD);
+      return Promise.resolve(null);
+    });
+    mockRenewLiteLLMKey.mockResolvedValue({ expiresAt: RENEWED_EXPIRES });
+    mockKvSet.mockResolvedValue(undefined);
+
+    const res = await renewKey(makeReq());
+    const body = await res.json();
+    expect(res.status).toBe(200);
+    expect(body.expiresAt).toBe(RENEWED_EXPIRES);
   });
 
   it("returns 404 when no key exists", async () => {
