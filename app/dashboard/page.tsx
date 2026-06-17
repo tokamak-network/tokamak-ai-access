@@ -993,7 +993,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Key card */}
-                <div className="card">
+                <div className="card" data-testid="active-key-card">
                   <span className="card__label">Your API key</span>
                   {keyData?.hasActiveKey ? (
                     <>
