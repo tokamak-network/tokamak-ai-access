@@ -718,25 +718,29 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleStakeSuccess = useCallback(async () => {
-    let result = await fetchAll();
-    for (let i = 0; i < 4 && !result?.balance?.eligible; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      result = await fetchAll();
-    }
-    if (!result?.balance?.eligible || result?.keyData?.hasActiveKey) return;
+    const result = await fetchAll();
+    if (result?.keyData?.hasActiveKey) return;
     setActionLoading(true);
     setError(null);
-    try {
-      const res = await fetch("/api/keys/issue", { method: "POST" });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setOneTimeKey(data.key);
-      setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4), expiresAt: data.expiresAt });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Key issue failed");
-    } finally {
-      setActionLoading(false);
+    let lastError = "";
+    for (let i = 0; i < 4; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 1500));
+      try {
+        const res = await fetch("/api/keys/issue", { method: "POST" });
+        if (res.ok) {
+          const data = await res.json();
+          setOneTimeKey(data.key);
+          setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4), expiresAt: data.expiresAt });
+          setActionLoading(false);
+          return;
+        }
+        lastError = await res.text();
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : "Key issue failed";
+      }
     }
+    setError(lastError || "Key issue failed");
+    setActionLoading(false);
   }, [fetchAll]);
 
   const purchase = usePurchase((key?: string) => {
