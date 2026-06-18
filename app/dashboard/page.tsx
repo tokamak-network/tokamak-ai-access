@@ -694,6 +694,7 @@ export default function DashboardPage() {
   const [priceLoading, setPriceLoading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const setupRef = useRef<HTMLDivElement>(null);
+  const keyRevealRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -753,6 +754,12 @@ export default function DashboardPage() {
   });
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    if (oneTimeKey && keyRevealRef.current) {
+      keyRevealRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [oneTimeKey]);
 
   useEffect(() => {
     if (selectedCard !== "buy") return;
@@ -1189,7 +1196,7 @@ export default function DashboardPage() {
 
             {/* One-time key reveal */}
             {oneTimeKey && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div ref={keyRevealRef} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                 <div>
                   <h2 className="section-heading">Save this key — it won&apos;t be shown again.</h2>
                   <p className="body-lead" style={{ marginBottom: "20px" }}>
