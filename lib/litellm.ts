@@ -33,12 +33,14 @@ export async function generateLiteLLMKey(
   const { baseUrl, masterKey } = getConfig();
 
   const body = {
-    user_id:   ownerAddress,
-    key_alias: ownerAddress,
-    metadata: { owner: ownerAddress },
-    duration: "30d",
-    rpm_limit: 600,
-    tpm_limit: 4_000_000,
+    user_id:          ownerAddress,
+    key_alias:        ownerAddress,
+    metadata:         { owner: ownerAddress },
+    duration:         "30d",
+    rpm_limit:        300,
+    tpm_limit:        2_000_000,
+    max_budget:       1.0,       // virtual unit: $1 = 1M output tokens (output_cost_per_token: 0.000001)
+    budget_duration:  "1d",      // resets daily
     max_parallel_requests: 30,
   };
 
