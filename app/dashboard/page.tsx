@@ -1088,8 +1088,22 @@ export default function DashboardPage() {
                         const daysUntilRenewable = isRenewable
                           ? 0
                           : Math.ceil((renewableAfterMs - Date.now()) / (1000 * 60 * 60 * 24));
+                        const isPurchaseUser = !!(balance?.activePurchase && !balance?.eligible);
                         return (
                           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                            {isPurchaseUser && (
+                              <div style={{
+                                background: "#eff6ff",
+                                border: "1px solid #bfdbfe",
+                                borderRadius: "var(--radius)",
+                                padding: "12px 16px",
+                                fontSize: "0.8125rem",
+                                color: "#1e40af",
+                                lineHeight: 1.5,
+                              }}>
+                                Didn&apos;t copy your key? Click <strong>Get key →</strong> below to issue a new one — the current key will be revoked.
+                              </div>
+                            )}
                             <div>
                               <button
                                 className="btn-secondary"
@@ -1105,11 +1119,15 @@ export default function DashboardPage() {
                               </p>
                             </div>
                             <div>
-                              <button className="btn-secondary" onClick={rotateKey} disabled={actionLoading}>
-                                {actionLoading ? "Working…" : "New key"}
+                              <button
+                                className={isPurchaseUser ? "btn-primary" : "btn-secondary"}
+                                onClick={rotateKey}
+                                disabled={actionLoading}
+                              >
+                                {actionLoading ? "Working…" : isPurchaseUser ? "Get key →" : "New key"}
                               </button>
                               <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
-                                New key · revokes current · save immediately
+                                {isPurchaseUser ? "Issues new key · revokes current · copy immediately" : "New key · revokes current · save immediately"}
                               </p>
                             </div>
                           </div>
