@@ -686,6 +686,7 @@ export default function DashboardPage() {
   const [oneTimeKey, setOneTimeKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [stakingKeyPending, setStakingKeyPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
   const [selectedCard, setSelectedCard] = useState<"stake" | "buy" | null>(null);
@@ -721,6 +722,7 @@ export default function DashboardPage() {
     const result = await fetchAll();
     if (result?.keyData?.hasActiveKey) return;
     setActionLoading(true);
+    setStakingKeyPending(true);
     setError(null);
     let lastError = "";
     for (let i = 0; i < 4; i++) {
@@ -732,6 +734,7 @@ export default function DashboardPage() {
           setOneTimeKey(data.key);
           setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4), expiresAt: data.expiresAt });
           setActionLoading(false);
+          setStakingKeyPending(false);
           return;
         }
         lastError = await res.text();
@@ -741,6 +744,7 @@ export default function DashboardPage() {
     }
     setError(lastError || "Key issue failed");
     setActionLoading(false);
+    setStakingKeyPending(false);
   }, [fetchAll]);
 
   const purchase = usePurchase((key?: string) => {
@@ -1169,6 +1173,11 @@ export default function DashboardPage() {
                         No key issued yet. Issue one to access qwen-3.6 and other models
                         via the OpenAI-compatible API.
                       </p>
+                      {stakingKeyPending && (
+                        <p style={{ fontSize: "0.8125rem", color: "var(--muted)", fontFamily: "var(--font-mono)", marginBottom: "12px" }}>
+                          Confirming stake on-chain — this may take a few seconds…
+                        </p>
+                      )}
                       <button className="btn-primary" onClick={issueKey} disabled={actionLoading}>
                         {actionLoading ? "Issuing…" : "Issue API key →"}
                       </button>
