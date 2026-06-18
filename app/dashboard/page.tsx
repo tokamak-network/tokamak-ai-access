@@ -702,17 +702,38 @@ export default function DashboardPage() {
         fetch("/api/staking/balance"),
         fetch("/api/keys/me"),
       ]);
-      if (balRes.status === 401) { router.push("/"); return; }
+      if (balRes.status === 401) { router.push("/"); return null; }
       if (!balRes.ok) throw new Error(`Balance error ${balRes.status}`);
       if (!keyRes.ok) throw new Error(`Key status error ${keyRes.status}`);
-      setBalance(await balRes.json());
-      setKeyData(await keyRes.json());
+      const [balData, keyDataResult] = await Promise.all([balRes.json(), keyRes.json()]);
+      setBalance(balData);
+      setKeyData(keyDataResult);
+      return { balance: balData as BalanceData, keyData: keyDataResult as KeyData };
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
+      return null;
     } finally {
       setLoading(false);
     }
   }, [router]);
+
+  const handleStakeSuccess = useCallback(async () => {
+    const result = await fetchAll();
+    if (!result?.balance?.eligible || result?.keyData?.hasActiveKey) return;
+    setActionLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/keys/issue", { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setOneTimeKey(data.key);
+      setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4), expiresAt: data.expiresAt });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Key issue failed");
+    } finally {
+      setActionLoading(false);
+    }
+  }, [fetchAll]);
 
   const purchase = usePurchase((key?: string) => {
     if (key) setOneTimeKey(key);
@@ -925,7 +946,7 @@ export default function DashboardPage() {
                 {selectedCard === "stake" && (
                   <div className="card" style={{ marginBottom: "16px" }}>
                     <span className="card__label">Stake TON directly</span>
-                    <StakePanel minTon={balance.minTon} onSuccess={fetchAll} />
+                    <StakePanel minTon={balance.minTon} onSuccess={handleStakeSuccess} />
                   </div>
                 )}
 
