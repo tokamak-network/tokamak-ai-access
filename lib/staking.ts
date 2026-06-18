@@ -4,7 +4,7 @@
  * §2 assumptions:
  *  - SeigManagerV1_3.stakeOf(layer2, account) returns WTON in ray (27 decimals)
  *  - We normalize to 18-decimal bigint (same unit as ETH/TON ERC-20)
- *  - Layer2 list is fetched on-chain dynamically via Layer2Registry.layer2sLength + layer2sByIndex
+ *  - Layer2 list is fetched on-chain dynamically via Layer2Registry.numLayer2s + layer2ByIndex
  *
  * Dune query (#3298440) analysis:
  *  - Dune sWTON method = protocol-level total (cannot query per-address directly)
@@ -55,14 +55,14 @@ const SEIG_STAKE_ABI = [
 const REGISTRY_ABI = [
   {
     inputs: [],
-    name: "layer2sLength",
+    name: "numLayer2s",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [{ internalType: "uint256", name: "index", type: "uint256" }],
-    name: "layer2sByIndex",
+    name: "layer2ByIndex",
     outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
     type: "function",
@@ -75,10 +75,10 @@ const REGISTRY_ABI = [
 const WTON_TO_TON = 10n ** 9n;
 
 // ---- Hardcoded fallback Layer2 list ----
-// Layer2Registry.layer2sLength() reverts on mainnet (proxy deprecated after v1→v2 migration).
-// Confirmed: cast call 0x7846... "layer2sLength()(uint256)" → execution reverted (2026-05-20).
-// getLayer2Addresses() tries dynamic first, falls back to this list on any error.
-// Update manually if Tokamak Network adds new v1 operators.
+// Used when Layer2Registry is unreachable (network error, RPC down, etc.).
+// Confirmed via cast call on 2026-06-18: numLayer2s() works on both mainnet (10) and Sepolia (157).
+// The previous comment "layer2sLength() reverts on mainnet" was wrong — the function was named
+// incorrectly in the ABI (layer2sLength/layer2sByIndex → correct: numLayer2s/layer2ByIndex).
 const LAYER2S_FALLBACK: Record<"mainnet" | "sepolia", `0x${string}`[]> = {
   mainnet: [
     "0xf3B17FDB808c7d0Df9ACd24dA34700ce069007DF", // tokamak1
@@ -92,7 +92,13 @@ const LAYER2S_FALLBACK: Record<"mainnet" | "sepolia", `0x${string}`[]> = {
     "0xf3CF23D896Ba09d8EcdcD4655d918f71925E3FE5", // Danal Fintech
     "0x06D34f65869Ec94B3BA8c0E08BCEb532f65005E2", // Hammer DAO
   ],
-  sepolia: [],
+  sepolia: [
+    "0xCBeF7Cc221c04AD2E68e623613cc5d33b0fE1599", // TokamakOperator_v2 (index 0)
+    "0x277201BF0B20C672b023408Bf7778cFf3779b476", // ContractTeam_DAO_v2 (index 1)
+    "0x81581558791d423F2BBea52923BfD245DBB9C4F5", // ContractTeam_DAO2_v2 (index 2)
+    "0xaeB0463a2Fd96C68369C1347ce72997406Ed6409", // candidate (index 3)
+    "0xAbD15C021942Ca54aBd944C91705Fe70FEA13f0d", // member_DAO (index 4)
+  ],
 };
 
 // ---- Cache ----
@@ -120,12 +126,10 @@ function getClient() {
  * Fetches all registered Layer2 addresses.
  *
  * Strategy (try-then-fallback):
- *  1. Try Layer2Registry.layer2sLength() + layer2sByIndex() via multicall.
- *  2. If the registry call reverts (confirmed on mainnet 2026-05-20 — proxy appears
- *     deprecated post v1→v2 migration), fall back to LAYER2S_FALLBACK.
+ *  1. Try Layer2Registry.numLayer2s() + layer2ByIndex() via multicall.
+ *  2. If the registry call fails (RPC error, timeout), fall back to LAYER2S_FALLBACK.
  *
- * The fallback list is the hardcoded set of 10 known operators, which is safe and
- * matches the on-chain state as of the snapshot date.
+ * The fallback list covers the first few registered operators per chain.
  */
 export async function getLayer2Addresses(): Promise<`0x${string}`[]> {
   const cacheKey = `layer2s:${CHAIN}`;
@@ -138,22 +142,22 @@ export async function getLayer2Addresses(): Promise<`0x${string}`[]> {
   try {
     const client = getClient();
 
-    // 1. Get total count — may revert if registry is deprecated
+    // 1. Get total count
     const length = await client.readContract({
       address: LAYER2_REGISTRY_PROXY,
       abi: REGISTRY_ABI,
-      functionName: "layer2sLength",
+      functionName: "numLayer2s",
     }) as bigint;
 
     // Mark success before multicall so a partial multicall failure still uses fallback
     registrySucceeded = true;
 
     if (length > 0n) {
-      // 2. Multicall layer2sByIndex(0..length-1)
+      // 2. Multicall layer2ByIndex(0..length-1)
       const calls = Array.from({ length: Number(length) }, (_, i) => ({
         address: LAYER2_REGISTRY_PROXY,
         abi: REGISTRY_ABI,
-        functionName: "layer2sByIndex" as const,
+        functionName: "layer2ByIndex" as const,
         args: [BigInt(i)] as const,
       }));
 
@@ -166,12 +170,7 @@ export async function getLayer2Addresses(): Promise<`0x${string}`[]> {
       }
     }
   } catch {
-    // Registry call reverted (e.g. proxy deprecated). Use hardcoded fallback.
-    // NOTE: log this in production so the team knows to investigate.
-    console.warn(
-      "[staking] Layer2Registry call failed — using hardcoded fallback list.",
-      "If this is unexpected, check Layer2Registry proxy implementation slot.",
-    );
+    console.warn("[staking] Layer2Registry call failed — using hardcoded fallback list.");
   }
 
   // Only fall back to hardcoded list when the registry itself failed (reverted/unreachable).

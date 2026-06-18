@@ -3,8 +3,8 @@
  * vitest + mock viem multicall / readContract
  *
  * 호출 순서:
- *   1. readContract(layer2sLength)      → mockReadContract
- *   2. multicall(layer2sByIndex × N)   → mockMulticall (1st call per describe block)
+ *   1. readContract(numLayer2s)        → mockReadContract
+ *   2. multicall(layer2ByIndex × N)   → mockMulticall (1st call per describe block)
  *   3. multicall(stakeOf × N)          → mockMulticall (2nd call)
  *
  * Layer2 캐시(1h)는 beforeEach에서 invalidateLayer2Cache()로 초기화.
@@ -27,9 +27,8 @@ vi.mock("viem", async (importOriginal) => {
   };
 });
 
-// Env before module import
-process.env.RPC_URL = "https://eth-mainnet.example.com/test";
-process.env.NEXT_PUBLIC_CHAIN = "mainnet";
+// Env before module import (staking.ts hardcodes CHAIN = "sepolia", so RPC_URL_SEPOLIA is needed)
+process.env.RPC_URL_SEPOLIA = "https://eth-sepolia.example.com/test";
 
 import {
   getTotalStakedTON,
@@ -50,8 +49,8 @@ const MOCK_LAYER2S = Array.from(
 
 /**
  * Sets up Layer2Registry mocks for one invocation of getLayer2Addresses().
- * - readContract → layer2sLength = n
- * - mockMulticall → layer2sByIndex results (queued as next multicall call)
+ * - readContract → numLayer2s = n
+ * - mockMulticall → layer2ByIndex results (queued as next multicall call)
  */
 function mockRegistry(n = 10) {
   mockReadContract.mockResolvedValueOnce(BigInt(n));
@@ -116,7 +115,7 @@ describe("getTotalStakedTON — dynamic Layer2Registry", () => {
     const addr = "0xcache";
     await getTotalStakedTON(addr);
     await getTotalStakedTON(addr); // both caches hit → no additional multicall
-    // calls: 1× layer2sByIndex + 1× stakeOf = 2 total
+    // calls: 1× layer2ByIndex + 1× stakeOf = 2 total
     expect(mockMulticall).toHaveBeenCalledTimes(2);
   });
 
@@ -129,7 +128,7 @@ describe("getTotalStakedTON — dynamic Layer2Registry", () => {
     await getTotalStakedTON(addr);          // call 1: layer2s + stakeOf (2 multicalls)
     invalidateStakingCache(addr);
     await getTotalStakedTON(addr);          // call 2: layer2 cache hit, stakeOf re-queried (+1)
-    // calls: 1× layer2sByIndex + 2× stakeOf = 3 total
+    // calls: 1× layer2ByIndex + 2× stakeOf = 3 total
     expect(mockMulticall).toHaveBeenCalledTimes(3);
   });
 
@@ -151,18 +150,18 @@ describe("getTotalStakedTON — dynamic Layer2Registry", () => {
   });
 
   it("returns 0n when Layer2Registry reports 0 registered Layer2s", async () => {
-    mockReadContract.mockResolvedValueOnce(0n); // layer2sLength = 0
-    // No multicall for layer2sByIndex; no multicall for stakeOf either
+    mockReadContract.mockResolvedValueOnce(0n); // numLayer2s = 0
+    // No multicall for layer2ByIndex; no multicall for stakeOf either
     const result = await getTotalStakedTON("0xempty");
     expect(result).toBe(0n);
     expect(mockMulticall).not.toHaveBeenCalled();
   });
 
-  it("throws if RPC_URL env var is not set", async () => {
-    const saved = process.env.RPC_URL;
-    delete process.env.RPC_URL;
+  it("throws if RPC_URL_SEPOLIA env var is not set", async () => {
+    const saved = process.env.RPC_URL_SEPOLIA;
+    delete process.env.RPC_URL_SEPOLIA;
     invalidateLayer2Cache(); // ensure fresh registry call attempt
-    await expect(getTotalStakedTON("0xnoenv")).rejects.toThrow("RPC_URL");
-    process.env.RPC_URL = saved;
+    await expect(getTotalStakedTON("0xnoenv")).rejects.toThrow("RPC_URL_SEPOLIA");
+    process.env.RPC_URL_SEPOLIA = saved;
   });
 });
