@@ -202,10 +202,8 @@ export default function LandingPage() {
             <span className="n-val">3</span>
             <span className="n-lbl">Time</span>
             <span className="n-val">~60 seconds</span>
-            <span className="n-lbl">Gas required</span>
-            <span className="n-val">None</span>
             <span className="n-lbl">Supported wallets</span>
-            <span className="n-val" style={{ marginBottom: 0 }}>MetaMask, OKX Wallet, Browser Wallet</span>
+            <span className="n-val" style={{ marginBottom: 0 }}>MetaMask, OKX Wallet, Rabby Wallet</span>
           </aside>
 
           <div>
