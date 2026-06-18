@@ -18,6 +18,8 @@ import {
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
+  usePublicClient,
+  useAccount,
 } from "wagmi";
 import { encodeAbiParameters, parseUnits, formatUnits } from "viem";
 
@@ -136,6 +138,8 @@ export interface UseStakeResult {
 }
 
 export function useStake(): UseStakeResult {
+  const publicClient = usePublicClient();
+  const { address: userAddress } = useAccount();
   const {
     writeContractAsync,
     isPending,
@@ -172,11 +176,31 @@ export function useStake(): UseStakeResult {
       [DEPOSIT_MANAGER_ADDRESS, layer2]
     );
 
+    // Pre-estimate gas via wagmi's transport (Alchemy) so MetaMask doesn't use
+    // its own internal RPC for gas estimation, which can incorrectly report
+    // "This transaction is likely to fail" on Sepolia.
+    let gasLimit: bigint | undefined;
+    if (publicClient && userAddress) {
+      try {
+        const estimated = await publicClient.estimateContractGas({
+          address: TON_ADDRESS,
+          abi: tonAbi.abi as Parameters<typeof publicClient.estimateContractGas>[0]["abi"],
+          functionName: "approveAndCall",
+          args: [WTON, amount, data],
+          account: userAddress,
+        });
+        gasLimit = (estimated * 130n) / 100n; // 30% buffer
+      } catch {
+        gasLimit = 600_000n;
+      }
+    }
+
     return writeContractAsync({
       address: TON_ADDRESS,
       abi: tonAbi.abi,
       functionName: "approveAndCall",
       args: [WTON, amount, data],
+      gas: gasLimit,
     });
   }
 
