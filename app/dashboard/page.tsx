@@ -718,7 +718,11 @@ export default function DashboardPage() {
   }, [router]);
 
   const handleStakeSuccess = useCallback(async () => {
-    const result = await fetchAll();
+    let result = await fetchAll();
+    for (let i = 0; i < 4 && !result?.balance?.eligible; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      result = await fetchAll();
+    }
     if (!result?.balance?.eligible || result?.keyData?.hasActiveKey) return;
     setActionLoading(true);
     setError(null);
