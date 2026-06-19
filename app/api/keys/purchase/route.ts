@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
       expiresAt,
     } satisfies PurchaseRecord);
 
-    return await issueKeyForAddress(address);
+    return await issueKeyForAddress(address, 'purchase');
   } catch (err) {
     // Release the dedup claim if issuance fails
     await kvDel(`txhash:${txHash}`);

@@ -234,7 +234,7 @@ describe("POST /api/keys/purchase", () => {
       expect.objectContaining({ txHash: TX_HASH }),
     );
     // issueKeyForAddress called
-    expect(mockIssueKeyForAddress).toHaveBeenCalledWith(ADDR);
+    expect(mockIssueKeyForAddress).toHaveBeenCalledWith(ADDR, "purchase");
     // kvDel NOT called on success (only on failure)
     expect(mockKvDel).not.toHaveBeenCalled();
   });
