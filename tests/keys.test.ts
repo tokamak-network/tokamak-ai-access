@@ -205,6 +205,34 @@ describe("POST /api/keys/issue", () => {
     const body = await res.json();
     expect(body.error).toBe("Issue in progress");
   });
+
+  it("calls generateLiteLLMKey with 'stake' keyType", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(null);
+    mockGenerateLiteLLMKey.mockResolvedValue({ key: "sk-litellm-abc", keyId: "sk-litellm-abc", expiresAt: undefined });
+    mockKvSet.mockResolvedValue(undefined);
+    mockKvIncr.mockResolvedValue(undefined);
+
+    await issueKey(makeReq());
+
+    expect(mockGenerateLiteLLMKey).toHaveBeenCalledWith(ADDR, "stake");
+  });
+
+  it("does not store expiresAt in KV when stake key has no expiry", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(null);
+    mockGenerateLiteLLMKey.mockResolvedValue({ key: "sk-litellm-abc", keyId: "sk-litellm-abc", expiresAt: undefined });
+    mockKvSet.mockResolvedValue(undefined);
+    mockKvIncr.mockResolvedValue(undefined);
+
+    await issueKey(makeReq());
+
+    // mockKvSet.calls[0] = lock set (kvSetNx), calls[1] = key record
+    const storedRecord = mockKvSet.mock.calls[1][1];
+    expect(storedRecord).not.toHaveProperty("expiresAt");
+  });
 });
 
 // ── GET /api/keys/me ─────────────────────────────────────────────────────────
@@ -408,6 +436,39 @@ describe("POST /api/keys/rotate", () => {
     const newCall = mockKvSet.mock.calls[mockKvSet.mock.calls.length - 1];
     expect(newCall[1]).toHaveProperty("lastRotatedAt");
     expect(newCall[1].lastRotatedAt).toBeGreaterThan(Date.now() - 1000);
+  });
+
+  it("uses 'stake' keyType when no active purchase record", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    // STORED_RECORD.expiresAt is a string; PurchaseRecord.expiresAt is number
+    // string > Date.now() === false → keyType = 'stake'
+    mockKvGet.mockResolvedValue(STORED_RECORD);
+    mockRevokeLiteLLMKey.mockResolvedValue(undefined);
+    mockGenerateLiteLLMKey.mockResolvedValue({ ...MOCK_KEY, key: "sk-litellm-stake1" });
+    mockKvSet.mockResolvedValue(undefined);
+
+    await rotateKey(makeReq());
+
+    expect(mockGenerateLiteLLMKey).toHaveBeenCalledWith(ADDR, "stake");
+  });
+
+  it("uses 'purchase' keyType when active purchase record exists", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    const FUTURE = Date.now() + 30 * 24 * 60 * 60 * 1000;
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === `key:${ADDR}`) return Promise.resolve(STORED_RECORD);
+      if (key === `purchase:${ADDR}`) return Promise.resolve({ txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE });
+      return Promise.resolve(null);
+    });
+    mockRevokeLiteLLMKey.mockResolvedValue(undefined);
+    mockGenerateLiteLLMKey.mockResolvedValue({ ...MOCK_KEY, key: "sk-litellm-purch1" });
+    mockKvSet.mockResolvedValue(undefined);
+
+    await rotateKey(makeReq());
+
+    expect(mockGenerateLiteLLMKey).toHaveBeenCalledWith(ADDR, "purchase");
   });
 });
 

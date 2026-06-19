@@ -3,7 +3,7 @@ import { getSessionAddress } from "@/lib/siwe";
 import { generateLiteLLMKey, revokeLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, hashKey } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
-import { assertRotateCooldown, assertEligibility } from "@/lib/key-guards";
+import { assertRotateCooldown, assertEligibility, type PurchaseRecord } from "@/lib/key-guards";
 
 /**
  * POST /api/keys/rotate
@@ -35,14 +35,18 @@ export async function POST(req: NextRequest) {
     await kvSet(`key:${address}:prev`, { ...existing, revokedAt: Date.now() });
   }
 
-  // Issue new key
-  const { key, keyId, expiresAt } = await generateLiteLLMKey(address);
+  // Determine keyType: active purchase record → 'purchase', else → 'stake'
+  const purchase = await kvGet<PurchaseRecord>(`purchase:${address}`);
+  const keyType: 'stake' | 'purchase' =
+    (purchase && purchase.expiresAt > Date.now()) ? 'purchase' : 'stake';
+
+  const { key, keyId, expiresAt } = await generateLiteLLMKey(address, keyType);
   await kvSet(`key:${address}`, {
     liteLlmKeyId: keyId,
     hash: hashKey(key),
     keySlice: key.slice(-4),
     createdAt: Date.now(),
-    expiresAt,
+    ...(expiresAt !== undefined && { expiresAt }),
     lastRotatedAt: Date.now(),
   });
 
