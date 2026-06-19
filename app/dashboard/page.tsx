@@ -1087,7 +1087,7 @@ export default function DashboardPage() {
                             fontSize: "0.875rem",
                             color: "var(--muted)",
                           }}>
-                            This key has no expiry date. Rotating issues a fresh 30-day key.
+                            No expiry — valid as long as you stay staked. Rotating issues a new key with the same unlimited access.
                           </div>
                         );
                         const msLeft = new Date(keyData.expiresAt).getTime() - Date.now();
@@ -1156,7 +1156,7 @@ export default function DashboardPage() {
                               </button>
                               <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
                                 {isStakingKey
-                                  ? "No expiry while staked"
+                                  ? null
                                   : isRenewable
                                   ? "Same key · no reconfiguration needed"
                                   : `Available in ${daysUntilRenewable} day${daysUntilRenewable === 1 ? "" : "s"}`}
@@ -1171,7 +1171,7 @@ export default function DashboardPage() {
                                 {actionLoading ? "Working…" : isPurchaseUser ? "Get key →" : "New key"}
                               </button>
                               <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
-                                {isPurchaseUser ? "Issues new key · revokes current · copy immediately" : "New key · revokes current · save immediately"}
+                                {isPurchaseUser ? "Issues new key · revokes current · copy immediately" : null}
                               </p>
                             </div>
                           </div>
