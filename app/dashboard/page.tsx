@@ -1156,7 +1156,7 @@ export default function DashboardPage() {
                               </button>
                               <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
                                 {isStakingKey
-                                  ? "Not available for staking keys"
+                                  ? "No expiry while staked · Rotate to get a fresh 30-day key"
                                   : isRenewable
                                   ? "Same key · no reconfiguration needed"
                                   : `Available in ${daysUntilRenewable} day${daysUntilRenewable === 1 ? "" : "s"}`}

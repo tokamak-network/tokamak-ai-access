@@ -104,8 +104,8 @@ test.describe('Dashboard — Eligible staker', () => {
       await expect(btn).toBeDisabled();
     });
 
-    test('shows "Not available for staking keys" hint', async ({ eligibleStakingKey: page }) => {
-      await expect(page.getByText('Not available for staking keys')).toBeVisible({ timeout: 10_000 });
+    test('shows no-expiry hint for staking keys', async ({ eligibleStakingKey: page }) => {
+      await expect(page.getByText('No expiry while staked · Rotate to get a fresh 30-day key')).toBeVisible({ timeout: 10_000 });
     });
 
     test('New key button remains enabled', async ({ eligibleStakingKey: page }) => {

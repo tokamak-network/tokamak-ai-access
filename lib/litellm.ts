@@ -67,7 +67,7 @@ export async function generateLiteLLMKey(
     keyId: data.key,   // actual token — required by /key/delete; key_name is a label only
     expiresAt: keyType === 'purchase'
       ? (data.expires ?? new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString())
-      : data.expires,
+      : undefined, // stake keys have no expiry — cron removes them on unstake
   };
 }
 
