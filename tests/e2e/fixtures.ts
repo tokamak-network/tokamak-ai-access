@@ -6,6 +6,7 @@ import {
   applyAuthMocks,
   applyEligibleNoKeyMocks,
   applyEligibleWithKeyMocks,
+  applyEligibleStakingKeyMocks,
   applyIneligibleMocks,
   applyPurchaseMocks,
 } from './api-mocks';
@@ -17,6 +18,8 @@ type Fixtures = {
   eligibleNoKey: Page;
   /** Dashboard: eligible staker, active key (31 days old, renewable) */
   eligibleWithKey: Page;
+  /** Dashboard: eligible staker, active staking key (no expiresAt) */
+  eligibleStakingKey: Page;
   /** Dashboard: not eligible, no purchase */
   ineligiblePage: Page;
   /** Dashboard: active purchase expiring in 6 days */
@@ -45,6 +48,13 @@ export const test = base.extend<Fixtures>({
     await use(page);
   },
 
+  eligibleStakingKey: async ({ page }, use) => {
+    await page.addInitScript({ content: buildWalletMockScript(MOCK_ADDRESS) });
+    await applyEligibleStakingKeyMocks(page);
+    await page.goto('/dashboard');
+    await use(page);
+  },
+
   ineligiblePage: async ({ page }, use) => {
     await page.addInitScript({ content: buildWalletMockScript(MOCK_ADDRESS) });
     await applyIneligibleMocks(page);
@@ -65,7 +75,7 @@ export const test = base.extend<Fixtures>({
           return;
         }
       }
-      await route.continue();
+      await route.fallback();
     });
 
     await page.goto('/dashboard');

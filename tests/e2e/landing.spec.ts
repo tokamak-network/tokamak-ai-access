@@ -3,8 +3,8 @@ import { test, expect } from './fixtures';
 
 test.describe('Landing page', () => {
   test('renders hero, model cards, and footer', async ({ landingPage: page }) => {
-    await expect(page.locator('h1')).toContainText('Your stake');
-    await expect(page.locator('h1')).toContainText('earns you AI');
+    await expect(page.locator('h1')).toContainText('Your wallet');
+    await expect(page.locator('h1')).toContainText('Your AI access');
 
     // Model cards
     await expect(page.getByText('qwen-3.6', { exact: true }).first()).toBeVisible();
