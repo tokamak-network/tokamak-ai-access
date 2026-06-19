@@ -1121,6 +1121,7 @@ export default function DashboardPage() {
                         return null;
                       })()}
                       {(() => {
+                        const isStakingKey = !keyData.expiresAt;
                         const renewableAfterMs = keyData.createdAt
                           ? new Date(keyData.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000
                           : Infinity;
@@ -1146,14 +1147,17 @@ export default function DashboardPage() {
                             )}
                             <div>
                               <button
+                                data-testid="renew-btn"
                                 className="btn-secondary"
                                 onClick={renewKey}
-                                disabled={actionLoading || !isRenewable}
+                                disabled={actionLoading || !isRenewable || isStakingKey}
                               >
                                 {actionLoading ? "Working…" : "Extend key (+30d)"}
                               </button>
                               <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
-                                {isRenewable
+                                {isStakingKey
+                                  ? "Not available for staking keys"
+                                  : isRenewable
                                   ? "Same key · no reconfiguration needed"
                                   : `Available in ${daysUntilRenewable} day${daysUntilRenewable === 1 ? "" : "s"}`}
                               </p>

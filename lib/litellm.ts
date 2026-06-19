@@ -29,20 +29,23 @@ function getConfig() {
  */
 export async function generateLiteLLMKey(
   ownerAddress: string,
-): Promise<{ key: string; keyId: string; expiresAt: string }> {
+  keyType: 'stake' | 'purchase',
+): Promise<{ key: string; keyId: string; expiresAt: string | undefined }> {
   const { baseUrl, masterKey } = getConfig();
 
-  const body = {
-    user_id:          ownerAddress,
-    key_alias:        ownerAddress,
-    metadata:         { owner: ownerAddress },
-    duration:         "30d",
-    rpm_limit:        300,
-    tpm_limit:        2_000_000,
-    max_budget:       1.0,       // virtual unit: $1 = 1M output tokens (output_cost_per_token: 0.000001)
-    budget_duration:  "1d",      // resets daily
+  const body: Record<string, unknown> = {
+    user_id:               ownerAddress,
+    key_alias:             ownerAddress,
+    metadata:              { owner: ownerAddress },
+    rpm_limit:             300,
+    tpm_limit:             2_000_000,
+    max_budget:            1.0,       // virtual unit: $1 = 1M output tokens (output_cost_per_token: 0.000001)
+    budget_duration:       "1d",      // resets daily
     max_parallel_requests: 30,
   };
+  if (keyType === 'purchase') {
+    body.duration = "30d";
+  }
 
   const res = await fetch(`${baseUrl}/key/generate`, {
     method: "POST",
@@ -62,7 +65,9 @@ export async function generateLiteLLMKey(
   return {
     key: data.key,
     keyId: data.key,   // actual token — required by /key/delete; key_name is a label only
-    expiresAt: data.expires ?? new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString(),
+    expiresAt: keyType === 'purchase'
+      ? (data.expires ?? new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString())
+      : data.expires,
   };
 }
 
