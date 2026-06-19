@@ -341,7 +341,7 @@ export default function LandingPage() {
             </div>
             <div className="faq-item">
               <div className="faq-q">Are there rate limits? <span className="faq-chevron">▾</span></div>
-              <div className="faq-a">Fair-use limits apply to prevent abuse, but they&apos;re set well above typical daily usage — most users will never hit them.</div>
+              <div className="faq-a">Fair-use limits apply to prevent abuse. Usage resets every 24 hours — most users will never hit the daily cap.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">What if I lose my key? <span className="faq-chevron">▾</span></div>
