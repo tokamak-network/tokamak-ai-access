@@ -622,4 +622,21 @@ describe("POST /api/keys/renew", () => {
 
     expect(mockKvSet.mock.calls[0][1]).toHaveProperty("createdAt", OLD_RECORD.createdAt);
   });
+
+  it("returns noOp:true and expiresAt:null for staking keys (no expiresAt in record)", async () => {
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    // Staking key: no expiresAt field
+    const STAKE_RECORD = { ...OLD_RECORD, expiresAt: undefined };
+    mockKvGet.mockResolvedValue(STAKE_RECORD);
+
+    const res  = await renewKey(makeReq());
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.noOp).toBe(true);
+    expect(body.expiresAt).toBeNull();
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+    expect(mockKvSet).not.toHaveBeenCalled();
+  });
 });

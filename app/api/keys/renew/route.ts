@@ -42,6 +42,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No active key" }, { status: 404 });
   }
 
+  // Staking keys have no expiry — GitHub Actions handles revocation on unstake
+  if (!existing.expiresAt) {
+    return NextResponse.json({ expiresAt: null, noOp: true });
+  }
+
   const renewableAfter = existing.createdAt + THIRTY_DAYS_MS;
   if (Date.now() < renewableAfter) {
     const daysLeft = Math.ceil((renewableAfter - Date.now()) / (1000 * 60 * 60 * 24));

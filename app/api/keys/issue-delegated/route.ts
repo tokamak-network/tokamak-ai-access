@@ -65,7 +65,7 @@ interface KeyRecord {
   hash: string;
   keySlice: string;
   createdAt: number;
-  expiresAt: string;
+  expiresAt?: string;
   revokedAt?: number;
 }
 
@@ -177,13 +177,13 @@ export async function POST(req: NextRequest) {
     return json({ error: "Key already issued" }, 409, origin);
   }
 
-  const { key, keyId, expiresAt } = await generateLiteLLMKey(address);
+  const { key, keyId, expiresAt } = await generateLiteLLMKey(address, 'stake');
   await kvSet(`key:${address}`, {
     liteLlmKeyId: keyId,
     hash: hashKey(key),
     keySlice: key.slice(-4),
     createdAt: Date.now(),
-    expiresAt,
+    ...(expiresAt !== undefined && { expiresAt }),
   } satisfies KeyRecord);
 
   return json({ key, expiresAt }, 200, origin);
