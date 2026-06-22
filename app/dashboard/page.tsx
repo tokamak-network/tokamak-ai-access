@@ -16,6 +16,14 @@ import {
   type UseProcessRequestResult,
 } from "@/lib/hooks/useUnstake";
 
+const CEX_EXCHANGES = [
+  { name: "Upbit",    url: "https://upbit.com/exchange?code=CRIX.UPBIT.KRW-TOKAMAK" },
+  { name: "Bithumb",  url: "https://www.bithumb.com/trade/order/TOKAMAK_KRW" },
+  { name: "WEEX",     url: "https://www.weex.com/spot/TOKAMAK-USDT" },
+  { name: "XT.COM",   url: "https://www.xt.com/en/trade/tokamak_usdt" },
+  { name: "DigiFinex",url: "https://www.digifinex.com/en-ww/trade/USDT/TOKAMAK" },
+];
+
 interface BalanceData {
   address: string;
   totalStakedTON: string;
@@ -958,6 +966,23 @@ export default function DashboardPage() {
                     <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>≈$5 in TON</span>
                     <br />
                     <span style={{ fontSize: "0.6875rem", color: "var(--muted)" }}>30 days</span>
+                    <p style={{ marginTop: "10px", fontSize: "0.6875rem", color: "var(--muted)" }}>Get TON:</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 8px", marginTop: "3px" }}>
+                      {CEX_EXCHANGES.map(({ name, url }) => (
+                        <a
+                          key={name}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "#6366f1", textDecoration: "none" }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline"; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+                        >
+                          {name}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
