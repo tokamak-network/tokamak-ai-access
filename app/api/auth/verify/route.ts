@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Resolve domain from trusted config; Host header as fallback only
-  const domain = process.env.APP_DOMAIN ?? req.headers.get("host") ?? "";
+  const domain = process.env.APP_DOMAIN || req.headers.get("host") || "";
 
   // Fetch stored nonce before crypto verify (so we can pass server-issued nonce)
   const address = siweMsg.address.toLowerCase();

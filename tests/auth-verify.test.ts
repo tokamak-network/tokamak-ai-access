@@ -88,4 +88,22 @@ describe("POST /api/auth/verify — domain binding (F-06)", () => {
     );
     expect(res.status).toBe(401);
   });
+
+  it("falls back to Host header when APP_DOMAIN is empty string", async () => {
+    process.env.APP_DOMAIN = "";
+    mockSiweVerify.mockResolvedValue({ success: true });
+    mockKvGet.mockResolvedValue({ nonce: "abc123", expiresAt: Date.now() + 60_000 });
+    mockKvDel.mockResolvedValue(undefined);
+    mockKvSet.mockResolvedValue(undefined);
+
+    await verifyRoute(
+      makeReq("ai-access.tokamak.network", { message: "test-siwe-message", signature: "0xsig" }),
+    );
+
+    expect(mockSiweVerify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        domain: "ai-access.tokamak.network",
+      }),
+    );
+  });
 });
