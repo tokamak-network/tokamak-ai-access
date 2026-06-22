@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useAccount, useConnect, useDisconnect, type Connector } from "wagmi";
+import { useAccount, useChainId, useConnect, useDisconnect, type Connector } from "wagmi";
 import { useSiwe } from "@/lib/hooks/useSiwe";
 import HeroMark from "./HeroMark";
 
@@ -30,6 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
 export default function LandingPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
   const { connect, connectors, isPending: isConnecting, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
   const { status: siweStatus, error: siweError, signIn } = useSiwe();
@@ -134,10 +135,15 @@ export default function LandingPage() {
               </>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
+                {isConnected && chainId !== 1 && (
+                  <p style={{ fontSize: "0.8125rem", color: "#f59e0b", maxWidth: "52ch" }}>
+                    Wrong network — switch to Ethereum Mainnet in your wallet to continue.
+                  </p>
+                )}
                 <button
                   className="btn-primary"
                   onClick={() => address && signIn(address)}
-                  disabled={isSiweLoading}
+                  disabled={isSiweLoading || (isConnected && chainId !== 1)}
                 >
                   {STATUS_LABELS[siweStatus] ?? "Sign in"}
                 </button>
