@@ -12,6 +12,13 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+// vi.hoisted runs before any module imports — needed so CHAIN const in staking.ts
+// evaluates to "sepolia" at module load time.
+vi.hoisted(() => {
+  process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+  process.env.RPC_URL_SEPOLIA = "https://eth-sepolia.example.com/test";
+});
+
 // ---- Mock viem ----
 const mockMulticall    = vi.fn();
 const mockReadContract = vi.fn();
@@ -26,9 +33,6 @@ vi.mock("viem", async (importOriginal) => {
     })),
   };
 });
-
-// Env before module import (staking.ts hardcodes CHAIN = "sepolia", so RPC_URL_SEPOLIA is needed)
-process.env.RPC_URL_SEPOLIA = "https://eth-sepolia.example.com/test";
 
 import {
   getTotalStakedTON,

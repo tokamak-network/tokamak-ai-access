@@ -12,18 +12,22 @@ const {
   mockGetTransactionReceipt,
   mockParseEventLogs,
   mockFetchTonUsdRate,
-} = vi.hoisted(() => ({
-  mockGetSessionAddress: vi.fn(),
-  mockKvGet: vi.fn(),
-  mockKvSet: vi.fn(),
-  mockKvDel: vi.fn(),
-  mockKvIncr: vi.fn(),
-  mockAssertKeyCapacity: vi.fn(),
-  mockIssueKeyForAddress: vi.fn(),
-  mockGetTransactionReceipt: vi.fn(),
-  mockParseEventLogs: vi.fn(),
-  mockFetchTonUsdRate: vi.fn(),
-}));
+} = vi.hoisted(() => {
+  // Set before route module loads — CHAIN_ID is a module-level const
+  process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+  return {
+    mockGetSessionAddress: vi.fn(),
+    mockKvGet: vi.fn(),
+    mockKvSet: vi.fn(),
+    mockKvDel: vi.fn(),
+    mockKvIncr: vi.fn(),
+    mockAssertKeyCapacity: vi.fn(),
+    mockIssueKeyForAddress: vi.fn(),
+    mockGetTransactionReceipt: vi.fn(),
+    mockParseEventLogs: vi.fn(),
+    mockFetchTonUsdRate: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
 vi.mock("@vercel/kv", () => ({ kv: { get: mockKvGet, set: mockKvSet, del: mockKvDel, incr: mockKvIncr } }));

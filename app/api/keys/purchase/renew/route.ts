@@ -20,7 +20,7 @@ const TRANSFER_EVENT_ABI = [
   },
 ] as const;
 
-const CHAIN_ID = "sepolia";
+const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "sepolia" : "mainnet";
 const TON_ERC20_ADDRESS = tonAbi._meta.addresses[CHAIN_ID as "mainnet" | "sepolia"].proxy.toLowerCase();
 
 function getPublicClient() {

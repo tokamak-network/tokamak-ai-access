@@ -18,9 +18,10 @@
  * can be rate-limited, causing useReadContract to silently return undefined.
  */
 import { createConfig, http, fallback } from "wagmi";
-import { sepolia } from "wagmi/chains";
+import { mainnet, sepolia } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
+const isSepolia = process.env.NEXT_PUBLIC_CHAIN === "sepolia";
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
 const connectors = [
@@ -54,13 +55,24 @@ const connectors = [
   // auto-discovered at runtime via multiInjectedProviderDiscovery (default).
 ];
 
-export const wagmiConfig = createConfig({
-  chains: [sepolia],
-  connectors,
-  transports: {
-    [sepolia.id]: rpcUrl
-      ? fallback([http(rpcUrl), http()])
-      : http(),
-  },
-  ssr: true,
-});
+export const wagmiConfig = isSepolia
+  ? createConfig({
+      chains: [sepolia],
+      connectors,
+      transports: {
+        [sepolia.id]: rpcUrl
+          ? fallback([http(rpcUrl), http()])
+          : http(),
+      },
+      ssr: true,
+    })
+  : createConfig({
+      chains: [mainnet],
+      connectors,
+      transports: {
+        [mainnet.id]: rpcUrl
+          ? fallback([http(rpcUrl), http("https://eth.llamarpc.com"), http()])
+          : fallback([http("https://eth.llamarpc.com"), http("https://rpc.ankr.com/eth"), http()]),
+      },
+      ssr: true,
+    });

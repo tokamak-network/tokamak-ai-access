@@ -24,7 +24,7 @@ import seigManagerAbi from "@/abi/SeigManagerV1_3.json";
 import layer2RegistryAbi from "@/abi/Layer2Registry.json";
 
 // ---- Network selection ----
-const CHAIN = "sepolia";
+const CHAIN = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "sepolia" : "mainnet";
 
 // ---- Contract addresses from ABI JSON _meta ----
 const SEIG_MANAGER_PROXY = (
