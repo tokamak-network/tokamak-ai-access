@@ -12,18 +12,22 @@ const {
   mockGetTransactionReceipt,
   mockParseEventLogs,
   mockFetchTonUsdRate,
-} = vi.hoisted(() => ({
-  mockGetSessionAddress: vi.fn(),
-  mockKvGet: vi.fn(),
-  mockKvSet: vi.fn(),
-  mockKvDel: vi.fn(),
-  mockKvIncr: vi.fn(),
-  mockAssertKeyCapacity: vi.fn(),
-  mockIssueKeyForAddress: vi.fn(),
-  mockGetTransactionReceipt: vi.fn(),
-  mockParseEventLogs: vi.fn(),
-  mockFetchTonUsdRate: vi.fn(),
-}));
+} = vi.hoisted(() => {
+  // Set before route module loads — CHAIN_ID is a module-level const
+  process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+  return {
+    mockGetSessionAddress: vi.fn(),
+    mockKvGet: vi.fn(),
+    mockKvSet: vi.fn(),
+    mockKvDel: vi.fn(),
+    mockKvIncr: vi.fn(),
+    mockAssertKeyCapacity: vi.fn(),
+    mockIssueKeyForAddress: vi.fn(),
+    mockGetTransactionReceipt: vi.fn(),
+    mockParseEventLogs: vi.fn(),
+    mockFetchTonUsdRate: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
 vi.mock("@vercel/kv", () => ({ kv: { get: mockKvGet, set: mockKvSet, del: mockKvDel, incr: mockKvIncr } }));
@@ -56,7 +60,7 @@ import { NextResponse } from "next/server";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
 const BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
-const TON_ERC20 = "0xton00000000000000000000000000000000001";
+const TON_ERC20 = "0xa30fe40285b8f5c0457dbc3b7c8a280373c40044"; // Sepolia TON from abi/TON.json
 const TX_HASH = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab";
 const FIVE_TON = 5n * 10n ** 18n;
 
@@ -95,7 +99,6 @@ function makeReq(body: object = { txHash: TX_HASH }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.TON_ERC20_ADDRESS = TON_ERC20;
   process.env.PURCHASE_USD_PRICE = "5";
 
   mockGetSessionAddress.mockResolvedValue(ADDR);
@@ -235,8 +238,16 @@ describe("POST /api/keys/purchase", () => {
       expect.objectContaining({ txHash: TX_HASH }),
     );
     // issueKeyForAddress called
-    expect(mockIssueKeyForAddress).toHaveBeenCalledWith(ADDR);
+    expect(mockIssueKeyForAddress).toHaveBeenCalledWith(ADDR, "purchase");
     // kvDel NOT called on success (only on failure)
     expect(mockKvDel).not.toHaveBeenCalled();
+  });
+
+  it("success response body contains key and expiresAt (contract usePurchase hook depends on)", async () => {
+    const res = await POST(makeReq());
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveProperty("key", "sk-litellm-xxx");
+    expect(body).toHaveProperty("expiresAt");
   });
 });

@@ -6,6 +6,7 @@ import { type PurchaseRecord, type KeyRecord } from "@/lib/key-guards";
 import { renewLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, kvSetNx, kvDel } from "@/lib/kv";
 import { fetchTonUsdRate, usdToTonWei } from "@/lib/ton-price";
+import tonAbi from "@/abi/TON.json";
 
 const TRANSFER_EVENT_ABI = [
   {
@@ -20,6 +21,7 @@ const TRANSFER_EVENT_ABI = [
 ] as const;
 
 const CHAIN_ID = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "sepolia" : "mainnet";
+const TON_ERC20_ADDRESS = tonAbi._meta.addresses[CHAIN_ID as "mainnet" | "sepolia"].proxy.toLowerCase();
 
 function getPublicClient() {
   const rpcUrl =
@@ -36,7 +38,7 @@ async function verifyTransferTx(
   txHash: string,
   address: string,
 ): Promise<NextResponse | null> {
-  const tonErc20 = (process.env.TON_ERC20_ADDRESS ?? "").toLowerCase();
+  const tonErc20 = TON_ERC20_ADDRESS;
   const treasury = "0x000000000000000000000000000000000000dead";
 
   const rate = await fetchTonUsdRate().catch(() => null);

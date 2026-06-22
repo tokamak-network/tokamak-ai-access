@@ -11,17 +11,21 @@ const {
   mockGetTransactionReceipt,
   mockParseEventLogs,
   mockFetchTonUsdRate,
-} = vi.hoisted(() => ({
-  mockGetSessionAddress: vi.fn(),
-  mockKvGet: vi.fn(),
-  mockKvSet: vi.fn(),
-  mockKvSetNx: vi.fn(),
-  mockKvDel: vi.fn(),
-  mockRenewLiteLLMKey: vi.fn(),
-  mockGetTransactionReceipt: vi.fn(),
-  mockParseEventLogs: vi.fn(),
-  mockFetchTonUsdRate: vi.fn(),
-}));
+} = vi.hoisted(() => {
+  // Set before route module loads — CHAIN_ID is a module-level const
+  process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+  return {
+    mockGetSessionAddress: vi.fn(),
+    mockKvGet: vi.fn(),
+    mockKvSet: vi.fn(),
+    mockKvSetNx: vi.fn(),
+    mockKvDel: vi.fn(),
+    mockRenewLiteLLMKey: vi.fn(),
+    mockGetTransactionReceipt: vi.fn(),
+    mockParseEventLogs: vi.fn(),
+    mockFetchTonUsdRate: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
 vi.mock("@vercel/kv", () => {
@@ -67,7 +71,7 @@ import { PUT } from "@/app/api/keys/purchase/renew/route";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
 const BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
-const TON_ERC20 = "0xton00000000000000000000000000000000001";
+const TON_ERC20 = "0xa30fe40285b8f5c0457dbc3b7c8a280373c40044"; // Sepolia TON from abi/TON.json
 const TX_HASH = "0xnewTxHash00000000000000000000000000000000000000000000000000000001";
 const FIVE_TON = 5n * 10n ** 18n;
 const NOW = Date.now();
@@ -84,7 +88,6 @@ function makeReq(body: object = { txHash: TX_HASH }) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  process.env.TON_ERC20_ADDRESS = TON_ERC20;
   process.env.PURCHASE_USD_PRICE = "5";
 
   mockGetSessionAddress.mockResolvedValue(ADDR);

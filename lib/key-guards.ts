@@ -9,7 +9,7 @@ export interface KeyRecord {
   hash: string;
   keySlice: string;
   createdAt: number;
-  expiresAt: string;
+  expiresAt?: string;    // undefined = staking key (no expiry)
   revokedAt?: number;
   lastRotatedAt?: number;
 }

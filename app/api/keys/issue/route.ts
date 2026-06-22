@@ -21,5 +21,5 @@ export async function POST(req: NextRequest) {
     throw err;
   }
 
-  return issueKeyForAddress(address);
+  return issueKeyForAddress(address, 'stake');
 }

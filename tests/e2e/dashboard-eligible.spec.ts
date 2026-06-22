@@ -97,6 +97,22 @@ test.describe('Dashboard — Eligible staker', () => {
     });
   });
 
+  test.describe('Staking key (no expiresAt)', () => {
+    test('Extend key button is disabled', async ({ eligibleStakingKey: page }) => {
+      const btn = page.getByTestId('renew-btn');
+      await expect(btn).toBeVisible({ timeout: 10_000 });
+      await expect(btn).toBeDisabled();
+    });
+
+    test('shows no-expiry hint for staking keys', async ({ eligibleStakingKey: page }) => {
+      await expect(page.getByText('No expiry — valid as long as you stay staked. Rotating issues a new key with the same unlimited access.')).toBeVisible({ timeout: 10_000 });
+    });
+
+    test('New key button remains enabled', async ({ eligibleStakingKey: page }) => {
+      await expect(page.getByRole('button', { name: /New key/i })).toBeEnabled({ timeout: 10_000 });
+    });
+  });
+
   test('sign out redirects to /', async ({ eligibleNoKey: page }) => {
     await expect(page.getByRole('button', { name: /Sign out/i })).toBeVisible({ timeout: 10_000 });
     await page.getByRole('button', { name: /Sign out/i }).click();
