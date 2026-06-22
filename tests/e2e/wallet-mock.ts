@@ -10,13 +10,14 @@
  */
 export function buildWalletMockScript(
   address: string,
-  options?: { autoConnect?: boolean },
+  options?: { autoConnect?: boolean; chainId?: string },
 ): string {
   const autoConnect = options?.autoConnect !== false;
+  const chainId = options?.chainId ?? '0x1';
   return `
 (function() {
   var MOCK_ADDRESS = '${address}';
-  var MOCK_CHAIN_ID = '0x1'; // mainnet (app wagmi config is mainnet-only)
+  var MOCK_CHAIN_ID = '${chainId}';
   var connectedAddress = ${autoConnect} ? MOCK_ADDRESS : null;
 
   var listeners = {};
@@ -58,7 +59,7 @@ export function buildWalletMockScript(
         return Promise.resolve(MOCK_CHAIN_ID);
       }
       if (method === 'net_version') {
-        return Promise.resolve('1');
+        return Promise.resolve(String(parseInt(MOCK_CHAIN_ID, 16)));
       }
       if (method === 'personal_sign' || method === 'eth_sign') {
         // Return a fake 65-byte signature (valid format, content doesn't matter since verify is mocked)

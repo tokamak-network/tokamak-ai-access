@@ -14,6 +14,8 @@ import {
 type Fixtures = {
   /** Landing page with wallet mock injected and auth endpoints mocked */
   landingPage: Page;
+  /** Landing page with wallet mock on Sepolia (wrong network) */
+  sepoliaLandingPage: Page;
   /** Dashboard: eligible staker, no active key */
   eligibleNoKey: Page;
   /** Dashboard: eligible staker, active key (31 days old, renewable) */
@@ -26,9 +28,22 @@ type Fixtures = {
   purchasePage: Page;
 };
 
+// Match the chain the wagmi config is built for (set via NEXT_PUBLIC_CHAIN).
+// landingPage = correct network; sepoliaLandingPage = wrong network.
+const isSepolia = process.env.NEXT_PUBLIC_CHAIN === 'sepolia';
+const correctChainId = isSepolia ? '0xaa36a7' : '0x1';
+const wrongChainId = isSepolia ? '0x1' : '0xaa36a7';
+
 export const test = base.extend<Fixtures>({
   landingPage: async ({ page }, use) => {
-    await page.addInitScript({ content: buildWalletMockScript(MOCK_ADDRESS, { autoConnect: false }) });
+    await page.addInitScript({ content: buildWalletMockScript(MOCK_ADDRESS, { autoConnect: false, chainId: correctChainId }) });
+    await applyAuthMocks(page);
+    await page.goto('/');
+    await use(page);
+  },
+
+  sepoliaLandingPage: async ({ page }, use) => {
+    await page.addInitScript({ content: buildWalletMockScript(MOCK_ADDRESS, { autoConnect: false, chainId: wrongChainId }) });
     await applyAuthMocks(page);
     await page.goto('/');
     await use(page);

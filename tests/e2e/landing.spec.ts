@@ -1,6 +1,25 @@
 // tests/e2e/landing.spec.ts
 import { test, expect } from './fixtures';
 
+test.describe('Wrong network', () => {
+  test('shows amber warning when connected to Sepolia', async ({ sepoliaLandingPage: page }) => {
+    await page.getByRole('button', { name: /Connect Wallet/i }).click();
+    await page.getByRole('button').filter({ hasText: 'MetaMask' }).click();
+
+    await expect(page.getByRole('button', { name: /Sign in/i })).toBeVisible({ timeout: 8_000 });
+    await expect(page.getByText(/Wrong network/i)).toBeVisible();
+  });
+
+  test('Sign in button is disabled on wrong network', async ({ sepoliaLandingPage: page }) => {
+    await page.getByRole('button', { name: /Connect Wallet/i }).click();
+    await page.getByRole('button').filter({ hasText: 'MetaMask' }).click();
+
+    const signInBtn = page.getByRole('button', { name: /Sign in/i });
+    await expect(signInBtn).toBeVisible({ timeout: 8_000 });
+    await expect(signInBtn).toBeDisabled();
+  });
+});
+
 test.describe('Landing page', () => {
   test('renders hero, model cards, and footer', async ({ landingPage: page }) => {
     await expect(page.locator('h1')).toContainText('Your wallet');
