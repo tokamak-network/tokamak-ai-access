@@ -5,6 +5,7 @@ import type { KeyRecord } from "@/lib/key-guards";
 
 export async function issueKeyForAddress(
   address: string,
+  keyType: 'stake' | 'purchase',
 ): Promise<NextResponse> {
   const lockKey = `key:${address}:lock`;
   const locked = await kvSetNx(lockKey, 1, 10);
@@ -21,14 +22,14 @@ export async function issueKeyForAddress(
       return NextResponse.json({ error: "Key already issued" }, { status: 409 });
     }
 
-    const { key, keyId, expiresAt } = await generateLiteLLMKey(address);
+    const { key, keyId, expiresAt } = await generateLiteLLMKey(address, keyType);
 
     await kvSet(`key:${address}`, {
       liteLlmKeyId: keyId,
       hash: hashKey(key),
       keySlice: key.slice(-4),
       createdAt: Date.now(),
-      expiresAt,
+      ...(expiresAt !== undefined && { expiresAt }),
     } satisfies Omit<KeyRecord, "revokedAt" | "lastRotatedAt">);
 
     // F-03: increment global counter
@@ -38,7 +39,7 @@ export async function issueKeyForAddress(
       // Best-effort: cron resync corrects drift hourly
     }
 
-    return NextResponse.json({ key, expiresAt });
+    return NextResponse.json({ key, expiresAt: expiresAt ?? null });
   } finally {
     await kvDel(lockKey);
   }

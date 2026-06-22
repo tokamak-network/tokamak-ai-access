@@ -10,8 +10,7 @@ import { formatUnits, parseUnits } from "viem";
 import seigManagerAbi from "@/abi/SeigManagerV1_3.json";
 import depositManagerAbi from "@/abi/DepositManagerV1_1.json";
 
-const CHAIN =
-  process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "sepolia" : "mainnet";
+const CHAIN = "sepolia";
 
 const SEIG_MANAGER_ADDRESS = (
   seigManagerAbi._meta.addresses[CHAIN as "mainnet" | "sepolia"].proxy

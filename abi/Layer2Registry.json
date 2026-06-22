@@ -13,16 +13,15 @@
       }
     },
     "verified_selectors": {
-      "layer2sLength()":        "0x8dcbb0da",
-      "layer2sByIndex(uint256)":"0xac8d8c35",
-      "isLayer2(address)":      "0x95a97f48"
+      "numLayer2s()":           "0xbfdf2ff7",
+      "layer2ByIndex(uint256)": "0xd5bf46c2"
     },
-    "note": "Call through Proxy. Use layer2sLength + layer2sByIndex to enumerate all registered Layer2s dynamically."
+    "note": "Call through Proxy. Use numLayer2s + layer2ByIndex to enumerate all registered Layer2s dynamically."
   },
   "abi": [
     {
       "inputs": [],
-      "name": "layer2sLength",
+      "name": "numLayer2s",
       "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
       "stateMutability": "view",
       "type": "function"
@@ -31,17 +30,8 @@
       "inputs": [
         { "internalType": "uint256", "name": "index", "type": "uint256" }
       ],
-      "name": "layer2sByIndex",
+      "name": "layer2ByIndex",
       "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        { "internalType": "address", "name": "layer2", "type": "address" }
-      ],
-      "name": "isLayer2",
-      "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
       "stateMutability": "view",
       "type": "function"
     }

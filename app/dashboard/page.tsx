@@ -16,6 +16,14 @@ import {
   type UseProcessRequestResult,
 } from "@/lib/hooks/useUnstake";
 
+const CEX_EXCHANGES = [
+  { name: "Upbit",    url: "https://upbit.com/exchange?code=CRIX.UPBIT.KRW-TOKAMAK" },
+  { name: "Bithumb",  url: "https://www.bithumb.com/trade/order/TOKAMAK_KRW" },
+  { name: "WEEX",     url: "https://www.weex.com/spot/TOKAMAK-USDT" },
+  { name: "XT.COM",   url: "https://www.xt.com/en/trade/tokamak_usdt" },
+  { name: "DigiFinex",url: "https://www.digifinex.com/en-ww/trade/USDT/TOKAMAK" },
+];
+
 interface BalanceData {
   address: string;
   totalStakedTON: string;
@@ -677,8 +685,8 @@ export default function DashboardPage() {
   const { address, chainId } = useAccount();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
-  const targetChainId = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? 11155111 : 1;
-  const targetChainName = process.env.NEXT_PUBLIC_CHAIN === "sepolia" ? "Sepolia" : "Ethereum Mainnet";
+  const targetChainId = 11155111;
+  const targetChainName = "Sepolia";
   const isWrongNetwork = !!address && chainId !== targetChainId;
 
   const [balance, setBalance] = useState<BalanceData | null>(null);
@@ -686,6 +694,7 @@ export default function DashboardPage() {
   const [oneTimeKey, setOneTimeKey] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [stakingKeyPending, setStakingKeyPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [keyCopied, setKeyCopied] = useState(false);
   const [selectedCard, setSelectedCard] = useState<"stake" | "buy" | null>(null);
@@ -693,6 +702,7 @@ export default function DashboardPage() {
   const [priceLoading, setPriceLoading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const setupRef = useRef<HTMLDivElement>(null);
+  const keyRevealRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -702,21 +712,62 @@ export default function DashboardPage() {
         fetch("/api/staking/balance"),
         fetch("/api/keys/me"),
       ]);
-      if (balRes.status === 401) { router.push("/"); return; }
+      if (balRes.status === 401) { router.push("/"); return null; }
       if (!balRes.ok) throw new Error(`Balance error ${balRes.status}`);
       if (!keyRes.ok) throw new Error(`Key status error ${keyRes.status}`);
-      setBalance(await balRes.json());
-      setKeyData(await keyRes.json());
+      const [balData, keyDataResult] = await Promise.all([balRes.json(), keyRes.json()]);
+      setBalance(balData);
+      setKeyData(keyDataResult);
+      return { balance: balData as BalanceData, keyData: keyDataResult as KeyData };
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
+      return null;
     } finally {
       setLoading(false);
     }
   }, [router]);
 
-  const purchase = usePurchase(fetchAll);
+  const handleStakeSuccess = useCallback(async () => {
+    const result = await fetchAll();
+    if (result?.keyData?.hasActiveKey) return;
+    setActionLoading(true);
+    setStakingKeyPending(true);
+    setError(null);
+    let lastError = "";
+    for (let i = 0; i < 4; i++) {
+      if (i > 0) await new Promise(r => setTimeout(r, 1500));
+      try {
+        const res = await fetch("/api/keys/issue", { method: "POST" });
+        if (res.ok) {
+          const data = await res.json();
+          setOneTimeKey(data.key);
+          setKeyData({ hasActiveKey: true, lastFour: data.key.slice(-4), expiresAt: data.expiresAt });
+          setActionLoading(false);
+          setStakingKeyPending(false);
+          return;
+        }
+        lastError = await res.text();
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : "Key issue failed";
+      }
+    }
+    setError(lastError || "Key issue failed");
+    setActionLoading(false);
+    setStakingKeyPending(false);
+  }, [fetchAll]);
+
+  const purchase = usePurchase((key?: string) => {
+    if (key) setOneTimeKey(key);
+    fetchAll();
+  });
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    if (oneTimeKey && keyRevealRef.current) {
+      keyRevealRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [oneTimeKey]);
 
   useEffect(() => {
     if (selectedCard !== "buy") return;
@@ -915,6 +966,23 @@ export default function DashboardPage() {
                     <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>≈$5 in TON</span>
                     <br />
                     <span style={{ fontSize: "0.6875rem", color: "var(--muted)" }}>30 days</span>
+                    <p style={{ marginTop: "10px", fontSize: "0.6875rem", color: "var(--muted)" }}>Get TON:</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "3px 8px", marginTop: "3px" }}>
+                      {CEX_EXCHANGES.map(({ name, url }) => (
+                        <a
+                          key={name}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "#6366f1", textDecoration: "none" }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline"; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+                        >
+                          {name}
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -922,7 +990,7 @@ export default function DashboardPage() {
                 {selectedCard === "stake" && (
                   <div className="card" style={{ marginBottom: "16px" }}>
                     <span className="card__label">Stake TON directly</span>
-                    <StakePanel minTon={balance.minTon} onSuccess={fetchAll} />
+                    <StakePanel minTon={balance.minTon} onSuccess={handleStakeSuccess} />
                   </div>
                 )}
 
@@ -1044,7 +1112,7 @@ export default function DashboardPage() {
                             fontSize: "0.875rem",
                             color: "var(--muted)",
                           }}>
-                            This key has no expiry date. Rotating issues a fresh 30-day key.
+                            No expiry — valid as long as you stay staked. Rotating issues a new key with the same unlimited access.
                           </div>
                         );
                         const msLeft = new Date(keyData.expiresAt).getTime() - Date.now();
@@ -1078,6 +1146,7 @@ export default function DashboardPage() {
                         return null;
                       })()}
                       {(() => {
+                        const isStakingKey = !keyData.expiresAt;
                         const renewableAfterMs = keyData.createdAt
                           ? new Date(keyData.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000
                           : Infinity;
@@ -1085,28 +1154,49 @@ export default function DashboardPage() {
                         const daysUntilRenewable = isRenewable
                           ? 0
                           : Math.ceil((renewableAfterMs - Date.now()) / (1000 * 60 * 60 * 24));
+                        const isPurchaseUser = !!(balance?.activePurchase && !balance?.eligible);
                         return (
                           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                            {isPurchaseUser && (
+                              <div style={{
+                                background: "#eff6ff",
+                                border: "1px solid #bfdbfe",
+                                borderRadius: "var(--radius)",
+                                padding: "12px 16px",
+                                fontSize: "0.8125rem",
+                                color: "#1e40af",
+                                lineHeight: 1.5,
+                              }}>
+                                Didn&apos;t copy your key? Click <strong>Get key →</strong> below to issue a new one — the current key will be revoked.
+                              </div>
+                            )}
                             <div>
                               <button
+                                data-testid="renew-btn"
                                 className="btn-secondary"
                                 onClick={renewKey}
-                                disabled={actionLoading || !isRenewable}
+                                disabled={actionLoading || !isRenewable || isStakingKey}
                               >
                                 {actionLoading ? "Working…" : "Extend key (+30d)"}
                               </button>
                               <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
-                                {isRenewable
+                                {isStakingKey
+                                  ? null
+                                  : isRenewable
                                   ? "Same key · no reconfiguration needed"
                                   : `Available in ${daysUntilRenewable} day${daysUntilRenewable === 1 ? "" : "s"}`}
                               </p>
                             </div>
                             <div>
-                              <button className="btn-secondary" onClick={rotateKey} disabled={actionLoading}>
-                                {actionLoading ? "Working…" : "New key"}
+                              <button
+                                className={isPurchaseUser ? "btn-primary" : "btn-secondary"}
+                                onClick={rotateKey}
+                                disabled={actionLoading}
+                              >
+                                {actionLoading ? "Working…" : isPurchaseUser ? "Get key →" : "New key"}
                               </button>
                               <p style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--muted)", marginTop: "6px" }}>
-                                New key · revokes current · save immediately
+                                {isPurchaseUser ? "Issues new key · revokes current · copy immediately" : null}
                               </p>
                             </div>
                           </div>
@@ -1119,6 +1209,11 @@ export default function DashboardPage() {
                         No key issued yet. Issue one to access qwen-3.6 and other models
                         via the OpenAI-compatible API.
                       </p>
+                      {stakingKeyPending && (
+                        <p style={{ fontSize: "0.8125rem", color: "var(--muted)", fontFamily: "var(--font-mono)", marginBottom: "12px" }}>
+                          Confirming stake on-chain — this may take a few seconds…
+                        </p>
+                      )}
                       <button className="btn-primary" onClick={issueKey} disabled={actionLoading}>
                         {actionLoading ? "Issuing…" : "Issue API key →"}
                       </button>
@@ -1130,7 +1225,7 @@ export default function DashboardPage() {
 
             {/* One-time key reveal */}
             {oneTimeKey && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+              <div ref={keyRevealRef} style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
                 <div>
                   <h2 className="section-heading">Save this key — it won&apos;t be shown again.</h2>
                   <p className="body-lead" style={{ marginBottom: "20px" }}>

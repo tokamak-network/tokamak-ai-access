@@ -122,6 +122,40 @@ export async function applyEligibleWithKeyMocks(page: Page): Promise<void> {
 }
 
 /**
+ * Scenario A'': Eligible staker, has active staking key (no expiresAt).
+ * Tests: Extend key button is disabled for staking keys.
+ */
+export async function applyEligibleStakingKeyMocks(page: Page): Promise<void> {
+  await applyAuthMocks(page);
+  await page.route('**/api/staking/balance', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        address: MOCK_ADDRESS,
+        totalStakedTON: '150',
+        eligible: true,
+        minTon: 100,
+        activePurchase: false,
+        purchaseExpiresAt: null,
+      }),
+    }),
+  );
+  await page.route('**/api/keys/me', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        hasActiveKey: true,
+        lastFour: '7890',
+        createdAt: isoAgo(THIRTY_ONE_DAYS_MS),
+        // no expiresAt — staking key
+      }),
+    }),
+  );
+}
+
+/**
  * Scenario B: Not eligible staker, no purchase.
  * Tests: Stake/Buy cards, StakePanel, Purchase flow.
  */
