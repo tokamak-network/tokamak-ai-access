@@ -10,6 +10,15 @@ import HeroMark from "./HeroMark";
 // Inlined at build time: 100 in dev (.env.local), 100 in production (.env.production)
 const MIN_TON = process.env.NEXT_PUBLIC_MIN_TON ?? "100";
 
+const CEX_EXCHANGES = [
+  { name: "Upbit",           url: "https://upbit.com/exchange?code=CRIX.UPBIT.KRW-TOKAMAK" },
+  { name: "Bithumb",         url: "https://www.bithumb.com/trade/order/TOKAMAK_KRW" },
+  { name: "WEEX",            url: "https://www.weex.com/spot/TOKAMAK-USDT" },
+  { name: "XT.COM",          url: "https://www.xt.com/en/trade/tokamak_usdt" },
+  { name: "Upbit Indonesia", url: "https://id.upbit.com/exchange?code=CRIX.UPBIT.BTC-TOKAMAK" },
+  { name: "DigiFinex",       url: "https://www.digifinex.com/en-ww/trade/USDT/TOKAMAK" },
+];
+
 const STATUS_LABELS: Record<string, string> = {
   "fetching-nonce": "Preparing…",
   signing:          "Check your wallet…",
@@ -93,6 +102,12 @@ export default function LandingPage() {
             <span className="n-val">~$5 / 30 days</span>
             <span className="n-lbl">Network</span>
             <span className="n-val">Ethereum Mainnet</span>
+            <span className="n-lbl" style={{ marginTop: "8px" }}>Get TON</span>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px" }}>
+              {CEX_EXCHANGES.map(({ name, url }) => (
+                <CexLink key={name} name={name} url={url} />
+              ))}
+            </div>
           </aside>
 
           <div className="hero-content">
@@ -253,28 +268,56 @@ export default function LandingPage() {
               gap: "28px",
               marginBottom: "40px",
             }}>
-              {[
-                ["01", "Connect wallet", "MetaMask, WalletConnect, or any EVM-compatible wallet."],
-                ["02", "Sign a message", "One SIWE signature proves ownership. No gas, no transactions."],
-                howItWorksTab === "staker"
-                  ? ["03", `Stake ≥${MIN_TON} TON`, "Stake across any Layer2. Key issued instantly — free for 30 days, auto-renewable while you stay staked."]
-                  : ["03", "Buy a 30-day pass (~$5 in TON)", "TON ERC-20 is burned on purchase. Key activates after on-chain confirmation (~15s). No staking required."],
-              ].map(([num, title, desc]) => (
-                <li key={num} style={{ display: "flex", gap: "20px" }}>
-                  <span style={{
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "0.6875rem",
-                    color: "var(--accent)",
-                    letterSpacing: "0.12em",
-                    paddingTop: "2px",
-                    flexShrink: 0,
-                  }}>{num}</span>
-                  <div>
-                    <p style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>{title}</p>
-                    <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6 }}>{desc}</p>
-                  </div>
-                </li>
-              ))}
+              {(["01", "02"] as const).map((num) => {
+                const [title, desc] = num === "01"
+                  ? ["Connect wallet", "MetaMask, WalletConnect, or any EVM-compatible wallet."]
+                  : ["Sign a message", "One SIWE signature proves ownership. No gas, no transactions."];
+                return (
+                  <li key={num} style={{ display: "flex", gap: "20px" }}>
+                    <span style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "0.6875rem",
+                      color: "var(--accent)",
+                      letterSpacing: "0.12em",
+                      paddingTop: "2px",
+                      flexShrink: 0,
+                    }}>{num}</span>
+                    <div>
+                      <p style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>{title}</p>
+                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6 }}>{desc}</p>
+                    </div>
+                  </li>
+                );
+              })}
+              <li style={{ display: "flex", gap: "20px" }}>
+                <span style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.6875rem",
+                  color: "var(--accent)",
+                  letterSpacing: "0.12em",
+                  paddingTop: "2px",
+                  flexShrink: 0,
+                }}>03</span>
+                <div>
+                  {howItWorksTab === "staker" ? (
+                    <>
+                      <p style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>Stake ≥{MIN_TON} TON</p>
+                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6 }}>Stake across any Layer2. Key issued instantly — free for 30 days, auto-renewable while you stay staked.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>Buy a 30-day pass (~$5 in TON)</p>
+                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6 }}>TON ERC-20 is burned on purchase. Key activates after on-chain confirmation (~15s). No staking required.</p>
+                      <p style={{ marginTop: "12px", fontSize: "0.8125rem", color: "var(--muted)" }}>Don&apos;t have TON? Get it on:</p>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", marginTop: "6px" }}>
+                        {CEX_EXCHANGES.map(({ name, url }) => (
+                          <CexLink key={name} name={name} url={url} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </li>
             </ol>
           </div>
         </section>
@@ -591,6 +634,21 @@ function WalletModal({
       </div>
     </div>,
     document.body
+  );
+}
+
+function CexLink({ name, url }: { name: string; url: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ fontFamily: "var(--font-mono)", fontSize: "0.75rem", color: "var(--accent)", textDecoration: "none", letterSpacing: "0.04em" }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "underline"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+    >
+      {name}
+    </a>
   );
 }
 

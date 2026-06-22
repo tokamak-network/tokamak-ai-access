@@ -8,9 +8,11 @@ on:
 jobs:
   check-stakes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Trigger check-stakes endpoint
         run: |
           curl -f -s -X GET \
+            --retry 3 --retry-delay 10 --retry-all-errors \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             https://ai-access.tokamak.network/api/cron/check-stakes
