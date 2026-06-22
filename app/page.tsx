@@ -15,7 +15,6 @@ const CEX_EXCHANGES = [
   { name: "Bithumb",         url: "https://www.bithumb.com/trade/order/TOKAMAK_KRW" },
   { name: "WEEX",            url: "https://www.weex.com/spot/TOKAMAK-USDT" },
   { name: "XT.COM",          url: "https://www.xt.com/en/trade/tokamak_usdt" },
-  { name: "Upbit Indonesia", url: "https://id.upbit.com/exchange?code=CRIX.UPBIT.BTC-TOKAMAK" },
   { name: "DigiFinex",       url: "https://www.digifinex.com/en-ww/trade/USDT/TOKAMAK" },
 ];
 
@@ -102,12 +101,7 @@ export default function LandingPage() {
             <span className="n-val">~$5 / 30 days</span>
             <span className="n-lbl">Network</span>
             <span className="n-val">Ethereum Mainnet</span>
-            <span className="n-lbl" style={{ marginTop: "8px" }}>Get TON</span>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px" }}>
-              {CEX_EXCHANGES.map(({ name, url }) => (
-                <CexLink key={name} name={name} url={url} />
-              ))}
-            </div>
+
           </aside>
 
           <div className="hero-content">
