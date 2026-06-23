@@ -202,7 +202,6 @@ export default function LandingPage() {
                   <span className="tag tag--purple">Fast Inference</span>
                   <span className="tag tag--blue">Coding</span>
                   <span className="tag tag--teal">Reasoning</span>
-                  <span className="tag tag--amber">Low latency</span>
                 </div>
               </div>
               <div className="model-card m2">
