@@ -323,6 +323,9 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── Tutorial video ── */}
+        <TutorialSection />
+
         {/* ── Agent setup (CLI) ── */}
         <AgentSetupSection />
 
@@ -415,6 +418,44 @@ export default function LandingPage() {
         <span>Any support? <a href="mailto:theo@tokamak.network" style={{ color: "inherit", textDecoration: "none" }}>theo@tokamak.network</a></span>
       </footer>
     </>
+  );
+}
+
+function TutorialSection() {
+  return (
+    <section className="section">
+      <aside>
+        <span className="eyebrow">Tutorial</span>
+        <span className="n-lbl">Duration</span>
+        <span className="n-val">~2 min</span>
+        <span className="n-lbl">Covers</span>
+        <span className="n-val">Staking &amp; buying</span>
+        <span className="n-lbl">Format</span>
+        <span className="n-val" style={{ marginBottom: 0 }}>Walkthrough</span>
+      </aside>
+
+      <div>
+        <h2 className="section-heading">See it in action</h2>
+        <p className="body-lead">
+          Watch the full walkthrough — connect your wallet, stake or buy, and get your API key in under two minutes.
+        </p>
+        <div style={{
+          background: "#000",
+          borderRadius: "var(--radius)",
+          border: "1px solid var(--hairline)",
+          overflow: "hidden",
+          boxShadow: "0 4px 24px rgba(12,26,44,0.08)",
+        }}>
+          <video
+            controls
+            preload="metadata"
+            style={{ display: "block", width: "100%", height: "auto", maxHeight: "480px" }}
+          >
+            <source src="/TonAiAccessIntro.mp4" type="video/mp4" />
+          </video>
+        </div>
+      </div>
+    </section>
   );
 }
 

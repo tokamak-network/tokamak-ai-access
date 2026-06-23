@@ -19,6 +19,9 @@ export interface ConfigureCommandOptions {
 
 export async function runConfigure(opts: ConfigureCommandOptions): Promise<void> {
   const baseUrl = opts.baseUrl ?? "https://api2.ai.tokamak.network";
+  const isTTY = process.stdin.isTTY === true;
+  const nonInteractive = opts.nonInteractive || !isTTY;
+  const defaultModel = "qwen-3.6";
 
   if (opts.listModels) {
     const apiKey = opts.apiKey ?? process.env["TON_API_KEY"] ?? process.env["ANTHROPIC_API_KEY"] ?? "";
@@ -39,8 +42,8 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
 
   let target = opts.target;
   if (!target) {
-    if (opts.nonInteractive) {
-      log.err("--target is required in --non-interactive mode.");
+    if (nonInteractive) {
+      log.err("--target is required in non-interactive mode (no TTY detected).");
       process.exit(1);
     }
     const { promptTarget } = await import("../lib/prompts.js");
@@ -49,8 +52,8 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
 
   let apiKey = opts.apiKey ?? process.env["TON_API_KEY"] ?? "";
   if (!apiKey) {
-    if (opts.nonInteractive) {
-      log.err("--api-key or TON_API_KEY env var is required in --non-interactive mode.");
+    if (nonInteractive) {
+      log.err("--api-key or TON_API_KEY env var is required in non-interactive mode (no TTY detected).");
       process.exit(1);
     }
     const { promptApiKey } = await import("../lib/prompts.js");
@@ -58,9 +61,13 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
   }
 
   let model = opts.model;
-  if (!model && !opts.nonInteractive) {
-    const { promptModel } = await import("../lib/prompts.js");
-    model = await promptModel();
+  if (!model) {
+    if (nonInteractive) {
+      model = defaultModel;
+    } else {
+      const { promptModel } = await import("../lib/prompts.js");
+      model = await promptModel();
+    }
   }
 
   console.log("");
