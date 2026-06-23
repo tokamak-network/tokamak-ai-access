@@ -50,16 +50,6 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
     target = await promptTarget();
   }
 
-  let apiKey = opts.apiKey ?? process.env["TON_API_KEY"] ?? "";
-  if (!apiKey) {
-    if (nonInteractive) {
-      log.err("--api-key or TON_API_KEY env var is required in non-interactive mode (no TTY detected).");
-      process.exit(1);
-    }
-    const { promptApiKey } = await import("../lib/prompts.js");
-    apiKey = await promptApiKey();
-  }
-
   let model = opts.model;
   if (!model) {
     if (nonInteractive) {
@@ -68,6 +58,16 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
       const { promptModel } = await import("../lib/prompts.js");
       model = await promptModel();
     }
+  }
+
+  let apiKey = opts.apiKey ?? process.env["TON_API_KEY"] ?? "";
+  if (!apiKey) {
+    if (nonInteractive) {
+      log.err("--api-key or TON_API_KEY env var is required in non-interactive mode (no TTY detected).");
+      process.exit(1);
+    }
+    const { promptApiKey } = await import("../lib/prompts.js");
+    apiKey = await promptApiKey();
   }
 
   console.log("");
