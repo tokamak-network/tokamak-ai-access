@@ -45,7 +45,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Resolve domain from trusted config; Host header as fallback only
-  const domain = process.env.APP_DOMAIN || req.headers.get("host") || "";
+  // .trim() guards against accidental whitespace/newlines in the env var
+  const domain = (process.env.APP_DOMAIN || req.headers.get("host") || "").trim();
 
   // Fetch stored nonce before crypto verify (so we can pass server-issued nonce)
   const address = siweMsg.address.toLowerCase();
@@ -55,29 +56,15 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify signature with server-trusted domain and server-issued nonce
-  let result: Awaited<ReturnType<typeof siweMsg.verify>> | null = null;
-  try {
-    result = await siweMsg.verify({
+  const result = await siweMsg
+    .verify({
       signature,
       domain,
       nonce: stored.nonce,
       time: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error("[verify] siwe.verify threw:", err);
-  }
-
+    })
+    .catch(() => null);
   if (!result?.success) {
-    console.error("[verify] failed", {
-      serverDomain: domain,
-      msgDomain: siweMsg.domain,
-      msgNonce: siweMsg.nonce,
-      storedNonce: stored.nonce,
-      msgAddress: siweMsg.address,
-      errorType: result?.error?.type,
-      errorExpected: (result?.error as { expected?: string })?.expected,
-      errorReceived: (result?.error as { received?: string })?.received,
-    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
