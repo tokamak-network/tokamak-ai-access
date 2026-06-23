@@ -1,5 +1,9 @@
 "use client";
 
+import { ClaudeLogo } from "./logos/ClaudeLogo";
+import { GptLogo } from "./logos/GptLogo";
+import { HermesLogo } from "./logos/HermesLogo";
+import { OpenClawLogo } from "./logos/OpenClawLogo";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, useConfig, useDisconnect, useSwitchChain } from "wagmi";
@@ -670,9 +674,29 @@ function CliCard({ label, command }: { label: string; command: string }) {
   );
 }
 
+function WatermarkLayer() {
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", userSelect: "none" }}>
+      <div style={{ position: "absolute", top: 16, right: 20, width: 80, height: 80, opacity: 0.18 }}>
+        <ClaudeLogo />
+      </div>
+      <div style={{ position: "absolute", bottom: 16, left: 20, width: 80, height: 80, opacity: 0.18 }}>
+        <GptLogo />
+      </div>
+      <div style={{ position: "absolute", top: 16, left: 20, width: 76, height: 76, opacity: 0.17 }}>
+        <OpenClawLogo />
+      </div>
+      <div style={{ position: "absolute", bottom: 16, right: 20, width: 72, height: 72, opacity: 0.18 }}>
+        <HermesLogo />
+      </div>
+    </div>
+  );
+}
+
 function CliSetupPanel() {
   return (
-    <div>
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      <WatermarkLayer />
       <CliCard label="Configure — prompts for tool, key & model" command={`${CLI} configure`} />
       <CliCard label="Revert — restores your original settings" command={`${CLI} revert`} />
     </div>
