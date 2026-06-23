@@ -38,6 +38,12 @@ describe("codex.configure", () => {
     expect(config).toContain("qwen-3.6");
   });
 
+  it("includes model_context_window in config.toml to suppress unknown-model warning", () => {
+    configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
+    const config = readFileSync(join(home, ".codex", "config.toml"), "utf8");
+    expect(config).toContain("model_context_window = 131072");
+  });
+
   it("does not modify files in dry-run mode", () => {
     configure({ home, apiKey: "sk-test", model: "qwen-3.6", dryRun: true });
     const profile = readFileSync(join(home, ".zshrc"), "utf8");

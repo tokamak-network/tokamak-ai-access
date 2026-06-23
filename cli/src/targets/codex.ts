@@ -57,6 +57,7 @@ export function configure(opts: ConfigureOptions): void {
     `${BLOCK_START} — ${date}`,
     `model = "${model}"`,
     `model_provider = "tokamak"`,
+    `model_context_window = 131072`,
     ``,
     `[model_providers.tokamak]`,
     `name = "TON AI Access (LiteLLM)"`,
