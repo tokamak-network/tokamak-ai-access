@@ -402,13 +402,16 @@ export default function LandingPage() {
       <footer style={{
         borderTop: "1px solid var(--divider)",
         padding: "24px var(--pad-x)",
-        textAlign: "left",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
         fontFamily: "var(--font-mono)",
         fontSize: "0.6875rem",
         color: "var(--muted)",
         letterSpacing: "0.06em",
       }}>
-        © 2026 Tokamak Network | All Rights Reserved. | Support: <a href="mailto:theo@tokamak.network" style={{ color: "inherit", textDecoration: "none" }}>theo@tokamak.network</a>
+        <span>© 2026 Tokamak Network | All Rights Reserved.</span>
+        <span>Any support? <a href="mailto:theo@tokamak.network" style={{ color: "inherit", textDecoration: "none" }}>theo@tokamak.network</a></span>
       </footer>
     </>
   );
