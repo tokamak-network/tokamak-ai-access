@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
+import { useAccount, useConfig, useDisconnect, useSwitchChain } from "wagmi";
 import { useTonBalance, useStake, LAYER2_OPTIONS, DEFAULT_LAYER2 } from "@/lib/hooks/useStake";
 import { usePurchase } from "@/lib/hooks/usePurchase";
 import {
@@ -683,10 +683,11 @@ function CliSetupPanel() {
 export default function DashboardPage() {
   const router = useRouter();
   const { address, chainId } = useAccount();
+  const { chains } = useConfig();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
-  const targetChainId = 11155111;
-  const targetChainName = "Sepolia";
+  const targetChainId = chains[0]?.id ?? 1;
+  const targetChainName = chains[0]?.name ?? "Ethereum Mainnet";
   const isWrongNetwork = !!address && chainId !== targetChainId;
 
   const [balance, setBalance] = useState<BalanceData | null>(null);

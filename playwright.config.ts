@@ -1,4 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
+import * as fs from 'fs';
+
+// Propagate NEXT_PUBLIC_CHAIN from .env.local so test fixtures choose the right wrong-chain ID
+try {
+  const envLocal = fs.readFileSync('.env.local', 'utf8');
+  for (const line of envLocal.split('\n')) {
+    const m = line.match(/^NEXT_PUBLIC_CHAIN=(.+)/);
+    if (m && !process.env.NEXT_PUBLIC_CHAIN) { process.env.NEXT_PUBLIC_CHAIN = m[1].trim(); break; }
+  }
+} catch {}
 
 const PORT = process.env.TEST_PORT ?? '3000';
 const BASE_URL = `http://localhost:${PORT}`;

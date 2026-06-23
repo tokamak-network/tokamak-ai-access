@@ -26,6 +26,8 @@ type Fixtures = {
   ineligiblePage: Page;
   /** Dashboard: active purchase expiring in 6 days */
   purchasePage: Page;
+  /** Dashboard: eligible staker on wrong network */
+  wrongNetworkDashboard: Page;
 };
 
 // Match the chain the wagmi config is built for (set via NEXT_PUBLIC_CHAIN).
@@ -100,6 +102,13 @@ export const test = base.extend<Fixtures>({
   purchasePage: async ({ page }, use) => {
     await page.addInitScript({ content: buildWalletMockScript(MOCK_ADDRESS) });
     await applyPurchaseMocks(page);
+    await page.goto('/dashboard');
+    await use(page);
+  },
+
+  wrongNetworkDashboard: async ({ page }, use) => {
+    await page.addInitScript({ content: buildWalletMockScript(MOCK_ADDRESS, { chainId: wrongChainId }) });
+    await applyEligibleNoKeyMocks(page);
     await page.goto('/dashboard');
     await use(page);
   },
