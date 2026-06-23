@@ -195,16 +195,6 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="model-card m2">
-                <div className="model-name">deepseek-v4-flash</div>
-                <div className="model-maker">DeepSeek · V4 Series</div>
-                <div className="model-desc">Fast and capable model optimized for speed and efficiency across coding, reasoning, and multilingual tasks.</div>
-                <div className="model-tags">
-                  <span className="tag tag--purple">Fast Inference</span>
-                  <span className="tag tag--blue">Coding</span>
-                  <span className="tag tag--teal">Reasoning</span>
-                </div>
-              </div>
-              <div className="model-card m2">
                 <div className="model-name">gemma-4</div>
                 <div className="model-maker">Google · Gemma 4</div>
                 <div className="model-desc">31B dense transformer. Multimodal (text, image, video) with 256K token context. Advanced reasoning with configurable thinking mode.</div>
@@ -344,7 +334,7 @@ export default function LandingPage() {
             <div className="card" style={{ marginTop: 0, padding: "20px 24px", display: "flex", flexDirection: "column", gap: "8px" }}>
               {[
                 ["Base URL", "https://api2.ai.tokamak.network"],
-                ["Model", "qwen-3.6, deepseek-v4-flash, gemma-4"],
+                ["Model", "qwen-3.6, gemma-4"],
                 ["Protocol", "OpenAI-compatible REST"],
               ].map(([label, val]) => (
                 <div key={label} style={{ display: "flex", gap: "8px 16px", alignItems: "baseline", flexWrap: "wrap" }}>

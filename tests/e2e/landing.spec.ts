@@ -27,7 +27,6 @@ test.describe('Landing page', () => {
 
     // Model cards
     await expect(page.getByText('qwen-3.6', { exact: true }).first()).toBeVisible();
-    await expect(page.getByText('deepseek-v4-flash', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('gemma-4', { exact: true }).first()).toBeVisible();
 
     // How it works section
