@@ -967,7 +967,7 @@ export default function DashboardPage() {
                   >
                     <span className="eyebrow" style={{ display: "block", marginBottom: "8px" }}>Stake TON</span>
                     <p style={{ fontSize: "0.8125rem", color: "var(--body)", marginBottom: "12px", lineHeight: 1.5 }}>
-                      30-day key, renews free while you stay staked.
+                      No expiry — active as long as you stay staked.
                     </p>
                     <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.125rem" }}>Free</span>
                     <br />

@@ -175,7 +175,7 @@ export default function LandingPage() {
             <aside>
               <span className="eyebrow-dark">Models</span>
               <span className="n-lbl-dark">Available</span>
-              <span className="n-val-dark">3 models</span>
+              <span className="n-val-dark">2 models</span>
               <span className="n-lbl-dark">API compat</span>
               <span className="n-val-dark">OpenAI REST</span>
               <span className="n-lbl-dark">Context</span>
@@ -303,7 +303,7 @@ export default function LandingPage() {
                   {howItWorksTab === "staker" ? (
                     <>
                       <p style={{ fontWeight: 600, color: "var(--ink)", marginBottom: "4px" }}>Stake ≥{MIN_TON} TON</p>
-                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6 }}>Stake across any Layer2. Key issued instantly — free for 30 days, auto-renewable while you stay staked.</p>
+                      <p style={{ fontSize: "0.9375rem", color: "var(--muted)", lineHeight: 1.6 }}>Stake across any Layer2. Key issued instantly — no expiry, active as long as you stay staked.</p>
                     </>
                   ) : (
                     <>
@@ -377,7 +377,7 @@ export default function LandingPage() {
             <div className="faq-list">
             <div className="faq-item">
               <div className="faq-q">How long is access valid? <span className="faq-chevron">▾</span></div>
-              <div className="faq-a">Stakers: free as long as you stay staked — each key is valid for 30 days and auto-renewable. Buyers: 30 days per purchase, renewable anytime from the dashboard.</div>
+              <div className="faq-a">Stakers: free as long as you stay staked — your key has no expiry and stays active until you unstake. Buyers: 30 days per purchase, renewable anytime from the dashboard.</div>
             </div>
             <div className="faq-item">
               <div className="faq-q">Which AI tools can I use this with? <span className="faq-chevron">▾</span></div>
