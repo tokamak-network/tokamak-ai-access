@@ -55,15 +55,29 @@ export async function POST(req: NextRequest) {
   }
 
   // Verify signature with server-trusted domain and server-issued nonce
-  const result = await siweMsg
-    .verify({
+  let result: Awaited<ReturnType<typeof siweMsg.verify>> | null = null;
+  try {
+    result = await siweMsg.verify({
       signature,
       domain,
       nonce: stored.nonce,
       time: new Date().toISOString(),
-    })
-    .catch(() => null);
+    });
+  } catch (err) {
+    console.error("[verify] siwe.verify threw:", err);
+  }
+
   if (!result?.success) {
+    console.error("[verify] failed", {
+      serverDomain: domain,
+      msgDomain: siweMsg.domain,
+      msgNonce: siweMsg.nonce,
+      storedNonce: stored.nonce,
+      msgAddress: siweMsg.address,
+      errorType: result?.error?.type,
+      errorExpected: (result?.error as { expected?: string })?.expected,
+      errorReceived: (result?.error as { received?: string })?.received,
+    });
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
