@@ -611,7 +611,7 @@ function StakePanel({
 }
 
 /* ── CLI Setup Panel ──────────────────────────────────────────────── */
-const CLI = "npx @tokamak-network/ai-access-cli";
+const CLI = "npx @tokamak-network/ai-access-cli@latest";
 
 function CliCard({ label, command }: { label: string; command: string }) {
   const [copied, setCopied] = useState(false);

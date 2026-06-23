@@ -459,7 +459,7 @@ function TutorialSection() {
   );
 }
 
-const CLI = "npx @tokamak-network/ai-access-cli";
+const CLI = "npx @tokamak-network/ai-access-cli@latest";
 
 function AgentSetupSection() {
   const [copied, setCopied] = useState<string | null>(null);
@@ -483,7 +483,7 @@ function AgentSetupSection() {
           <span className="n-lbl-dark">Time</span>
           <span className="n-val-dark">~30 seconds</span>
           <span className="n-lbl-dark">Reversible</span>
-          <span className="n-val-dark" style={{ marginBottom: 0 }}>Yes — one command</span>
+          <span className="n-val-dark" style={{ marginBottom: 0 }}>Partially Yes (Claude Code, Codex CLI)</span>
         </aside>
 
         <div>
