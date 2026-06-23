@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, rmSync, copyFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { writeEnvBlock, removeMarkerBlock, revertShellProfile } from "../../src/lib/shell-profile.js";
@@ -116,7 +116,7 @@ describe("revertShellProfile", () => {
     const backupPaths: string[] = [];
     revertShellProfile(profile, {
       backup: true,
-      backupFile: (p) => { const bak = `${p}.bak-test`; require("node:fs").copyFileSync(p, bak); backupPaths.push(bak); return bak; },
+      backupFile: (p) => { const bak = `${p}.bak-test`; copyFileSync(p, bak); backupPaths.push(bak); return bak; },
     });
     expect(backupPaths).toHaveLength(1);
   });

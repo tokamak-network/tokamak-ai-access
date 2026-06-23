@@ -5,6 +5,7 @@ import { GptLogo } from "./logos/GptLogo";
 import { HermesLogo } from "./logos/HermesLogo";
 import { OpenClawLogo } from "./logos/OpenClawLogo";
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAccount, useConfig, useDisconnect, useSwitchChain } from "wagmi";
 import { useTonBalance, useStake, LAYER2_OPTIONS, DEFAULT_LAYER2 } from "@/lib/hooks/useStake";
@@ -851,7 +852,7 @@ export default function DashboardPage() {
       {/* Top bar */}
       <header className="topbar">
         <div className="topbar-inner">
-          <a href="/" className="topbar-logo" style={{ textDecoration: "none", color: "inherit" }}>TON AI Access</a>
+          <Link href="/" className="topbar-logo" style={{ textDecoration: "none", color: "inherit" }}>TON AI Access</Link>
           <div className="topbar-meta">
             {isWrongNetwork && (
               <>

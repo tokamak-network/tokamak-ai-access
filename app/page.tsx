@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { useAccount, useConfig, useConnect, useDisconnect, useSwitchChain, type Connector } from "wagmi";
@@ -62,7 +63,7 @@ export default function LandingPage() {
       {/* Top bar */}
       <header className="topbar">
         <div className="topbar-inner">
-          <a href="/" className="topbar-logo" style={{ textDecoration: "none", color: "inherit" }}>TON AI Access</a>
+          <Link href="/" className="topbar-logo" style={{ textDecoration: "none", color: "inherit" }}>TON AI Access</Link>
           {isConnected && (
             <div className="topbar-meta">
               <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.6875rem", color: "var(--muted)" }}>

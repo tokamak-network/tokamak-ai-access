@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { homedir } from "node:os";
 import { CLAUDE_ENV_KEYS } from "./litellm.js";
@@ -39,7 +39,6 @@ export function saveEnvBackup(): void {
   }
 
   if (!existsSync(BACKUP_DIR)) {
-    const { mkdirSync } = require("node:fs");
     mkdirSync(BACKUP_DIR, { recursive: true });
   }
 

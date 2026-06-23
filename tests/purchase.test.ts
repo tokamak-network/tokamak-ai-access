@@ -106,7 +106,7 @@ beforeEach(() => {
   mockKvGet.mockResolvedValue(null); // no existing key by default
   mockFetchTonUsdRate.mockResolvedValue(1.0); // rate=$1/TON → minValue=4 TON (5 USD * 0.8)
   // kv.set with nx: true returns "OK" on success, null on failure
-  mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: any) => {
+  mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: Record<string, unknown>) => {
     if (opts?.nx === true) {
       return Promise.resolve("OK"); // kvSetNx succeeds by default
     }
@@ -212,7 +212,7 @@ describe("POST /api/keys/purchase", () => {
   });
 
   it("returns 409 when txHash already used", async () => {
-    mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: any) => {
+    mockKvSet.mockImplementation((_key: string, _value: unknown, opts?: Record<string, unknown>) => {
       if (opts?.nx === true) {
         return Promise.resolve(null); // claim fails — already taken
       }

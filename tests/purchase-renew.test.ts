@@ -29,7 +29,7 @@ const {
 
 vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
 vi.mock("@vercel/kv", () => {
-  const kvSet = vi.fn(async (_key: string, _value: unknown, opts?: any) => {
+  const kvSet = vi.fn(async (_key: string, _value: unknown, opts?: Record<string, unknown>) => {
     if (opts?.nx === true) {
       // kvSetNx internally calls kv.set with nx: true
       const result = await mockKvSetNx(_key, _value, opts);

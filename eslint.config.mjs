@@ -15,7 +15,15 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      "playwright-report/**",
+      "cli/dist/**",
     ],
+  },
+  {
+    files: ["tests/e2e/**"],
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+    },
   },
 ];
 
