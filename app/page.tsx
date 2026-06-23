@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { useAccount, useConfig, useConnect, useDisconnect, type Connector } from "wagmi";
+import { useAccount, useConfig, useConnect, useDisconnect, useSwitchChain, type Connector } from "wagmi";
 import { useSiwe } from "@/lib/hooks/useSiwe";
 import HeroMark from "./HeroMark";
 
@@ -34,6 +34,7 @@ export default function LandingPage() {
   const expectedChainId = chains[0]?.id;
   const { connect, connectors, isPending: isConnecting, error: connectError } = useConnect();
   const { disconnect } = useDisconnect();
+  const { switchChain, isPending: isSwitchingChain } = useSwitchChain();
   const { status: siweStatus, error: siweError, signIn } = useSiwe();
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -137,9 +138,18 @@ export default function LandingPage() {
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start" }}>
                 {isConnected && chainId !== expectedChainId && (
-                  <p style={{ fontSize: "0.8125rem", color: "#f59e0b", maxWidth: "52ch" }}>
-                    Wrong network — switch to Ethereum Mainnet in your wallet to continue.
-                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                    <p style={{ fontSize: "0.8125rem", color: "#f59e0b", margin: 0 }}>
+                      Wrong network
+                    </p>
+                    <button
+                      onClick={() => expectedChainId && switchChain({ chainId: expectedChainId })}
+                      disabled={isSwitchingChain}
+                      style={{ background: "transparent", color: "var(--ink)", border: "1px solid var(--hairline)", cursor: isSwitchingChain ? "default" : "pointer", padding: "3px 10px", borderRadius: "4px", fontFamily: "var(--font-mono)", fontSize: "0.625rem", letterSpacing: "0.08em", opacity: isSwitchingChain ? 0.5 : 1, transition: "border-color 140ms" }}
+                    >
+                      {isSwitchingChain ? "Switching…" : `Switch to ${chains[0]?.name ?? "correct network"}`}
+                    </button>
+                  </div>
                 )}
                 <button
                   className="btn-primary"
