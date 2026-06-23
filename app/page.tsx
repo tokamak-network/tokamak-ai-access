@@ -408,7 +408,7 @@ export default function LandingPage() {
         color: "var(--muted)",
         letterSpacing: "0.06em",
       }}>
-        © 2026 Tokamak Network | All Rights Reserved.
+        © 2026 Tokamak Network | All Rights Reserved. | Support: <a href="mailto:theo@tokamak.network" style={{ color: "inherit", textDecoration: "none" }}>theo@tokamak.network</a>
       </footer>
     </>
   );
