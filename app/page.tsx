@@ -448,6 +448,7 @@ function TutorialSection() {
         }}>
           <video
             controls
+            muted
             preload="metadata"
             style={{ display: "block", width: "100%", height: "auto", maxHeight: "480px" }}
           >
