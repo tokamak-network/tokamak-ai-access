@@ -179,7 +179,7 @@ export default function LandingPage() {
               <span className="n-lbl-dark">API compat</span>
               <span className="n-val-dark">OpenAI REST</span>
               <span className="n-lbl-dark">Context</span>
-              <span className="n-val-dark">Up to 1M tokens</span>
+              <span className="n-val-dark">Up to 256K tokens</span>
               <span className="n-lbl-dark">Best for</span>
               <span className="n-val-dark" style={{ marginBottom: 0 }}>Coding · Agents</span>
             </aside>
@@ -187,7 +187,7 @@ export default function LandingPage() {
               <div className="model-card">
                 <div className="model-name">qwen-3.6</div>
                 <div className="model-maker">Alibaba · Qwen3 MoE</div>
-                <div className="model-desc">35B params, 3B active. Fast reasoning with up to 1M token context. Strong at coding and agentic workflows.</div>
+                <div className="model-desc">35B params, 3B active. Fast reasoning with up to 256K token context. Strong at coding and agentic workflows.</div>
                 <div className="model-tags">
                   <span className="tag tag--blue">Agentic coding</span>
                   <span className="tag tag--blue">Reasoning</span>
