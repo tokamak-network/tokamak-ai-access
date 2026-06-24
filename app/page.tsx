@@ -198,12 +198,12 @@ export default function LandingPage() {
               <div className="model-card m2">
                 <div className="model-name">gemma-4</div>
                 <div className="model-maker">Google · Gemma 4</div>
-                <div className="model-desc">31B dense transformer. Multimodal (text, image, video) with 256K token context. Advanced reasoning with configurable thinking mode.</div>
+                <div className="model-desc">31B dense transformer. Multimodal (text, image, video) with 128K token context. Advanced reasoning with configurable thinking mode.</div>
                 <div className="model-tags">
                   <span className="tag tag--teal">Multimodal</span>
                   <span className="tag tag--blue">Coding</span>
                   <span className="tag tag--purple">Thinking mode</span>
-                  <span className="tag tag--amber">256K context</span>
+                  <span className="tag tag--amber">128K context</span>
                 </div>
               </div>
             </div>
