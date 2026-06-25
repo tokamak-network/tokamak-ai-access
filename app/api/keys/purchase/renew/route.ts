@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient, http, parseEventLogs } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 import { getSessionAddress } from "@/lib/siwe";
-import { type PurchaseRecord, type KeyRecord } from "@/lib/key-guards";
+import { assertMainnetOnly, type PurchaseRecord, type KeyRecord } from "@/lib/key-guards";
 import { renewLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, kvSetNx, kvDel } from "@/lib/kv";
 import { fetchTonUsdRate, usdToTonWei } from "@/lib/ton-price";
@@ -91,6 +91,13 @@ export async function PUT(req: NextRequest) {
   const txHash: string | undefined = body?.txHash;
   if (!txHash) {
     return NextResponse.json({ error: "txHash required" }, { status: 400 });
+  }
+
+  // Mainnet-only: no renewing/extending a key with free Sepolia testnet payment.
+  try {
+    assertMainnetOnly();
+  } catch (err) {
+    return err as NextResponse;
   }
 
   const purchase = await kvGet<PurchaseRecord>(`purchase:${address}`);

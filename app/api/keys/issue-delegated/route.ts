@@ -5,6 +5,7 @@ import { generateLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, kvDel, hashKey } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
 import { rateLimitAddr } from "@/lib/ratelimit";
+import { assertMainnetOnly } from "@/lib/key-guards";
 import { z } from "zod";
 
 /**
@@ -124,6 +125,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const origin = req.headers.get("origin");
   if (!originAllowed(origin)) return json({ error: "Origin not allowed" }, 403, origin);
+
+  // Mainnet-only: never mint a key for free Sepolia testnet stake (matches /api/keys/issue).
+  try {
+    assertMainnetOnly();
+  } catch (e) {
+    return withCors(e as NextResponse, origin);
+  }
 
   const ipRl = await checkRateLimit(req);
   if (ipRl) return withCors(ipRl, origin);

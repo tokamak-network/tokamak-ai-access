@@ -11,8 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { kv } from "@vercel/kv";
-import { kvGet, kvSet } from "@/lib/kv";
+import { kvGet, kvSet, kvKeys } from "@/lib/kv";
 import { getTotalStakedTON, MIN_TON } from "@/lib/staking";
 import { revokeLiteLLMKey } from "@/lib/litellm";
 import type { KeyRecord, PurchaseRecord } from "@/lib/key-guards";
@@ -37,8 +36,8 @@ async function handleCron(req: NextRequest) {
     // ---- Compute MIN_TON_WEI ----
     const MIN_TON_WEI = MIN_TON * 10n ** 18n;
 
-    // ---- Scan all key:{address} records ----
-    const keyPatterns = await kv.keys("key:*");
+    // ---- Scan all key:{address} records (chain-scoped; kvKeys strips the {chain}: prefix) ----
+    const keyPatterns = await kvKeys("key:*");
     if (!keyPatterns) {
       console.log("[cron] check-stakes: no keys found");
       return NextResponse.json({ revoked: 0, total: 0, status: "success" }, { status: 200 });

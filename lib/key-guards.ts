@@ -14,6 +14,21 @@ export interface KeyRecord {
   lastRotatedAt?: number;
 }
 
+/**
+ * Throws a 403 NextResponse on testnet (NEXT_PUBLIC_CHAIN=sepolia).
+ * Key issuance is mainnet-only — we never mint a real LiteLLM key in exchange
+ * for free Sepolia testnet TON (staking or purchase). Read at call time so tests
+ * can flip the chain per case.
+ */
+export function assertMainnetOnly(): void {
+  if (process.env.NEXT_PUBLIC_CHAIN === "sepolia") {
+    throw NextResponse.json(
+      { error: "Key issuance is disabled on Sepolia testnet" },
+      { status: 403 },
+    );
+  }
+}
+
 /** Throws a 403 NextResponse if address does not meet the minimum TON stake. */
 export async function assertStake(address: string): Promise<void> {
   const minTonWei = BigInt(process.env.MIN_TON ?? "100") * 10n ** 18n;

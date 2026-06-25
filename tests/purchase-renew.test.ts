@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 const {
   mockGetSessionAddress,
@@ -11,6 +11,7 @@ const {
   mockGetTransactionReceipt,
   mockParseEventLogs,
   mockFetchTonUsdRate,
+  mockAssertMainnetOnly,
 } = vi.hoisted(() => {
   // Set before route module loads — CHAIN_ID is a module-level const
   process.env.NEXT_PUBLIC_CHAIN = "sepolia";
@@ -24,6 +25,7 @@ const {
     mockGetTransactionReceipt: vi.fn(),
     mockParseEventLogs: vi.fn(),
     mockFetchTonUsdRate: vi.fn(),
+    mockAssertMainnetOnly: vi.fn(),  // no-op by default = mainnet allowed
   };
 });
 
@@ -48,6 +50,7 @@ vi.mock("@vercel/kv", () => {
   };
 });
 vi.mock("@/lib/litellm", () => ({ renewLiteLLMKey: mockRenewLiteLLMKey }));
+vi.mock("@/lib/key-guards", () => ({ assertMainnetOnly: mockAssertMainnetOnly }));
 vi.mock("@/lib/ton-price", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/ton-price")>();
   return {
@@ -104,15 +107,15 @@ beforeEach(() => {
 
   // Default KV state: txhash not used, purchase exists, key record exists
   mockKvGet.mockImplementation((key: string) => {
-    if (key.startsWith("txhash:")) return null;
-    if (key.startsWith("purchase:")) {
+    if (key.includes("txhash:")) return null;
+    if (key.includes("purchase:")) {
       return Promise.resolve({
         txHash: "0xold",
         paidAt: NOW,
         expiresAt: FUTURE,
       });
     }
-    if (key.startsWith("key:")) {
+    if (key.includes("key:")) {
       return Promise.resolve({
         liteLlmKeyId: LITELLM_KEY_ID,
       });
@@ -135,7 +138,7 @@ describe("PUT /api/keys/purchase/renew", () => {
 
   it("returns 404 when no existing purchase record", async () => {
     mockKvGet.mockImplementation((key: string) => {
-      if (key.startsWith("purchase:")) return Promise.resolve(null);
+      if (key.includes("purchase:")) return Promise.resolve(null);
       return Promise.resolve(null);
     });
     const res = await PUT(makeReq());
@@ -148,6 +151,18 @@ describe("PUT /api/keys/purchase/renew", () => {
     expect(res.status).toBe(409);
   });
 
+  it("returns 403 and does not renew/claim on Sepolia (testnet paid renewal blocked)", async () => {
+    mockAssertMainnetOnly.mockImplementationOnce(() => {
+      throw NextResponse.json({ error: "Key issuance is disabled on Sepolia testnet" }, { status: 403 });
+    });
+    const res = await PUT(makeReq());
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/sepolia/i);
+    // Blocked before the dedup claim / key renewal — no side effects
+    expect(mockKvSetNx).not.toHaveBeenCalled();
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
+
   it("extends expiresAt from current expiry, calls renewLiteLLMKey, returns 200", async () => {
     const res = await PUT(makeReq());
     expect(res.status).toBe(200);
@@ -157,7 +172,7 @@ describe("PUT /api/keys/purchase/renew", () => {
 
     // mockKvSet is called with (key, value, opts)
     expect(mockKvSet).toHaveBeenCalledWith(
-      `purchase:${ADDR}`,
+      `sepolia:purchase:${ADDR}`,
       expect.objectContaining({ txHash: TX_HASH }),
       undefined, // no TTL
     );
@@ -167,15 +182,15 @@ describe("PUT /api/keys/purchase/renew", () => {
   it("extends expiresAt from now when purchase already expired", async () => {
     const PAST = NOW - 1000;
     mockKvGet.mockImplementation((key: string) => {
-      if (key.startsWith("txhash:")) return Promise.resolve(null);
-      if (key.startsWith("purchase:")) {
+      if (key.includes("txhash:")) return Promise.resolve(null);
+      if (key.includes("purchase:")) {
         return Promise.resolve({
           txHash: "0xold",
           paidAt: NOW,
           expiresAt: PAST,
         });
       }
-      if (key.startsWith("key:")) {
+      if (key.includes("key:")) {
         return Promise.resolve({
           liteLlmKeyId: LITELLM_KEY_ID,
         });
@@ -195,14 +210,14 @@ describe("PUT /api/keys/purchase/renew", () => {
     const res = await PUT(makeReq());
     expect(res.status).toBe(422);
     // dedup claim should be released
-    expect(mockKvDel).toHaveBeenCalledWith(`txhash:${TX_HASH}`);
+    expect(mockKvDel).toHaveBeenCalledWith(`sepolia:txhash:${TX_HASH}`);
   });
 
   it("skips renewLiteLLMKey when key record is missing", async () => {
     mockKvGet.mockImplementation((key: string) => {
-      if (key.startsWith("txhash:")) return Promise.resolve(null);
-      if (key.startsWith("purchase:")) return Promise.resolve({ txHash: "0xold", paidAt: NOW, expiresAt: FUTURE });
-      if (key.startsWith("key:")) return Promise.resolve(null); // no key record
+      if (key.includes("txhash:")) return Promise.resolve(null);
+      if (key.includes("purchase:")) return Promise.resolve({ txHash: "0xold", paidAt: NOW, expiresAt: FUTURE });
+      if (key.includes("key:")) return Promise.resolve(null); // no key record
       return Promise.resolve(null);
     });
     const res = await PUT(makeReq());

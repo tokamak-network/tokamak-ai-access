@@ -36,6 +36,7 @@ vi.mock("@/lib/kv", () => ({
   },
   kvGet: mockKvGet,
   kvSet: mockKvSet,
+  kvKeys: mockKvKeys,
   kvDecr: mockKvDecr,
 }));
 

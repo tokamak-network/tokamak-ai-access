@@ -3,7 +3,7 @@ import { getSessionAddress } from "@/lib/siwe";
 import { generateLiteLLMKey, revokeLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet, hashKey } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
-import { assertRotateCooldown, assertEligibility, type PurchaseRecord } from "@/lib/key-guards";
+import { assertRotateCooldown, assertEligibility, assertMainnetOnly, type PurchaseRecord } from "@/lib/key-guards";
 
 /**
  * POST /api/keys/rotate
@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
   if (rl) return rl;
 
   try {
+    assertMainnetOnly();
     await assertRotateCooldown(address);
     await assertEligibility(address);
   } catch (err) {

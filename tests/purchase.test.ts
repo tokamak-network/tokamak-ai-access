@@ -8,6 +8,7 @@ const {
   mockKvDel,
   mockKvIncr,
   mockAssertKeyCapacity,
+  mockAssertMainnetOnly,
   mockIssueKeyForAddress,
   mockGetTransactionReceipt,
   mockParseEventLogs,
@@ -22,6 +23,7 @@ const {
     mockKvDel: vi.fn(),
     mockKvIncr: vi.fn(),
     mockAssertKeyCapacity: vi.fn(),
+    mockAssertMainnetOnly: vi.fn(),  // no-op by default = mainnet allowed
     mockIssueKeyForAddress: vi.fn(),
     mockGetTransactionReceipt: vi.fn(),
     mockParseEventLogs: vi.fn(),
@@ -33,6 +35,7 @@ vi.mock("@/lib/siwe", () => ({ getSessionAddress: mockGetSessionAddress }));
 vi.mock("@vercel/kv", () => ({ kv: { get: mockKvGet, set: mockKvSet, del: mockKvDel, incr: mockKvIncr } }));
 vi.mock("@/lib/key-guards", () => ({
   assertKeyCapacity: mockAssertKeyCapacity,
+  assertMainnetOnly: mockAssertMainnetOnly,
   PurchaseRecord: undefined,
 }));
 vi.mock("@/lib/issue-key", () => ({ issueKeyForAddress: mockIssueKeyForAddress }));
@@ -155,6 +158,18 @@ describe("POST /api/keys/purchase", () => {
     expect(res.status).toBe(503);
   });
 
+  it("returns 403 and mints no key when chain is Sepolia (testnet purchase blocked)", async () => {
+    mockAssertMainnetOnly.mockImplementationOnce(() => {
+      throw NextResponse.json({ error: "Key issuance is disabled on Sepolia testnet" }, { status: 403 });
+    });
+    const res = await POST(makeReq());
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/sepolia/i);
+    // No on-chain verification, no dedup/purchase write, no key issued
+    expect(mockGetTransactionReceipt).not.toHaveBeenCalled();
+    expect(mockIssueKeyForAddress).not.toHaveBeenCalled();
+  });
+
   it("returns 422 when tx.to is not the TON ERC-20 contract", async () => {
     mockGetTransactionReceipt.mockResolvedValue(makeReceipt({ to: "0xother000" }));
     const res = await POST(makeReq());
@@ -234,7 +249,7 @@ describe("POST /api/keys/purchase", () => {
     );
     // purchase:{address} written with expiresAt ~30 days from now
     expect(mockKvSet).toHaveBeenCalledWith(
-      `purchase:${ADDR}`,
+      `sepolia:purchase:${ADDR}`,
       expect.objectContaining({ txHash: TX_HASH }),
     );
     // issueKeyForAddress called

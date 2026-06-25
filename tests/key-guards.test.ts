@@ -14,12 +14,32 @@ vi.mock("@vercel/kv", () => ({
   kv: { get: mockKvGet, set: vi.fn(), keys: vi.fn() },
 }));
 
-import { assertStake, assertRotateCooldown, assertKeyCapacity, assertEligibility } from "@/lib/key-guards";
+import { assertStake, assertRotateCooldown, assertKeyCapacity, assertEligibility, assertMainnetOnly } from "@/lib/key-guards";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
 const MIN_TON_WEI = 100n * 10n ** 18n;
 
 beforeEach(() => vi.clearAllMocks());
+
+// ── assertMainnetOnly ─────────────────────────────────────────────────────────
+describe("assertMainnetOnly", () => {
+  const orig = process.env.NEXT_PUBLIC_CHAIN;
+  afterEach(() => { process.env.NEXT_PUBLIC_CHAIN = orig; });
+
+  it("throws NextResponse 403 on sepolia", async () => {
+    process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+    const err = (() => { try { assertMainnetOnly(); } catch (e) { return e; } })();
+    expect(err).toBeInstanceOf(NextResponse);
+    expect((err as NextResponse).status).toBe(403);
+    const body = await (err as NextResponse).json();
+    expect(body.error).toBe("Key issuance is disabled on Sepolia testnet");
+  });
+
+  it("passes on mainnet", () => {
+    process.env.NEXT_PUBLIC_CHAIN = "mainnet";
+    expect(() => assertMainnetOnly()).not.toThrow();
+  });
+});
 
 // ── assertStake ──────────────────────────────────────────────────────────────
 describe("assertStake", () => {

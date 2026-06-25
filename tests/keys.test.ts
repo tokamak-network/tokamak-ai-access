@@ -48,6 +48,7 @@ import { POST as renewKey }  from "@/app/api/keys/renew/route";
 
 // ── Test helpers ─────────────────────────────────────────────────────────────
 const ADDR       = "0xdeadbeef00000000000000000000000000000001";
+const P          = "mainnet:";          // chain-scoped KV key prefix (NEXT_PUBLIC_CHAIN pinned below; mainnet — issuance is mainnet-only)
 const MIN_TON    = 100n * 10n ** 18n;  // matches route default (MIN_TON env unset)
 const ENOUGH_TON = MIN_TON + 1n;
 
@@ -72,6 +73,7 @@ function makeReq(method = "POST"): NextRequest {
 // ── Setup ────────────────────────────────────────────────────────────────────
 beforeEach(() => {
   vi.clearAllMocks();
+  process.env.NEXT_PUBLIC_CHAIN = "mainnet";
   // Default: rate limit passes
   mockCheckRateLimit.mockResolvedValue(null);
 });
@@ -96,7 +98,7 @@ describe("POST /api/keys/issue", () => {
     expect(mockKvSet.mock.calls[1][1]).not.toHaveProperty("key");
     expect(mockKvSet.mock.calls[1][1]).toHaveProperty("hash");
     expect(mockKvIncr).toHaveBeenCalledOnce();
-    expect(mockKvIncr).toHaveBeenCalledWith("stats:active-keys");
+    expect(mockKvIncr).toHaveBeenCalledWith(`${P}stats:active-keys`);
   });
 
   it("returns 401 when no session", async () => {
@@ -115,6 +117,18 @@ describe("POST /api/keys/issue", () => {
     const res = await issueKey(makeReq());
     expect(res.status).toBe(403);
     expect((await res.json()).error).toMatch(/not eligible/i);
+    expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 and mints no key on Sepolia (testnet staking blocked)", async () => {
+    process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);  // eligible, but testnet
+    mockKvGet.mockResolvedValue(null);
+
+    const res = await issueKey(makeReq());
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/sepolia/i);
     expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
   });
 
@@ -180,7 +194,7 @@ describe("POST /api/keys/issue", () => {
     mockGetSessionAddress.mockResolvedValue(ADDR);
     mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
     mockKvGet.mockImplementation((key: string) => {
-      if (key === "stats:active-keys") return Promise.resolve(1000);
+      if (key === `${P}stats:active-keys`) return Promise.resolve(1000);
       return Promise.resolve(null);
     });
 
@@ -327,6 +341,19 @@ describe("POST /api/keys/rotate", () => {
     expect(newCall[1]).toHaveProperty("expiresAt", MOCK_KEY.expiresAt);
   });
 
+  it("returns 403 and mints no key on Sepolia (testnet rotation blocked)", async () => {
+    process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(STORED_RECORD);
+
+    const res = await rotateKey(makeReq());
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/sepolia/i);
+    expect(mockGenerateLiteLLMKey).not.toHaveBeenCalled();
+    expect(mockRevokeLiteLLMKey).not.toHaveBeenCalled();
+  });
+
   it("issues new key even with no prior key in KV", async () => {
     mockGetSessionAddress.mockResolvedValue(ADDR);
     mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
@@ -362,7 +389,7 @@ describe("POST /api/keys/rotate", () => {
     mockGetTotalStakedTON.mockResolvedValue(0n);
     const FUTURE = Date.now() + 30 * 24 * 60 * 60 * 1000;
     mockKvGet.mockImplementation((key: string) =>
-      key.startsWith("purchase:")
+      key.includes("purchase:")
         ? Promise.resolve({ txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE })
         : Promise.resolve(null),
     );
@@ -380,7 +407,7 @@ describe("POST /api/keys/rotate", () => {
     mockGetTotalStakedTON.mockResolvedValue(0n);
     const PAST = Date.now() - 1000;
     mockKvGet.mockImplementation((key: string) =>
-      key.startsWith("purchase:")
+      key.includes("purchase:")
         ? Promise.resolve({ txHash: "0xabc", paidAt: Date.now() - 31 * 24 * 60 * 60 * 1000, expiresAt: PAST })
         : Promise.resolve(null),
     );
@@ -395,8 +422,8 @@ describe("POST /api/keys/rotate", () => {
     mockGetTotalStakedTON.mockResolvedValue(0n);
     const ACTIVE_PURCHASE = { txHash: "0xabc", paidAt: Date.now() - 1000, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
     mockKvGet.mockImplementation((key: string) => {
-      if (key === `key:${ADDR}`) return Promise.resolve(STORED_RECORD);
-      if (key === `purchase:${ADDR}`) return Promise.resolve(ACTIVE_PURCHASE);
+      if (key === `${P}key:${ADDR}`) return Promise.resolve(STORED_RECORD);
+      if (key === `${P}purchase:${ADDR}`) return Promise.resolve(ACTIVE_PURCHASE);
       return Promise.resolve(null);
     });
     mockRevokeLiteLLMKey.mockResolvedValue(undefined);
@@ -476,8 +503,8 @@ describe("POST /api/keys/rotate", () => {
     mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
     const FUTURE = Date.now() + 30 * 24 * 60 * 60 * 1000;
     mockKvGet.mockImplementation((key: string) => {
-      if (key === `key:${ADDR}`) return Promise.resolve(STORED_RECORD);
-      if (key === `purchase:${ADDR}`) return Promise.resolve({ txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE });
+      if (key === `${P}key:${ADDR}`) return Promise.resolve(STORED_RECORD);
+      if (key === `${P}purchase:${ADDR}`) return Promise.resolve({ txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE });
       return Promise.resolve(null);
     });
     mockRevokeLiteLLMKey.mockResolvedValue(undefined);
@@ -497,6 +524,18 @@ describe("POST /api/keys/renew", () => {
   const OLD_RECORD = { ...STORED_RECORD, createdAt: Date.now() - 31 * 24 * 60 * 60 * 1000 };
   // createdAt within 30 days → not yet renewable
   const FRESH_RECORD = { ...STORED_RECORD, createdAt: Date.now() - 1 * 24 * 60 * 60 * 1000 };
+
+  it("returns 403 and does not renew on Sepolia (testnet renewal blocked)", async () => {
+    process.env.NEXT_PUBLIC_CHAIN = "sepolia";
+    mockGetSessionAddress.mockResolvedValue(ADDR);
+    mockGetTotalStakedTON.mockResolvedValue(ENOUGH_TON);
+    mockKvGet.mockResolvedValue(OLD_RECORD);
+
+    const res = await renewKey(makeReq());
+    expect(res.status).toBe(403);
+    expect((await res.json()).error).toMatch(/sepolia/i);
+    expect(mockRenewLiteLLMKey).not.toHaveBeenCalled();
+  });
 
   it("renews key and updates expiresAt when 30+ days have passed", async () => {
     mockGetSessionAddress.mockResolvedValue(ADDR);
@@ -570,7 +609,7 @@ describe("POST /api/keys/renew", () => {
     const FUTURE = Date.now() + 30 * 24 * 60 * 60 * 1000;
     const OLD_CREATED = Date.now() - 31 * 24 * 60 * 60 * 1000;
     mockKvGet.mockImplementation((key: string) => {
-      if (key.startsWith("purchase:")) {
+      if (key.includes("purchase:")) {
         return Promise.resolve({ txHash: "0xabc", paidAt: Date.now(), expiresAt: FUTURE });
       }
       return Promise.resolve({ ...STORED_RECORD, createdAt: OLD_CREATED });
@@ -588,7 +627,7 @@ describe("POST /api/keys/renew", () => {
     mockGetTotalStakedTON.mockResolvedValue(0n);
     const PAST = Date.now() - 1000;
     mockKvGet.mockImplementation((key: string) =>
-      key.startsWith("purchase:")
+      key.includes("purchase:")
         ? Promise.resolve({ txHash: "0xabc", paidAt: Date.now() - 31 * 24 * 60 * 60 * 1000, expiresAt: PAST })
         : Promise.resolve(null),
     );
@@ -604,8 +643,8 @@ describe("POST /api/keys/renew", () => {
     mockGetTotalStakedTON.mockResolvedValue(0n);
     const ACTIVE_PURCHASE = { txHash: "0xabc", paidAt: Date.now() - 1000, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 };
     mockKvGet.mockImplementation((key: string) => {
-      if (key === `purchase:${ADDR}`) return Promise.resolve(ACTIVE_PURCHASE);
-      if (key === `key:${ADDR}`) return Promise.resolve(OLD_RECORD);
+      if (key === `${P}purchase:${ADDR}`) return Promise.resolve(ACTIVE_PURCHASE);
+      if (key === `${P}key:${ADDR}`) return Promise.resolve(OLD_RECORD);
       return Promise.resolve(null);
     });
     mockRenewLiteLLMKey.mockResolvedValue({ expiresAt: RENEWED_EXPIRES });

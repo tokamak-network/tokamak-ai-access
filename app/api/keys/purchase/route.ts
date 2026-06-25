@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createPublicClient, http, parseEventLogs } from "viem";
 import { mainnet, sepolia } from "viem/chains";
 import { getSessionAddress } from "@/lib/siwe";
-import { assertKeyCapacity, type PurchaseRecord, type KeyRecord } from "@/lib/key-guards";
+import { assertKeyCapacity, assertMainnetOnly, type PurchaseRecord, type KeyRecord } from "@/lib/key-guards";
 import { issueKeyForAddress } from "@/lib/issue-key";
 import { kvGet, kvSet, kvSetNx, kvDel } from "@/lib/kv";
 import { fetchTonUsdRate, usdToTonWei } from "@/lib/ton-price";
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    assertMainnetOnly();
     await assertKeyCapacity();
   } catch (err) {
     if (err instanceof Response) return err as NextResponse;

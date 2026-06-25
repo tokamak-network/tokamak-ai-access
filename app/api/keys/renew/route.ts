@@ -3,7 +3,7 @@ import { getSessionAddress } from "@/lib/siwe";
 import { renewLiteLLMKey } from "@/lib/litellm";
 import { kvGet, kvSet } from "@/lib/kv";
 import { checkRateLimit } from "@/lib/with-rate-limit";
-import { assertEligibility } from "@/lib/key-guards";
+import { assertEligibility, assertMainnetOnly } from "@/lib/key-guards";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
   if (rl) return rl;
 
   try {
+    assertMainnetOnly();
     await assertEligibility(address);
   } catch (err) {
     return err as NextResponse;

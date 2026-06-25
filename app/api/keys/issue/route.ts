@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionAddress } from "@/lib/siwe";
 import { checkRateLimit } from "@/lib/with-rate-limit";
-import { assertEligibility, assertKeyCapacity } from "@/lib/key-guards";
+import { assertEligibility, assertKeyCapacity, assertMainnetOnly } from "@/lib/key-guards";
 import { issueKeyForAddress } from "@/lib/issue-key";
 
 export async function POST(req: NextRequest) {
@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
   if (rl) return rl;
 
   try {
+    assertMainnetOnly();
     await assertEligibility(address);
     await assertKeyCapacity();
   } catch (err) {
