@@ -179,6 +179,23 @@ describe("GET /api/cron/check-stakes (F-01)", () => {
       expect(body.total).toBe(0);
     });
 
+    it("skips archived key:{address}:prev keys (must not revoke the previous key)", async () => {
+      // rotate archives the old key under key:{addr}:prev — a valid KeyRecord shape.
+      // The scan must NOT treat "{addr}:prev" as an address or revoke its liteLlmKeyId.
+      mockKvKeys.mockResolvedValue(["key:0xabc:prev"]);
+
+      const req = makeReq("GET", "Bearer test-secret");
+      const res = await GET(req);
+
+      expect(res.status).toBe(200);
+      expect(mockKvGet).not.toHaveBeenCalled();
+      expect(mockRevokeLiteLLMKey).not.toHaveBeenCalled();
+
+      const body = await res.json();
+      expect(body.revoked).toBe(0);
+      expect(body.total).toBe(0);
+    });
+
     it("skips already-revoked keys", async () => {
       const keyRecord = {
         liteLlmKeyId: "sk-xyz789",

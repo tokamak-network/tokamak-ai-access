@@ -43,10 +43,12 @@ async function handleCron(req: NextRequest) {
       return NextResponse.json({ revoked: 0, total: 0, status: "success" }, { status: 200 });
     }
 
-    // Filter out :lock suffix keys and collect clean key:{address} patterns
+    // Keep only bare key:{address} records. Suffixed keys (key:{addr}:lock,
+    // key:{addr}:prev) share the key:* glob but must not be scanned — :prev is an
+    // archived previous key whose liteLlmKeyId would otherwise get wrongly revoked.
     const cleanKeys: string[] = [];
     for (const pattern of keyPatterns) {
-      if (!pattern.endsWith(":lock")) {
+      if (!pattern.slice(4).includes(":")) {
         cleanKeys.push(pattern);
       }
     }
