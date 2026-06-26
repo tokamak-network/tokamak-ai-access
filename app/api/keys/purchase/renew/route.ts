@@ -39,7 +39,7 @@ async function verifyTransferTx(
   address: string,
 ): Promise<NextResponse | null> {
   const tonErc20 = TON_ERC20_ADDRESS;
-  const treasury = "0x000000000000000000000000000000000000dead";
+  const treasury = "0x0000000000000000000000000000000000000001";
 
   const rate = await fetchTonUsdRate().catch(() => null);
   if (!rate) {

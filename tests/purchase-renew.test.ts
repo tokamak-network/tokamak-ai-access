@@ -73,7 +73,7 @@ vi.mock("viem", async (importOriginal) => {
 import { PUT } from "@/app/api/keys/purchase/renew/route";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
-const BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
+const BURN_ADDRESS = "0x0000000000000000000000000000000000000001";
 const TON_ERC20 = "0xa30fe40285b8f5c0457dbc3b7c8a280373c40044"; // Sepolia TON from abi/TON.json
 const TX_HASH = "0xnewTxHash00000000000000000000000000000000000000000000000000000001";
 const FIVE_TON = 5n * 10n ** 18n;

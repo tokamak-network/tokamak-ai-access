@@ -62,7 +62,8 @@ import { POST } from "@/app/api/keys/purchase/route";
 import { NextResponse } from "next/server";
 
 const ADDR = "0xdeadbeef00000000000000000000000000000001";
-const BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
+const BURN_ADDRESS = "0x0000000000000000000000000000000000000001";
+const OLD_BURN_ADDRESS = "0x000000000000000000000000000000000000dead";
 const TON_ERC20 = "0xa30fe40285b8f5c0457dbc3b7c8a280373c40044"; // Sepolia TON from abi/TON.json
 const TX_HASH = "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890ab";
 const FIVE_TON = 5n * 10n ** 18n;
@@ -193,6 +194,19 @@ describe("POST /api/keys/purchase", () => {
     );
     mockParseEventLogs.mockReturnValue([
       { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: "0xother00000000000000000000000000000003", value: FIVE_TON } },
+    ]);
+    const res = await POST(makeReq());
+    expect(res.status).toBe(403);
+  });
+
+  // Migration guard: treasury moved 0xdead → 0x1. A transfer to the OLD burn
+  // address must now be rejected, proving the new address is enforced.
+  it("returns 403 when event.to is the OLD burn address (0xdead)", async () => {
+    mockGetTransactionReceipt.mockResolvedValue(
+      makeReceipt({ toAddr: OLD_BURN_ADDRESS })
+    );
+    mockParseEventLogs.mockReturnValue([
+      { address: TON_ERC20.toLowerCase(), args: { from: ADDR, to: OLD_BURN_ADDRESS, value: FIVE_TON } },
     ]);
     const res = await POST(makeReq());
     expect(res.status).toBe(403);

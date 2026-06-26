@@ -26,7 +26,7 @@ const E2E_BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const RPC_URL_SEPOLIA = process.env.RPC_URL_SEPOLIA;
 
 const SEPOLIA_TON = "0xa30fe40285B8f5c0457DbC3B7C8A280373c40044" as `0x${string}`;
-const BURN_ADDRESS = "0x000000000000000000000000000000000000dead" as `0x${string}`;
+const BURN_ADDRESS = "0x0000000000000000000000000000000000000001" as `0x${string}`;
 
 const ERC20_TRANSFER_ABI = [
   {

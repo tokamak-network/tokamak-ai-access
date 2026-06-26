@@ -67,7 +67,7 @@ export function usePurchase(onSuccess?: (key?: string) => void): UsePurchaseResu
   const [status, setStatus] = useState<PurchaseStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
-  const BURN_ADDRESS = "0x000000000000000000000000000000000000dead" as `0x${string}`;
+  const BURN_ADDRESS = "0x0000000000000000000000000000000000000001" as `0x${string}`;
 
   async function executePurchase(
     endpoint: string,
