@@ -96,7 +96,8 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
     } else if (target === "openclaw") {
       log.ok("Setup complete! openclaw.json is applied automatically.");
     } else if (target === "opencode") {
-      log.ok("Setup complete! opencode.json is applied automatically.");
+      log.ok(`Setup complete! New opencode sessions will use litellm/${model}.`);
+      log.info("Existing sessions keep their previous model — start a new session to switch.");
     } else if (target !== "hermes") {
       log.ok("Setup complete! Restart your shell or run `source ~/.zshrc`.");
     }
