@@ -2,6 +2,7 @@ import * as claude from "../targets/claude.js";
 import * as codex from "../targets/codex.js";
 import * as openclaw from "../targets/openclaw.js";
 import * as hermes from "../targets/hermes.js";
+import * as opencode from "../targets/opencode.js";
 import { fetchModels } from "../lib/litellm.js";
 import { log } from "../lib/logger.js";
 import type { Target } from "../lib/prompts.js";
@@ -80,6 +81,7 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
     case "codex":     codex.configure(configOpts); break;
     case "openclaw":  openclaw.configure(configOpts); break;
     case "hermes":    hermes.configure(configOpts); break;
+    case "opencode":  opencode.configure(configOpts); break;
   }
 
   if (opts.dryRun) {
@@ -93,6 +95,8 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
       log.info("  2) Fully quit and relaunch Claude Code");
     } else if (target === "openclaw") {
       log.ok("Setup complete! openclaw.json is applied automatically.");
+    } else if (target === "opencode") {
+      log.ok("Setup complete! opencode.json is applied automatically.");
     } else if (target !== "hermes") {
       log.ok("Setup complete! Restart your shell or run `source ~/.zshrc`.");
     }

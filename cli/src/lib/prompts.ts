@@ -1,7 +1,7 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
 
-export type Target = "claude" | "codex" | "openclaw" | "hermes";
+export type Target = "claude" | "codex" | "openclaw" | "hermes" | "opencode";
 
 export async function promptTarget(): Promise<Target> {
   const value = await p.select<Target>({
@@ -11,6 +11,7 @@ export async function promptTarget(): Promise<Target> {
       { value: "codex", label: "Codex CLI" },
       { value: "openclaw", label: "OpenClaw" },
       { value: "hermes", label: "Hermes" },
+      { value: "opencode", label: "opencode" },
     ],
   });
   if (p.isCancel(value)) { p.cancel("Cancelled."); process.exit(0); }

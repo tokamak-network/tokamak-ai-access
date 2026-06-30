@@ -10,14 +10,14 @@ const program = new Command();
 
 program
   .name("tokamak-ai-access")
-  .description("TON AI Access — configure Claude Code, Codex, OpenClaw, Hermes")
+  .description("TON AI Access — configure Claude Code, Codex, OpenClaw, Hermes, opencode")
   .version(__PKG_VERSION__);
 
 // configure subcommand
 program
   .command("configure")
   .description("Configure a CLI with your TON AI Access API key and model")
-  .option("--target <t>", "target CLI: claude | codex | openclaw | hermes")
+  .option("--target <t>", "target CLI: claude | codex | openclaw | hermes | opencode")
   .option("--api-key <key>", "API key (default: TON_API_KEY env var)")
   .option("--base-url <url>", "API base URL (default: https://api2.ai.tokamak.network)")
   .option("--model <model>", "model to use (default: qwen-3.6)")
@@ -34,7 +34,7 @@ program
     dryRun?: boolean;
   }) => {
     await runConfigure({
-      target: opts.target as "claude" | "codex" | "openclaw" | "hermes" | undefined,
+      target: opts.target as "claude" | "codex" | "openclaw" | "hermes" | "opencode" | undefined,
       apiKey: opts.apiKey,
       baseUrl: opts.baseUrl,
       model: opts.model,
