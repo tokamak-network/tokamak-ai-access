@@ -1,5 +1,6 @@
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { MODELS } from "./models.js";
 
 export type Target = "claude" | "codex" | "openclaw" | "hermes" | "opencode";
 
@@ -33,10 +34,7 @@ export async function promptRevertTarget(): Promise<"claude" | "codex"> {
 export async function promptModel(): Promise<string> {
   const value = await p.select<string>({
     message: "Select a model",
-    options: [
-      { value: "qwen-3.6", label: "Qwen 3.6 (Recommended)" },
-      { value: "gemma-4", label: "Gemma 4" },
-    ],
+    options: MODELS.map((m) => ({ value: m.value, label: m.label })),
   });
   if (p.isCancel(value)) { p.cancel("Cancelled."); process.exit(0); }
   return value as string;

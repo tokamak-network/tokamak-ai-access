@@ -38,10 +38,22 @@ describe("codex.configure", () => {
     expect(config).toContain("qwen-3.6");
   });
 
-  it("includes model_context_window in config.toml to suppress unknown-model warning", () => {
+  it("writes the model's context window into config.toml", () => {
     configure({ home, apiKey: "sk-test", model: "qwen-3.6" });
     const config = readFileSync(join(home, ".codex", "config.toml"), "utf8");
+    expect(config).toContain("model_context_window = 262144");
+  });
+
+  it("writes gemma-4's smaller context window", () => {
+    configure({ home, apiKey: "sk-test", model: "gemma-4" });
+    const config = readFileSync(join(home, ".codex", "config.toml"), "utf8");
     expect(config).toContain("model_context_window = 131072");
+  });
+
+  it("omits model_context_window for an unknown model", () => {
+    configure({ home, apiKey: "sk-test", model: "some-future-model" });
+    const config = readFileSync(join(home, ".codex", "config.toml"), "utf8");
+    expect(config).not.toContain("model_context_window");
   });
 
   it("does not modify files in dry-run mode", () => {

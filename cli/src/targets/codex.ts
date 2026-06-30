@@ -5,6 +5,7 @@ import { writeEnvBlock, revertShellProfile, detectShellProfile } from "../lib/sh
 import { backupFile } from "../lib/backup.js";
 import { log, maskKey } from "../lib/logger.js";
 import { hasFileMarker, BLOCK_START } from "../lib/markers.js";
+import { getContextWindow } from "../lib/models.js";
 
 export interface ConfigureOptions {
   home?: string;
@@ -53,11 +54,12 @@ export function configure(opts: ConfigureOptions): void {
 
   // config.toml
   log.section("Codex CLI — config.toml");
+  const contextWindow = getContextWindow(model);
   const tomlContent = [
     `${BLOCK_START} — ${date}`,
     `model = "${model}"`,
     `model_provider = "tokamak"`,
-    `model_context_window = 131072`,
+    ...(contextWindow !== undefined ? [`model_context_window = ${contextWindow}`] : []),
     ``,
     `[model_providers.tokamak]`,
     `name = "TON AI Access (LiteLLM)"`,
