@@ -230,6 +230,50 @@ export default function LandingPage() {
           </section>
         </div>
 
+        {/* ── Image Model Cards (dark) ── */}
+        <div className="models-section-wrap">
+          <section className="models-section">
+            <aside>
+              <span className="eyebrow-dark">Image models</span>
+              <span className="n-lbl-dark">Available</span>
+              <span className="n-val-dark">3 models</span>
+              <span className="n-lbl-dark">API compat</span>
+              <span className="n-val-dark">OpenAI Images</span>
+              <span className="n-lbl-dark">Best for</span>
+              <span className="n-val-dark" style={{ marginBottom: 0 }}>Image generation</span>
+            </aside>
+            <div className="model-cards">
+              <div className="model-card">
+                <div className="model-name">z-image</div>
+                <div className="model-maker">Alibaba · Tongyi</div>
+                <div className="model-desc">Text-to-image model with fast turbo generation for high-quality visuals from prompts.</div>
+                <div className="model-tags">
+                  <span className="tag tag--teal">Text-to-image</span>
+                  <span className="tag tag--amber">Turbo</span>
+                </div>
+              </div>
+              <div className="model-card m2">
+                <div className="model-name">flux-2-klein</div>
+                <div className="model-maker">Black Forest Labs · FLUX.2</div>
+                <div className="model-desc">Distilled FLUX.2 variant for efficient, high-fidelity image generation.</div>
+                <div className="model-tags">
+                  <span className="tag tag--purple">Distilled</span>
+                  <span className="tag tag--teal">High fidelity</span>
+                </div>
+              </div>
+              <div className="model-card m2">
+                <div className="model-name">krea-2-turbo</div>
+                <div className="model-maker">Krea AI</div>
+                <div className="model-desc">Turbo image generation tuned for fast, real-time-style creative workflows.</div>
+                <div className="model-tags">
+                  <span className="tag tag--amber">Turbo</span>
+                  <span className="tag tag--blue">Real-time</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
         {/* ── How it works ── */}
         <section className="section">
           <aside>
@@ -359,6 +403,7 @@ export default function LandingPage() {
               {[
                 ["Base URL", "https://api2.ai.tokamak.network"],
                 ["Model", "qwen-3.6, gemma-4, deepseek-v4-flash, glm-5.2"],
+                ["Images", "/v1/images/generations"],
                 ["Protocol", "OpenAI-compatible REST"],
               ].map(([label, val]) => (
                 <div key={label} style={{ display: "flex", gap: "8px 16px", alignItems: "baseline", flexWrap: "wrap" }}>
