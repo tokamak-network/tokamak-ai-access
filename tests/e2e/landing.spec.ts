@@ -30,6 +30,9 @@ test.describe('Landing page', () => {
     await expect(page.getByText('gemma-4', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('deepseek-v4-flash', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('glm-5.2', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('z-image', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('flux-2-klein', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('krea-2-turbo', { exact: true }).first()).toBeVisible();
 
     // How it works section
     await expect(page.getByText('01')).toBeVisible();
