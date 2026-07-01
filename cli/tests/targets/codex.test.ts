@@ -62,6 +62,19 @@ describe("codex.configure", () => {
     expect(config).toContain("model_context_window = 262144");
   });
 
+  it("omits model_context_window for z-image (image model)", () => {
+    configure({ home, apiKey: "sk-test", model: "z-image" });
+    const config = readFileSync(join(home, ".codex", "config.toml"), "utf8");
+    expect(config).toContain('model = "z-image"');
+    expect(config).not.toContain("model_context_window");
+  });
+
+  it("omits model_context_window for flux-2-klein (image model)", () => {
+    configure({ home, apiKey: "sk-test", model: "flux-2-klein" });
+    const config = readFileSync(join(home, ".codex", "config.toml"), "utf8");
+    expect(config).not.toContain("model_context_window");
+  });
+
   it("omits model_context_window for an unknown model", () => {
     configure({ home, apiKey: "sk-test", model: "some-future-model" });
     const config = readFileSync(join(home, ".codex", "config.toml"), "utf8");
