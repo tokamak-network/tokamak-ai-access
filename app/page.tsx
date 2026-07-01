@@ -175,7 +175,7 @@ export default function LandingPage() {
             <aside>
               <span className="eyebrow-dark">Models</span>
               <span className="n-lbl-dark">Available</span>
-              <span className="n-val-dark">2 models</span>
+              <span className="n-val-dark">4 models</span>
               <span className="n-lbl-dark">API compat</span>
               <span className="n-val-dark">OpenAI REST</span>
               <span className="n-lbl-dark">Context</span>
@@ -204,6 +204,26 @@ export default function LandingPage() {
                   <span className="tag tag--blue">Coding</span>
                   <span className="tag tag--purple">Thinking mode</span>
                   <span className="tag tag--amber">128K context</span>
+                </div>
+              </div>
+              <div className="model-card m2">
+                <div className="model-name">deepseek-v4-flash</div>
+                <div className="model-maker">DeepSeek · V4 Series</div>
+                <div className="model-desc">Fast and capable model optimized for speed and efficiency across coding, reasoning, and multilingual tasks.</div>
+                <div className="model-tags">
+                  <span className="tag tag--purple">Fast Inference</span>
+                  <span className="tag tag--blue">Coding</span>
+                  <span className="tag tag--teal">Reasoning</span>
+                </div>
+              </div>
+              <div className="model-card m2">
+                <div className="model-name">glm-5.2</div>
+                <div className="model-maker">Zhipu AI · GLM</div>
+                <div className="model-desc">Bilingual (Chinese/English) model with strong agentic tool use. 256K token context for long-document coding and reasoning.</div>
+                <div className="model-tags">
+                  <span className="tag tag--blue">Agentic tools</span>
+                  <span className="tag tag--blue">Coding</span>
+                  <span className="tag tag--amber">256K context</span>
                 </div>
               </div>
             </div>
@@ -338,7 +358,7 @@ export default function LandingPage() {
             <div className="card" style={{ marginTop: 0, padding: "20px 24px", display: "flex", flexDirection: "column", gap: "8px" }}>
               {[
                 ["Base URL", "https://api2.ai.tokamak.network"],
-                ["Model", "qwen-3.6, gemma-4"],
+                ["Model", "qwen-3.6, gemma-4, deepseek-v4-flash, glm-5.2"],
                 ["Protocol", "OpenAI-compatible REST"],
               ].map(([label, val]) => (
                 <div key={label} style={{ display: "flex", gap: "8px 16px", alignItems: "baseline", flexWrap: "wrap" }}>

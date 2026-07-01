@@ -10,6 +10,8 @@ export interface ModelInfo {
 export const MODELS: ModelInfo[] = [
   { value: "qwen-3.6", label: "Qwen 3.6 (Recommended)", contextWindow: 262144 },
   { value: "gemma-4", label: "Gemma 4", contextWindow: 262144 },
+  { value: "deepseek-v4-flash", label: "DeepSeek V4 Flash", contextWindow: 262144 },
+  { value: "glm-5.2", label: "GLM 5.2", contextWindow: 262144 },
 ];
 
 export function getContextWindow(model: string): number | undefined {
