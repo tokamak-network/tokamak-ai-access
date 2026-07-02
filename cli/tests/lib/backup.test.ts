@@ -12,7 +12,7 @@ describe("makeTimestamp", () => {
 
 describe("backupFile", () => {
   it("creates a .bak-<timestamp> copy", () => {
-    const dir = join(tmpdir(), `backup-test-${Date.now()}`);
+    const dir = join(tmpdir(), `backup-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(dir, { recursive: true });
     const file = join(dir, "settings.json");
     writeFileSync(file, '{"key":"value"}');

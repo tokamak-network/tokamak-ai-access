@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { mergeKeys, removeKeys, readJson, writeJson } from "../../src/lib/json-merge.js";
 
 function makeTmp(): string {
-  const dir = join(tmpdir(), `json-merge-test-${Date.now()}`);
+  const dir = join(tmpdir(), `json-merge-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   mkdirSync(dir, { recursive: true });
   return dir;
 }

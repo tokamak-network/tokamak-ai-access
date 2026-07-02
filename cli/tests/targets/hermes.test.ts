@@ -10,7 +10,7 @@ vi.mock("node:child_process", () => ({
 }));
 
 function makeHome(): string {
-  const dir = join(tmpdir(), `hermes-test-${Date.now()}`);
+  const dir = join(tmpdir(), `hermes-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   mkdirSync(dir, { recursive: true });
   mkdirSync(join(dir, ".hermes"), { recursive: true });
   writeFileSync(join(dir, ".zshrc"), "export FOO=bar\n");

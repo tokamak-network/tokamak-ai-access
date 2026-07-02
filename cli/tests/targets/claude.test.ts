@@ -12,7 +12,7 @@ interface ClaudeSettings {
 }
 
 function makeHome(): string {
-  const dir = join(tmpdir(), `claude-test-${Date.now()}`);
+  const dir = join(tmpdir(), `claude-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   mkdirSync(dir, { recursive: true });
   mkdirSync(join(dir, ".claude"), { recursive: true });
   writeFileSync(join(dir, ".zshrc"), "export FOO=bar\n");

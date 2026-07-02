@@ -6,7 +6,7 @@ import { writeEnvBlock, removeMarkerBlock, revertShellProfile } from "../../src/
 import { hasMarkerBlock } from "../../src/lib/markers.js";
 
 function makeTmp(): string {
-  const dir = join(tmpdir(), `shell-profile-test-${Date.now()}`);
+  const dir = join(tmpdir(), `shell-profile-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   mkdirSync(dir, { recursive: true });
   return dir;
 }
