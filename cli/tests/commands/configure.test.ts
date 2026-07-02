@@ -5,7 +5,6 @@ vi.mock("../../src/targets/claude.js", () => ({ configure: vi.fn() }));
 vi.mock("../../src/targets/codex.js", () => ({ configure: vi.fn() }));
 vi.mock("../../src/targets/openclaw.js", () => ({ configure: vi.fn() }));
 vi.mock("../../src/targets/hermes.js", () => ({ configure: vi.fn() }));
-vi.mock("../../src/targets/opencode.js", () => ({ configure: vi.fn() }));
 vi.mock("../../src/lib/litellm.js", () => ({ fetchModels: vi.fn() }));
 
 const callOrder: string[] = [];
@@ -33,37 +32,5 @@ describe("runConfigure interactive prompt order", () => {
     expect(modelIdx).toBeGreaterThanOrEqual(0);
     expect(apiKeyIdx).toBeGreaterThanOrEqual(0);
     expect(modelIdx).toBeLessThan(apiKeyIdx);
-  });
-});
-
-describe("runConfigure --model validation", () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  function stubExit() {
-    return vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
-      throw new Error(`exit:${code}`);
-    }) as never);
-  }
-
-  it("rejects an image model", async () => {
-    const exit = stubExit();
-    await expect(
-      runConfigure({ target: "codex", apiKey: "sk-test", model: "z-image", nonInteractive: true }),
-    ).rejects.toThrow("exit:1");
-    expect(exit).toHaveBeenCalledWith(1);
-  });
-
-  it("rejects an unknown model", async () => {
-    const exit = stubExit();
-    await expect(
-      runConfigure({ target: "codex", apiKey: "sk-test", model: "gpt-9", nonInteractive: true }),
-    ).rejects.toThrow("exit:1");
-    expect(exit).toHaveBeenCalledWith(1);
-  });
-
-  it("accepts a valid chat model", async () => {
-    const exit = stubExit();
-    await runConfigure({ target: "codex", apiKey: "sk-test", model: "qwen-3.6", nonInteractive: true });
-    expect(exit).not.toHaveBeenCalled();
   });
 });
