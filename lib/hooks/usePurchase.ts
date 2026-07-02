@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * usePurchase — in-app TON payment via ERC-20 transfer to treasury
+ * usePurchase — in-app TON payment via ERC-20 transfer to burn address
  *
  * Flow:
- *   1. TON.transfer(TREASURY, PRICE_TON * 10^18)
+ *   1. TON.transfer(BURN_ADDRESS, PRICE_TON * 10^18)
  *      → Wait for tx confirmation
  *   2. POST/PUT to /api/keys/purchase or /api/keys/purchase/renew with txHash
  *   3. Server verifies tx on-chain, issues or renews API key

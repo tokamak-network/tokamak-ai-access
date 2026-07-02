@@ -198,12 +198,12 @@ export default function LandingPage() {
               <div className="model-card m2">
                 <div className="model-name">gemma-4</div>
                 <div className="model-maker">Google · Gemma 4</div>
-                <div className="model-desc">31B dense transformer. Multimodal (text, image, video) with 128K token context. Advanced reasoning with configurable thinking mode.</div>
+                <div className="model-desc">31B dense transformer. Multimodal (text, image, video) with 256K token context. Advanced reasoning with configurable thinking mode.</div>
                 <div className="model-tags">
                   <span className="tag tag--teal">Multimodal</span>
                   <span className="tag tag--blue">Coding</span>
                   <span className="tag tag--purple">Thinking mode</span>
-                  <span className="tag tag--amber">128K context</span>
+                  <span className="tag tag--amber">256K context</span>
                 </div>
               </div>
               <div className="model-card m2">
@@ -335,7 +335,7 @@ export default function LandingPage() {
             }}>
               {(["01", "02"] as const).map((num) => {
                 const [title, desc] = num === "01"
-                  ? ["Connect wallet", "MetaMask, WalletConnect, or any EVM-compatible wallet."]
+                  ? ["Connect wallet", "MetaMask, OKX, Rabby, or any EVM-compatible wallet."]
                   : ["Sign a message", "One SIWE signature proves ownership. No gas, no transactions."];
                 return (
                   <li key={num} style={{ display: "flex", gap: "20px" }}>
@@ -543,7 +543,7 @@ function AgentSetupSection() {
         <aside>
           <span className="eyebrow-dark">Agent setup</span>
           <span className="n-lbl-dark">Supported tools</span>
-          <span className="n-val-dark">Claude Code, Codex, OpenClaw, Hermes</span>
+          <span className="n-val-dark">Claude Code, Codex, OpenClaw, Hermes, OpenCode</span>
           <span className="n-lbl-dark">Requires</span>
           <span className="n-val-dark">Node.js + npm</span>
           <span className="n-lbl-dark">Time</span>

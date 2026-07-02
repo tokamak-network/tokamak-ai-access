@@ -39,7 +39,7 @@ async function verifyTransferTx(
   address: string,
 ): Promise<NextResponse | null> {
   const tonErc20 = TON_ERC20_ADDRESS;
-  const treasury = "0x0000000000000000000000000000000000000001";
+  const burnAddress = "0x0000000000000000000000000000000000000001";
 
   const rate = await fetchTonUsdRate().catch(() => null);
   if (!rate) {
@@ -70,7 +70,7 @@ async function verifyTransferTx(
     (log) =>
       log.address?.toLowerCase() === tonErc20 &&
       log.args.from?.toLowerCase() === address.toLowerCase() &&
-      log.args.to?.toLowerCase() === treasury &&
+      log.args.to?.toLowerCase() === burnAddress &&
       (log.args.value ?? 0n) >= minValue,
   );
 
