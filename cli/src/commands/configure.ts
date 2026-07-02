@@ -4,6 +4,7 @@ import * as openclaw from "../targets/openclaw.js";
 import * as hermes from "../targets/hermes.js";
 import * as opencode from "../targets/opencode.js";
 import { fetchModels } from "../lib/litellm.js";
+import { MODELS, CHAT_MODELS } from "../lib/models.js";
 import { log } from "../lib/logger.js";
 import type { Target } from "../lib/prompts.js";
 import pc from "picocolors";
@@ -49,6 +50,21 @@ export async function runConfigure(opts: ConfigureCommandOptions): Promise<void>
     }
     const { promptTarget } = await import("../lib/prompts.js");
     target = await promptTarget();
+  }
+
+  // Validate an explicitly-passed --model: coding tools only issue chat
+  // completions, so image models (and typos) must be rejected up front.
+  if (opts.model) {
+    const known = MODELS.find((m) => m.value === opts.model);
+    const chatList = CHAT_MODELS.map((m) => m.value).join(", ");
+    if (!known || known.type !== "chat") {
+      log.err(
+        known
+          ? `Model "${opts.model}" is an image model — coding tools support chat models only. Choose one of: ${chatList}`
+          : `Unknown model "${opts.model}". Choose one of: ${chatList}`,
+      );
+      process.exit(1);
+    }
   }
 
   let model = opts.model;
